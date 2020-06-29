@@ -19,4 +19,4 @@ matlab_command=$1
 
 module load matlab/R2017a
 
-matlab -nodesktop -nodisplay -nosplash "${matlab_command}"
+matlab -nodesktop -nodisplay -nosplash -r "${matlab_command}"
