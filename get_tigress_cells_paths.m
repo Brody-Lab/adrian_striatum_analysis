@@ -6,9 +6,9 @@ function paths=get_tigress_cells_paths()
     cells_files(~ismissing(curated_cells_files))=curated_cells_files(~ismissing(curated_cells_files));
     fix_path = @(x)strrep(strrep(strrep(char(x),'"',''),'\',filesep),'/',filesep);
     for i=1:length(cells_files)
-        paths{i}=fix_path(fullfile(P.tiger_volume,'data',char(regexprep(cells_files(i),'.*Adrian(.*)','$1'))));       
+        paths{i}=fullfile(P.tiger_volume,'data',fix_path(char(regexprep(cells_files(i),'.*Adrian(.*)','$1'))));       
         if ~exist(path,'file')
-            error('File not found: %s.',fix_path(paths{i}));
+            error('File not found: %s.',paths{i});
         end
     end
 end
