@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 # default settings are for tiger
