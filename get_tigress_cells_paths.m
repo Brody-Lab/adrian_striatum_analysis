@@ -7,7 +7,7 @@ function paths=get_tigress_cells_paths()
     fix_path = @(x)strrep(strrep(strrep(char(x),'"',''),'\',filesep),'/',filesep);
     for i=1:length(cells_files)
         paths{i}=fullfile(P.tiger_volume,'data',fix_path(char(regexprep(cells_files(i),'.*Adrian(.*)','$1'))));       
-        if ~exist(path,'file')
+        if ~exist(paths{i},'file')
             error('File not found: %s.',paths{i});
         end
     end
