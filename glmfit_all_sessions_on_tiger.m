@@ -15,7 +15,11 @@ function glmfit_all_sessions_on_tiger(varargin)
     paths = get_tigress_cells_paths();
     time_string =datestr(now,'YYYY_mm_DD_HH_MM_SS');
     for i=1:length(paths)
+        if ~exist(paths{i},'file')
+            error('Cells file not found: %s.',paths{i});
+        end
         output_dir=fullfile(fileparts(paths{i}),['glmfit_',time_string]);
+        mkdir(output_dir);
         error_file = fullfile(output_dir,'slurm.stderr');
         out_file = fullfile(output_dir,'slurm.stdout');       
         matlab_command = sprintf(['"fit_glm_to_Cells(''%s'',''output_dir'',''%s'',''save'',true,''bin_size_s'',%g,',...

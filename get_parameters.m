@@ -9,7 +9,7 @@ function P = get_parameters()
 %% paths
 P.repository_path = fileparts(mfilename('fullpath'));
 P.recordings_path = fullfile(P.repository_path,'recordings_log.csv');
-P.tiger_volume = '/tigress';
+P.tiger_volume = '/tigress/abondy';
 
 %% plotting
 P.figure_image_format = {'png'};
