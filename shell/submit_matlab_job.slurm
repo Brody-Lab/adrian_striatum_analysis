@@ -15,7 +15,7 @@ matlab_command=$1
 #SBATCH --ntasks-per-node=1      # number of tasks per node
 #SBATCH --cpus-per-task=7        # cpu-cores per task (>1 if multi-threaded tasks)
 #SBATCH --gres=gpu:1             # number of gpus per node
-#SBATCH -p gpu                   # send to gpu partition
+#SBATCH --partition=gpu                   # send to gpu partition
 
 
 module load matlab/R2017a
