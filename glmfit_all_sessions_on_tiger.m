@@ -21,7 +21,7 @@ function glmfit_all_sessions_on_tiger(varargin)
         matlab_command = sprintf(['"fit_glm_to_Cells(''%s'',''output_dir'',''%s'',''save'',true,''bin_size_s'',%g,',...
             '''kfold'',%g,''fit_adaptation'',logical(%g),''phi'',%0.10g,''tau_phi'',%0.10g,''choice_time_back_s'',%0.10g,''include_mono_clicks'',logical(%g));"'],...
             paths{i},output_dir,params.bin_size_s,params.kfold,params.fit_adaptation,params.phi,params.tau_phi,params.choice_time_back_s,params.include_mono_clicks);
-        system(sprintf('sbatch -e %s -o %s -t %g submit_matlab_job %s',error_file,out_file,round(params.time_per_job*60),matlab_command));   
+        system(sprintf('sbatch -e %s -o %s -t %g submit_matlab_job.slurm %s',error_file,out_file,round(params.time_per_job*60),matlab_command));   
     end   
 end
 
