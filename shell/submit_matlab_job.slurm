@@ -12,9 +12,10 @@ matlab_command=$1
 #SBATCH -e slurm_outfiles/%A.err
 #SBATCH -t 1439 # one minute shy of a day by default
 #SBATCH --nodes=1                # node count
-#SBATCH --ntasks-per-node=1     # number of tasks per node
+#SBATCH --ntasks-per-node=1      # number of tasks per node
 #SBATCH --cpus-per-task=7        # cpu-cores per task (>1 if multi-threaded tasks)
 #SBATCH --gres=gpu:1             # number of gpus per node
+#SBATCH -p gpu                   # send to gpu partition
 
 
 module load matlab/R2017a
