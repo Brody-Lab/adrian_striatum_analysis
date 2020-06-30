@@ -1,6 +1,7 @@
 function paths=get_tigress_cells_paths(varargin)
     P=get_parameters;
     p=inputParser;
+    p.KeepUnmatched=true;
     p.addParameter('rat','',@(x)validateattributes(x,{'char','cell'},{}));
     p.parse(varargin{:});
     params=p.Results;
