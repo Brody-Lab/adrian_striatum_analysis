@@ -2,6 +2,7 @@ function glmfit_all_sessions_on_tiger(varargin)
     %% parse and validate inputs
     P=get_parameters;
     p=inputParser;
+    p.KeepUnmatched=true;
     p.addParameter('kfold',1,@(x)validateattributes(x,{'numeric'},{'scalar','integer','>',0}));
     p.addParameter('bin_size_s',0.001,@(x)validateattributes(x,{'numeric'},{'positive','scalar'}));  % resolution of the model. predictions have this bin size.  
     p.addParameter('phi',1,@(x)validateattributes(x,{'numeric'},{'scalar','nonnegative'})); % value of C (adaptation state) at time lag 0
@@ -12,7 +13,7 @@ function glmfit_all_sessions_on_tiger(varargin)
     p.addParameter('include_mono_clicks',true,@(x)validateattributes(x,{'logical'},{'scalar'}));
     p.parse(varargin{:});
     params=p.Results;    
-    paths = get_tigress_cells_paths();
+    paths = get_tigress_cells_paths(varargin{:});
     time_string =datestr(now,'YYYY_mm_DD_HH_MM_SS');
     for i=1:length(paths)
         if ~exist(paths{i},'file')
