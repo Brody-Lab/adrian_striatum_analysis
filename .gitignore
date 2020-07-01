@@ -33,6 +33,7 @@ $RECYCLE.BIN/
 # temporary folders
 \plots
 \data
+glmfit_log.csv
 
 
 # End of https://www.gitignore.io/api/windows
