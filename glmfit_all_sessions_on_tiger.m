@@ -19,6 +19,13 @@ function glmfit_all_sessions_on_tiger(varargin)
         if ~exist(paths{i},'file')
             error('Cells file not found: %s.',paths{i});
         end
+        try
+            [rat,date] = extract_info_from_npx_path(paths{i});
+        catch
+            warning('Failed to extract rat and date from path: %s\n',paths{i});
+            rat='';
+            date='';
+        end
         output_dir=fullfile(fileparts(paths{i}),['glmfit_',time_string]);
         mkdir(output_dir);
         error_file = fullfile(output_dir,'slurm.stderr');
@@ -26,7 +33,7 @@ function glmfit_all_sessions_on_tiger(varargin)
         matlab_command = sprintf(['"fit_glm_to_Cells(''%s'',''save_path'',''%s'',''save'',true,''bin_size_s'',%g,',...
             '''kfold'',%g,''fit_adaptation'',logical(%g),''phi'',%0.10g,''tau_phi'',%0.10g,''choice_time_back_s'',%0.10g,''include_mono_clicks'',logical(%g));exit"'],...
             paths{i},output_dir,params.bin_size_s,params.kfold,params.fit_adaptation,params.phi,params.tau_phi,params.choice_time_back_s,params.include_mono_clicks);
-        system(sprintf('sbatch -e %s -o %s -t %g -J "striatum_glm" submit_matlab_job.slurm %s',error_file,out_file,round(params.time_per_job*60),matlab_command));   
+        system(sprintf('sbatch -e %s -o %s -t %g -J "%s" submit_matlab_job.slurm %s',error_file,out_file,round(params.time_per_job*60),[rat,',',date,'_glm'],matlab_command));   
     end   
 end
 
