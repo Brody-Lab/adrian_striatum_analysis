@@ -9,7 +9,12 @@ function P = get_parameters()
 %% paths
 P.repository_path = fileparts(mfilename('fullpath'));
 P.recordings_path = fullfile(P.repository_path,'recordings_log.csv');
-P.tiger_volume = '/tigress/abondy';
+P.tiger_data_path = '/tigress/abondy/data';
+P.data_path = fullfile(P.repository_path,'data');
+P.glmfit_catalog_path = fullfile(P.repository_path,'glmfit_log.csv');
+P.glmfit_catalog_params = {'phi','tau_phi','fit_adaptation','bin_size_s','include_mono_clicks','choice_time_back_s','kfold','distribution','link','within_stream'}; % if all these parameters are the same for a cell's fit, the fits should be identical.
+P.glmfit_catalog_other_params = {'git_branch','git_commit','hostname','save_time'};
+    
 
 %% plotting
 P.figure_image_format = {'png'};
