@@ -13,7 +13,7 @@ function glmfit_all_sessions_on_tiger(varargin)
     p.addParameter('include_mono_clicks',true,@(x)validateattributes(x,{'logical'},{'scalar'}));
     p.parse(varargin{:});
     params=p.Results;    
-    paths = get_tigress_cells_paths(varargin{:});
+    paths = get_cells_paths('data_path',P.tiger_data_path,varargin{:});
     time_string =datestr(now,'YYYY_mm_DD_HH_MM_SS');
     for i=1:length(paths)
         if ~exist(paths{i},'file')
