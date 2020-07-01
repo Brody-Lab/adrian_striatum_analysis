@@ -1,7 +1,8 @@
-function paths=get_tigress_cells_paths(varargin)
+function paths=get_cells_paths(varargin)
     P=get_parameters;
     p=inputParser;
     p.KeepUnmatched=true;
+    p.addParameter('data_path',P.data_path,@(x)isdir(x));
     p.addParameter('rat','',@(x)validateattributes(x,{'char','cell'},{}));
     p.parse(varargin{:});
     params=p.Results;
@@ -12,9 +13,9 @@ function paths=get_tigress_cells_paths(varargin)
     cells_files(~ismissing(curated_cells_files))=curated_cells_files(~ismissing(curated_cells_files));
     fix_path = @(x)strrep(strrep(strrep(char(x),'"',''),'\',filesep),'/',filesep);
     for i=1:length(cells_files)
-        paths{i}=fullfile(P.tiger_volume,'data',fix_path(char(regexprep(cells_files(i),'.*Adrian(.*)','$1'))));       
+        paths{i}=fullfile(params.data_path,fix_path(char(regexprep(cells_files(i),'.*Adrian(.*)','$1'))));       
         if ~exist(paths{i},'file')
-            %error('File not found: %s.',paths{i});
+            error('File not found: %s.',paths{i});
         end
     end
     if ~isempty(params.rat)
