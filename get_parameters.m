@@ -9,11 +9,19 @@ function P = get_parameters()
 %% paths
 P.repository_path = fileparts(mfilename('fullpath'));
 P.recordings_path = fullfile(P.repository_path,'recordings_log.csv');
-P.tiger_data_path = '/tigress/abondy/data';
-P.data_path = fullfile(P.repository_path,'data');
-P.glmfit_catalog_path = fullfile(P.repository_path,'glmfit_log.csv');
-P.glmfit_catalog_params = {'phi','tau_phi','fit_adaptation','bin_size_s','include_mono_clicks','choice_time_back_s','kfold','distribution','link','within_stream'}; % if all these parameters are the same for a cell's fit, the fits should be identical.
-P.glmfit_catalog_other_params = {'git_branch','git_commit','hostname','save_time'};
+[~,P.hostname] = system('hostname');
+P.hostname=deblank(P.hostname);
+if strncmp(P.hostname,'tiger',5)
+    P.data_path = '/tigress/abondy';
+else
+    P.data_path = fullfile('X:','abondy','adrian_striatum_analysis');
+end
+if ~isdir(P.data_path)
+   error('Data path does not exist: %s',P.data_path); 
+end
+P.glmfit_catalog_path = fullfile(P.data_path,'glmfit_log.csv');
+P.glmfit_catalog_keys = {'phi','tau_phi','fit_adaptation','bin_size_s','include_mono_clicks','choice_time_back_s','kfold','distribution','link','within_stream'}; % if all these parameters are the same for a cell's fit, the fits should be identical.
+P.glmfit_catalog_params = [P.glmfit_catalog_keys 'rat','sess_date','sessid','run','cells_file','git_branch','git_commit','hostname','save_time'];
     
 
 %% plotting
