@@ -20,7 +20,7 @@ function glmfit_all_sessions(varargin)
     for i=1:length(cells_paths)
         fprintf('\n---------Submitting job %g of %g-----------\n',i,length(cells_paths));
         if ~exist(cells_paths{i},'file')
-            %error('Cells file not found: %s.',cells_paths{i});
+            error('Cells file not found: %s.',cells_paths{i});
         end
         fprintf('   Found data file at %s\n',cells_paths{i});
         try
@@ -31,15 +31,13 @@ function glmfit_all_sessions(varargin)
             date='';
         end
         output_dir=fullfile(fileparts(fits_paths{i}),['glmfit_',time_string]);
-        %mkdir(output_dir);
+        mkdir(output_dir);
         fprintf('   Made output directory: %s\n   ',output_dir);
         error_file = fullfile(output_dir,'slurm.stderr');
         out_file = fullfile(output_dir,'slurm.stdout');       
         matlab_command = sprintf(['"fit_glm_to_Cells(''%s'',''save_path'',''%s'',''save'',true,''bin_size_s'',%g,',...
             '''kfold'',%g,''fit_adaptation'',logical(%g),''phi'',%0.10g,''tau_phi'',%0.10g,''choice_time_back_s'',%0.10g,''include_mono_clicks'',logical(%g));exit"'],...
             cells_paths{i},output_dir,params.bin_size_s,params.kfold,params.fit_adaptation,params.phi,params.tau_phi,params.choice_time_back_s,params.include_mono_clicks);
-        %system(sprintf('sbatch -e %s -o %s -t %g -J "%s" submit_matlab_job.slurm %s',error_file,out_file,round(params.time_per_job*60),[rat,',',date,'_glm'],matlab_command));   
+        system(sprintf('sbatch -e %s -o %s -t %g -J "%s" submit_matlab_job.slurm %s',error_file,out_file,round(params.time_per_job*60),[rat,',',date,'_glm'],matlab_command));   
     end   
 end
-
-
