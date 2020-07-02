@@ -1,9 +1,11 @@
-function paths=get_cells_paths(varargin)
+function paths=get_data_paths(varargin)
     P=get_parameters;
     p=inputParser;
     p.KeepUnmatched=true;
-    p.addParameter('data_path',P.data_path,@(x)isdir(x));
+    p.addParameter('data_path',fullfile(P.data_path,'cells'));
+    p.addParameter('parent_dir',false,@(x)validateattributes(x,{'logical'},{'scalar'}));
     p.addParameter('rat','',@(x)validateattributes(x,{'char','cell'},{}));
+    p.addParameter('must_exist',true,@(x)validateattributes(x,{'logical'},{'scalar'}));
     p.parse(varargin{:});
     params=p.Results;
     recordings_table = read_recordings_log(P.recordings_path);
@@ -14,8 +16,15 @@ function paths=get_cells_paths(varargin)
     fix_path = @(x)strrep(strrep(strrep(char(x),'"',''),'\',filesep),'/',filesep);
     for i=1:length(cells_files)
         paths{i}=fullfile(params.data_path,fix_path(char(regexprep(cells_files(i),'.*Adrian(.*)','$1'))));       
-        if ~exist(paths{i},'file')
-            error('File not found: %s.',paths{i});
+        if params.parent_dir
+            paths{i} = fileparts(paths{i});
+            if ~isdir(paths{i}) && params.must_exist
+                error('Directory not found: %s.',paths{i});                  
+            end            
+        else
+            if ~exist(paths{i},'file') && params.must_exist
+                error('File not found: %s.',paths{i});
+            end
         end
     end
     if ~isempty(params.rat)
