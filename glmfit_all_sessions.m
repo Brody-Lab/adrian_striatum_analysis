@@ -15,7 +15,7 @@ function glmfit_all_sessions(varargin)
     p.parse(varargin{:});
     params=p.Results;    
     cells_paths = get_data_paths('data_path',fullfile(P.data_path,'cells'),varargin{:});
-    fits_paths = get_data_paths('data_path',fullfile(P.data_path,'fits'),'parent_dir',true,varargin{:});
+    fits_paths = get_data_paths('data_path',fullfile(P.data_path,'fits'),'parent_dir',true,varargin{:},'must_exist',false);
     time_string =datestr(now,'YYYY_mm_DD_HH_MM_SS');
     for i=1:length(cells_paths)
         fprintf('\n---------Submitting job %g of %g-----------\n',i,length(cells_paths));
