@@ -1,7 +1,8 @@
 #!/bin/bash
-#SBATCH -o slurm_outfiles/%A.out
-#SBATCH -e slurm_outfiles/%A.err
-#SBATCH -t 1439 # one minute shy of a day by default
+#SBATCH --array=0
+#SBATCH -o slurm_outfiles/%A_%a.out
+#SBATCH -e slurm_outfiles/%A_%a.err;
+#SBATCH -t 300                   # 5 hrs by default
 #SBATCH --nodes=1                # node count
 #SBATCH --ntasks-per-node=1      # number of tasks per node
 #SBATCH --cpus-per-task=7        # cpu-cores per task (>1 if multi-threaded tasks)
@@ -9,7 +10,7 @@
 #SBATCH --partition=gpu          # send to gpu partition
 #SBATCH --mem-per-cpu=8G         # important for long sessions or small time binning
 #SBATCH --mail-type=fail         # email only upon error
-#SBATCH --mail-user=abondy@princeton.edu 
+#SBATCH --mail-user=abondy@princeton.edu
 
 # these default settings are for tiger
 
@@ -20,4 +21,10 @@ matlab_command=$1
 
 module load matlab/R2017a
 
-matlab -nodesktop -nodisplay -nosplash -r "${matlab_command}"
+if [ $SLURM_ARRAY_TASK_COUNT -eq 1 ]; then
+  echo "Matlab command is: ${matlab_command}"
+  matlab -nodesktop -nodisplay -nosplash -r "${matlab_command}"
+else
+  echo "Matlab command is: id=$SLURM_ARRAY_TASK_ID;${matlab_command}"
+  matlab -nodesktop -nodisplay -nosplash -r "id=$SLURM_ARRAY_TASK_ID;${matlab_command}"
+fi
