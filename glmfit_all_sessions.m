@@ -33,9 +33,7 @@ function glmfit_all_sessions(varargin)
         end
         output_dir=fullfile(fileparts(fits_paths{i}),['glmfit_',time_string]);
         mkdir(output_dir);
-        fprintf('   Made output directory: %s\n   ',output_dir);
-        error_file = fullfile(output_dir,'slurm.stderr');
-        out_file = fullfile(output_dir,'slurm.stdout');  
+        fprintf('   Made output directory: %s\n   ',output_dir); 
         if params.job_array
             matlab_command = sprintf(['fit_glm_to_Cells(''%s'',''save_path'',''%s'',''save'',true,''bin_size_s'',%g,',...
                 '''kfold'',%g,''fit_adaptation'',logical(%g),''phi'',%0.10g,''tau_phi'',%0.10g,''choice_time_back_s'',%0.10g,''include_mono_clicks'',logical(%g));'],...
@@ -49,10 +47,14 @@ function glmfit_all_sessions(varargin)
             else
                error('Could not load saved params file or it was not saved: %s\n',params_path); 
             end
+            error_file = fullfile(output_dir,'job%A_cell%a.stderr');
+            out_file = fullfile(output_dir,'job%A_cell%a.stdout');            
             array_string=sprintf('%g,',glmfit_params.params.cellno(glmfit_params.params.responsive_enough));
             matlab_command = ['"',matlab_command(1:end-2),[',''cellno'',id,''save_params'',false);'],'"'];
             system(sprintf('sbatch -e %s -o %s -t %g -J "%s" --array=%s submit_matlab_job.slurm %s',error_file,out_file,round(params.time_per_job*60),[rat,',',date,'_glm'],array_string(1:end-1),matlab_command));   
         else
+            error_file = fullfile(output_dir,'job%A.stderr');
+            out_file = fullfile(output_dir,'job%A.stdout');             
             matlab_command = sprintf(['"fit_glm_to_Cells(''%s'',''save_path'',''%s'',''save'',true,''bin_size_s'',%g,',...
                 '''kfold'',%g,''fit_adaptation'',logical(%g),''phi'',%0.10g,''tau_phi'',%0.10g,''choice_time_back_s'',%0.10g,''include_mono_clicks'',logical(%g));"'],...
                 cells_paths{i},output_dir,params.bin_size_s,params.kfold,params.fit_adaptation,params.phi,params.tau_phi,params.choice_time_back_s,params.include_mono_clicks);            
