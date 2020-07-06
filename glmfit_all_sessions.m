@@ -31,7 +31,7 @@ function glmfit_all_sessions(varargin)
             rat='';
             date='';
         end
-        output_dir=fullfile(fileparts(fits_paths{i}),['glmfit_',time_string]);
+        output_dir=fullfile(fits_paths{i},['glmfit_',time_string]);
         mkdir(output_dir);
         fprintf('   Made output directory: %s\n   ',output_dir); 
         if params.job_array
