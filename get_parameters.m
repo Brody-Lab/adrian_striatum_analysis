@@ -11,10 +11,14 @@ P.repository_path = fileparts(mfilename('fullpath'));
 P.recordings_path = fullfile(P.repository_path,'recordings_log.csv');
 [~,P.hostname] = system('hostname');
 P.hostname=deblank(P.hostname);
+P.pc_data_path = fullfile('X:','abondy','adrian_striatum_analysis');
+P.tiger_data_path = '/tigress/abondy';
 if strncmp(P.hostname,'tiger',5)
-    P.data_path = '/tigress/abondy';
+    P.on_tiger=true;
+    P.data_path = P.tiger_data_path;
 else
-    P.data_path = fullfile('X:','abondy','adrian_striatum_analysis');
+    P.on_tiger=false;
+    P.data_path = P.pc_data_path;    
 end
 if ~isdir(P.data_path)
    error('Data path does not exist: %s',P.data_path); 
