@@ -2,6 +2,7 @@ function catalog_glmfits(varargin)
     P=get_parameters;
     p=inputParser;
     p.addParameter('delete_empty',true,@(x)validateattributes(x,{'logical'},{'scalar'}));
+    p.addParameter('verbose',false,@(x)validateattributes(x,{'logical'},{'scalar'}));
     p.parse(varargin{:});
     params=p.Results;
     fits_paths = get_data_paths('data_path',fullfile(P.data_path,'fits'),'parent_dir',true,varargin{:});
@@ -9,7 +10,7 @@ function catalog_glmfits(varargin)
         if ~isdir(fits_paths{i})
             error('Could not fit fits path: %s\n',fits_paths{i});
         end
-        run_list{i} = dir(fits_paths{i});
+        run_list{i} = [dir(fits_paths{i});dir(fileparts(fits_paths{i}))]; % search one directory up too because of bug saving some of the fits in the parent folder
         run_list{i} = {run_list{i}.name};
         run_list{i} = run_list{i}(contains(run_list{i},'glmfit_'));
         run_list{i} = cellfun(@(x)fullfile(fits_paths{i},x),run_list{i},'uni',0);
@@ -31,6 +32,23 @@ function catalog_glmfits(varargin)
                         glmfit_params(k,i)=load(params_path);
                     else
                        error('Params file not found: %s.\n',params_path); 
+                    end
+                    params_cells = glmfit_params(k,i).params.cellno(glmfit_params(k,i).params.responsive_enough);
+                    saved_cells = cellfun(@(x)str2num(x),regexprep({tmp.name},'.*cell(.*).mat','$1'),'uni',0);
+                    saved_cells=[saved_cells{:}];
+                    unknown_cells = setdiff(saved_cells,params_cells);
+                    if ~isempty(unknown_cells)
+                        error('%g saved cells that are not listed in the params file!',length(unknown_cells));
+                    end
+                    missing_cells = setdiff(params_cells,saved_cells);
+                    if ~isempty(missing_cells)
+                        warning('%g missing cells for session %s!',length(missing_cells),run_list{i}{k});
+                        n_missing_cells(k,i) = length(missing_cells);
+                    else
+                        n_missing_cells(k,i) = 0;                        
+                        if params.verbose
+                            fprintf('All %g cells accounted for in session %s\n',length(params_cells),run_list{i}{k});
+                        end
                     end
                 end
             elseif params.delete_empty
@@ -56,7 +74,14 @@ function catalog_glmfits(varargin)
                     case 'run'
                         [~,T(count).(this_field)] = fileparts(glmfit_params(t).params.save_path);
                     case 'cells_file'
+                        [~,run] = fileparts(glmfit_params(t).params.save_path);                        
                         T(count).(this_field) = glmfit_params(t).params.dm.dspec.expt.param.mat_file_name;
+                        T(count).fit_path = fullfile(correct_file_path(fileparts(T(count).(this_field))),run);
+                        T(count).fit_path = strrep(T(count).fit_path,'data','fits');
+                        T(count).fit_path = strrep(T(count).fit_path,'cells','fits');                        
+                        if ~isdir(T(count).fit_path)
+                            error('Cannot find putative local fit path: %s',T(count).fit_path);
+                        end                        
                     case 'link'
                         T(count).(this_field) = func2str(glmfit_params(t).params.link.Link);
                     otherwise
@@ -66,16 +91,15 @@ function catalog_glmfits(varargin)
                                 T(count).(this_field) = string(T(count).(this_field));
                             end
                             T(count).(this_field) = unique(T(count).(this_field));                            
+                        elseif this_field=="sess_date"
+                           [~,cells_file_name] = fileparts(glmfit_params(t).params.dm.dspec.expt.param.mat_file_name);
+                           [~, T(count).(this_field)] = extract_info_from_npx_path(cells_file_name);
                         end
                 end
             end
+            T(count).n_missing_cells = n_missing_cells(t);
         end
     end
     T=struct2table(T);
-    writetable(T,P.glmfit_catalog_path);
+    writetable(T,P.glmfit_catalog_path);    
 end
-
-%% what I want this code to do:
-% 1. delete empty runs DONE
-% 2. get all params for runs and make a table DONE
-% 3. warn if there are sessions for which some param sets haven't been run
