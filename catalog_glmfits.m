@@ -3,6 +3,7 @@ function catalog_glmfits(varargin)
     p=inputParser;
     p.addParameter('delete_empty',true,@(x)validateattributes(x,{'logical'},{'scalar'}));
     p.addParameter('verbose',false,@(x)validateattributes(x,{'logical'},{'scalar'}));
+    p.addParameter('fix_responsive',true,@(x)validateattributes(x,{'logical'},{'scalar'}));
     p.parse(varargin{:});
     params=p.Results;
     fits_paths = get_data_paths('data_path',fullfile(P.data_path,'fits'),'parent_dir',true,varargin{:});
@@ -10,10 +11,32 @@ function catalog_glmfits(varargin)
         if ~isdir(fits_paths{i})
             error('Could not fit fits path: %s\n',fits_paths{i});
         end
-        run_list{i} = [dir(fits_paths{i});dir(fileparts(fits_paths{i}))]; % search one directory up too because of bug saving some of the fits in the parent folder
+        run_list{i} = dir(fits_paths{i}); 
         run_list{i} = {run_list{i}.name};
+        cells_path = run_list{i}(contains(run_list{i},'Cells'));
         run_list{i} = run_list{i}(contains(run_list{i},'glmfit_'));
         run_list{i} = cellfun(@(x)fullfile(fits_paths{i},x),run_list{i},'uni',0);
+        run_list_up_one = dir(fileparts(fits_paths{i})); % search one directory up too because of bug saving some of the fits in the parent folder
+        run_list_up_one = {run_list_up_one.name};
+        run_list_up_one = run_list_up_one(contains(run_list_up_one,'glmfit_'));
+        run_list_up_one = cellfun(@(x)fullfile(fileparts(fits_paths{i}),x),run_list_up_one,'uni',0);   
+        run_list{i} = [run_list{i} run_list_up_one];
+        if params.fix_responsive
+            if length(cells_path)==1
+                cells_path = cells_path{1};
+            else
+                error('Error locating cells file for this session.');
+            end                
+            cells_path = fullfile(fits_paths{i},cells_path);
+            cells_path = strrep(cells_path,'data','cells');
+            cells_path = strrep(cells_path,'fits','cells');
+            cells_path = correct_file_path(cells_path);
+            if exist(cells_path,'file')
+                Cells{i} = load(cells_path);
+            else
+                error('Error locating cells file for this session.');
+            end
+        end
         for k=1:length(run_list{i})
             stats_dir = fullfile(run_list{i}{k},'stats');
             if isdir(stats_dir)
@@ -29,25 +52,34 @@ function catalog_glmfits(varargin)
                 else
                     params_path=fullfile(run_list{i}{k},'glmfit_params.mat');
                     if exist(params_path,'file')
-                        glmfit_params(k,i)=load(params_path);
+                        if params.fix_responsive
+                            glmfit_params(k,i).params = fix_responsive(params_path,Cells{i});
+                        else
+                            glmfit_params(k,i)=load(params_path);
+                        end
                     else
                        error('Params file not found: %s.\n',params_path); 
                     end
-                    params_cells = glmfit_params(k,i).params.cellno(glmfit_params(k,i).params.responsive_enough);
+                    responsive_cells = glmfit_params(k,i).params.cellno(glmfit_params(k,i).params.responsive_enough);
+                    params_cells = glmfit_params(k,i).params.cellno;                    
                     saved_cells = cellfun(@(x)str2num(x),regexprep({tmp.name},'.*cell(.*).mat','$1'),'uni',0);
                     saved_cells=[saved_cells{:}];
                     unknown_cells = setdiff(saved_cells,params_cells);
                     if ~isempty(unknown_cells)
                         error('%g saved cells that are not listed in the params file!',length(unknown_cells));
                     end
-                    missing_cells = setdiff(params_cells,saved_cells);
+                    unresponsive_cells_fit = setdiff(saved_cells,responsive_cells);
+                    if ~isempty(unresponsive_cells_fit)
+                        warning('%g saved cells that are not responsive enough!',length(unresponsive_cells_fit));
+                    end
+                    missing_cells = setdiff(responsive_cells,saved_cells);
                     if ~isempty(missing_cells)
                         warning('%g missing cells for session %s!',length(missing_cells),run_list{i}{k});
                         n_missing_cells(k,i) = length(missing_cells);
                     else
                         n_missing_cells(k,i) = 0;                        
                         if params.verbose
-                            fprintf('All %g cells accounted for in session %s\n',length(params_cells),run_list{i}{k});
+                            fprintf('All %g cells accounted for in session %s\n',length(responsive_cells),run_list{i}{k});
                         end
                     end
                 end
