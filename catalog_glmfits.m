@@ -3,7 +3,7 @@ function catalog_glmfits(varargin)
     p=inputParser;
     p.addParameter('delete_empty',true,@(x)validateattributes(x,{'logical'},{'scalar'}));
     p.addParameter('verbose',false,@(x)validateattributes(x,{'logical'},{'scalar'}));
-    p.addParameter('fix_responsive',true,@(x)validateattributes(x,{'logical'},{'scalar'}));
+    p.addParameter('fix_responsive',false,@(x)validateattributes(x,{'logical'},{'scalar'}));
     p.parse(varargin{:});
     params=p.Results;
     fits_paths = get_data_paths('data_path',fullfile(P.data_path,'fits'),'parent_dir',true,varargin{:});
@@ -116,6 +116,10 @@ function catalog_glmfits(varargin)
                         end                        
                     case 'link'
                         T(count).(this_field) = func2str(glmfit_params(t).params.link.Link);
+                    case 'save_time'
+                        if isfield(glmfit_params(t).params,this_field) && ~isa(glmfit_params(t).params.(this_field),'datetime')
+                            T(count).save_time = datetime(glmfit_params(t).params.(this_field),'InputFormat','yyyy_MM_dd_HH_mm_ss');
+                        end
                     otherwise
                         if isfield(glmfit_params(t).params,this_field)                
                             T(count).(this_field) = glmfit_params(t).params.(this_field); 
