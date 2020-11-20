@@ -6,6 +6,7 @@ function cell_info = make_cell_info(Cells)
     if ~isfield(Cells,'penetration')
         Cells = import_penetration(Cells);
     end
+    num_clusters = numel(Cells.spike_time_s.cpoke_in);
     if ~isfield(Cells,'ks_good')
         % calculate refractory period violations a la Kilosort
         for i=1:num_clusters

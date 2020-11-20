@@ -1,5 +1,10 @@
-function package_cells_for_tiger()
+function package_cells_for_tiger(varargin)
     P=get_parameters;
+    p=inputParser;
+    p.addParameter('make_cell_info',false,@(x)validateattributes(x,{'logical'},{'scalar'}));
+    p.addParameter('remake',false,@(x)validateattributes(x,{'logical'},{'scalar'}));
+    p.parse(varargin{:});
+    params = p.Results;
     recordings_table = read_recordings_log(P.recordings_path);
     curated_cells_files = recordings_table.curated_cells_file(recordings_table.striatum_glm==1);
     cells_files = recordings_table.cells_file(recordings_table.striatum_glm==1);
@@ -13,8 +18,29 @@ function package_cells_for_tiger()
         if ~isdir(fileparts(destination))
             mkdir(fileparts(destination));
         end
-        fprintf('Copying %s ----->\n   to %s ... \n',fix_path(cells_files(i)),fix_path(destination));tic
-        copyfile(fix_path(cells_files(i)),fix_path(destination));
-        fprintf('... took %s.\n-----------------\n',timestr(toc));
+        if isfile(fix_path(destination)) && ~params.remake
+            fprintf('%s exists.\n',fix_path(destination));         
+        else
+            fprintf('Copying %s ----->\n   to %s ...',fix_path(cells_files(i)),fix_path(destination));tic
+            copyfile(fix_path(cells_files(i)),fix_path(destination));
+            fprintf(' took %s.\n',timestr(toc));        
+        end
+        if params.make_cell_info
+            [parent,~,~] = fileparts(fix_path(destination));
+            cell_info_path = fullfile(parent,'cell_info.mat');            
+            if isfile(cell_info_path) && ~params.remake
+                fprintf('%s exists.\n-----------------\n',cell_info_path);                         
+            else
+                fprintf('Loading Cells file and making cell_info structure ...');tic;
+                Cells = load(fix_path(destination));
+                fields=fieldnames(Cells);
+                if length(fields)==1
+                    Cells=Cells.(fields{1}); % if not saved with -struct flag
+                end   
+                cell_info = make_cell_info(Cells);
+                save(cell_info_path,'-struct','cell_info');
+                fprintf(' took %s.\n-----------------\n',timestr(toc));
+            end
+        end
     end
 end
