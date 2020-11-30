@@ -13,6 +13,10 @@ function paths=get_data_paths(varargin)
     cells_files = recordings_table.cells_file(recordings_table.striatum_glm==1);
     rat_names = recordings_table.rat_name(recordings_table.striatum_glm==1);
     cells_files(~ismissing(curated_cells_files))=curated_cells_files(~ismissing(curated_cells_files));
+    if any(ismissing(cells_files))
+        warning('%g missing cells files. Skipping.\n',sum(ismissing(cells_files)));
+    end
+    cells_files = cells_files(~ismissing(cells_files));
     fix_path = @(x)strrep(strrep(strrep(char(x),'"',''),'\',filesep),'/',filesep);
     for i=1:length(cells_files)
         paths{i}=fullfile(params.data_path,fix_path(char(regexprep(cells_files(i),'.*Adrian(.*)','$1'))));       
