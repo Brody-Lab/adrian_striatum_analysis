@@ -6,12 +6,15 @@ function package_cells_for_tiger(varargin)
     p.parse(varargin{:});
     params = p.Results;
     recordings_table = read_recordings_log(P.recordings_path);
+    tagged = recordings_table.D2Phototagging==1;
+    tagged = tagged(recordings_table.striatum_glm==1);
     curated_cells_files = recordings_table.curated_cells_file(recordings_table.striatum_glm==1);
     cells_files = recordings_table.cells_file(recordings_table.striatum_glm==1);
     cells_files(~ismissing(curated_cells_files))=curated_cells_files(~ismissing(curated_cells_files));
     if any(ismissing(cells_files))
         warning('%g missing cells files. Skipping.\n',sum(ismissing(cells_files)));
     end    
+    tagged = tagged(~ismissing(cells_files));
     cells_files = cells_files(~ismissing(cells_files));
     fix_path = @(x)strrep(char(x),'"','');
     for i=1:length(cells_files)
@@ -32,7 +35,7 @@ function package_cells_for_tiger(varargin)
         if params.make_cell_info
             [parent,~,~] = fileparts(fix_path(destination));
             cell_info_path = fullfile(parent,'cell_info.mat');            
-            if isfile(cell_info_path) && ~params.remake
+            if isfile(cell_info_path) && ~params.remake 
                 fprintf('%s exists.\n-----------------\n',cell_info_path);                         
             else
                 fprintf('Loading Cells file and making cell_info structure ...');tic;
@@ -41,8 +44,8 @@ function package_cells_for_tiger(varargin)
                 if length(fields)==1
                     Cells=Cells.(fields{1}); % if not saved with -struct flag
                 end   
-                cell_info = make_cell_info(Cells);
-                save(cell_info_path,'-struct','cell_info');
+                cell_info = make_cell_info(Cells,tagged(i));
+                save(cell_info_path,'cell_info');
                 fprintf(' took %s.\n-----------------\n',timestr(toc));
             end
         end
