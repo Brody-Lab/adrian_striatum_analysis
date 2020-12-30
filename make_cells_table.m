@@ -10,4 +10,5 @@ function T = make_cells_table(varargin)
         cell_info.cellno = [1:height(cell_info)]';
         T = cat(1,T,cell_info);
     end
+    writetable(T,P.cells_table_path);        
 end
