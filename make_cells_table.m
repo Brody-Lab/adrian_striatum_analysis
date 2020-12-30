@@ -7,11 +7,7 @@ function T = make_cells_table(varargin)
     paths = get_data_paths('cell_info',true);
     for i=1:length(paths)
         load(paths{i});
-        if i>1
-            vars = intersect(T.Properties.VariableNames,cell_info.Properties.VariableNames);
-            T = T(:,ismember(T.Properties.VariableNames, vars));
-            cell_info = cell_info(:,ismember(cell_info.Properties.VariableNames, vars));        
-        end
+        cell_info.cellno = [1:height(cell_info)]';
         T = cat(1,T,cell_info);
     end
 end

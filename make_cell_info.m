@@ -6,10 +6,19 @@ function cell_info = make_cell_info(Cells,tag_flag)
     % concatenated across sessions
     fields = {'last_modified','rat','sess_date','sessid','bank','electrode','unitCount',...
                       'unitISIRatio','unitLRatio','unitIsoDist','unitVppRaw','hemisphere',...
-                      'probe_serial','distance_from_tip','DV','AP','ML','regions','ks_good'};    
-    if ~isfield(Cells,'penetration')
-        Cells = import_penetration(Cells);
-    end
+                      'probe_serial','distance_from_tip','DV','AP','ML','regions','ks_good',...
+                      'like_axon','mean_uv','peak_trough_width','peak_uv','peak_width_s',...
+                      'spike_width_ms','mean_uV','width_ms','reliability','signrank','tp',...
+                      'auc','mi','dp','days_implanted','distance_from_fiber_tip'};  
+    missing_vals = num2cell(NaN(numel(fields),1));
+    missing_vals{1}=NaT;
+    missing_vals{3}=NaT;    
+    missing_vals{2}=missing; %string
+    missing_vals{12}=missing; %string    
+    missing_vals{13}=missing; %string        
+    missing_vals{18}={};
+    % keep adding special missings
+    Cells = import_penetration(Cells);
     num_clusters = numel(Cells.spike_time_s.cpoke_in);
     if ~isfield(Cells,'ks_good')
         % calculate refractory period violations a la Kilosort
@@ -17,16 +26,19 @@ function cell_info = make_cell_info(Cells,tag_flag)
             Cells.ks_good(i) = is_ks_good(Cells.raw_spike_time_s{i});
         end
     end
-    if tag_flag
-        %Cells = compute_laser_modulation(Cells);
-        % to do: extract relevant fields
-    end
+    cell_info=table();    
     n_cells = numel(Cells.raw_spike_time_s);    
+    for f=1:length(fields)
+        if iscell(missing_vals{f})
+            cell_info.(fields{f}) = cell(n_cells,1);
+        else
+            cell_info.(fields{f}) = repmat(missing_vals{f},n_cells,1);            
+        end
+    end
     region_names = {Cells.penetration.regions.name};
     regions = cell(n_cells,1);
     regions(Cells.regions>0) = region_names(Cells.regions(Cells.regions>0));
     Cells.regions = regions;
-    cell_info=table();
     if isfield(Cells,'waveform')
         waveform_fields = fieldnames(Cells.waveform);
         for i=1:length(waveform_fields)
@@ -41,16 +53,25 @@ function cell_info = make_cell_info(Cells,tag_flag)
            end
         end
         Cells = rmfield(Cells,'waveform');
-        fields = union(fields,waveform_fields);        
     end
     try
         Cells.probe_serial = Cells.ap_meta.imDatPrb_sn;
     catch
         Cells.probe_serial = Cells.rec.ap_meta.imDatPrb_sn;        
     end
+    if isfield(Cells,'sess_date')
+        Cells.sess_date = datetime(Cells.sess_date);
+    elseif unique(Cells.sessid)==701531 % special case for A242 session
+        Cells.sess_date = datetime('2019-06-03');
+    elseif unique(Cells.sessid)==702016 % special case for A242 session
+        Cells.sess_date = datetime('2019-06-06');      
+    elseif unique(Cells.sessid)==703121 % special case for A242 session     
+        Cells.sess_date = datetime('2019-06-10');              
+    end
+    Cells.days_implanted = days(datetime(Cells.sess_date) - datetime(Cells.penetration.date_implanted));    
+    Cells.last_modified = datetime(Cells.last_modified);
     Cells.probe_serial = string(Cells.probe_serial);    
     for f=1:length(fields)
-        tmp = repmat(missing,n_cells,1);                        
         if isfield(Cells,fields{f})
             if isscalar(Cells.(fields{f}))
                 tmp=repmat(Cells.(fields{f}),n_cells,1);
@@ -63,15 +84,32 @@ function cell_info = make_cell_info(Cells,tag_flag)
             end
             if ~isvector(tmp)
                 warning('Entry %s is not a vector. Cannot insert into table.',fields{f});    
-                tmp = repmat(missing,n_cells,1);                                        
             elseif ~all(size(tmp) == [n_cells,1])
                 warning('Size of entry %s (%g,%g) does not match expected size (%g,%g). Cannot insert into table.',fields{f},size(tmp,1),size(tmp,2),n_cells,1);
-                tmp = repmat(missing,n_cells,1);                                        
+            else
+                cell_info.(fields{f}) = tmp;
             end
         else
-           warning('Fields %s not found.',fields{f}); 
+           %warning('Fields %s not found.',fields{f}); 
+           % happens frequently, warning messages are not useful
         end
-        cell_info.(fields{f}) = tmp;        
+    end
+    if cell_info.rat(1)=="A249" || cell_info.rat(1)=="A256"
+        cell_info.distance_from_fiber_tip = sqrt((cell_info.AP - 1.6).^2 + (cell_info.DV - 3.9).^2);
+    end
+    tag_fields = {'reliability','signrank','tp','auc','mi','dp'};
+    if tag_flag
+        Cells = compute_laser_modulation(Cells);
+    end
+    % add all statistics from the "prepost" field of
+    % Cells.PPTH.combined_pulse_stats (i.e. comparing the 100ms before
+    % and after the laser across all pulses)
+    for f=1:length(tag_fields)  
+        if tag_flag
+            cell_info.(tag_fields{f}) = cellfun(@(x)x.prepost.(tag_fields{f}),Cells.PPTH.combined_pulse_stats);
+        else
+            cell_info.(tag_fields{f}) = NaN(height(cell_info),1);
+        end
     end
 end
 

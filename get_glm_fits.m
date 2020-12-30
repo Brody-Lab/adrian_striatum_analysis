@@ -9,10 +9,23 @@ function [fits,T] = get_glm_fits(varargin)
     p.addParameter('region',{},@(x)validateattributes(x,{'char','cell'},{}));
     p.addParameter('spike_width_ms_range',[0 Inf],@(x)validateattributes(x,{'numeric'},{'increasing','numel',2,'>=',0}));
     p.addParameter('recency_mode','run',@(x)validateattributes(x,{'char'},{'nonempty'}));
-    p.addParameter('min_reliability',0,@(x)validateattributes(x,{'numeric'},{'scalar','<=',1,'>=',0}));
-    p.addParameter('max_reliability',1,@(x)validateattributes(x,{'numeric'},{'scalar','<=',1,'>=',0}));    
+    p.addParameter('reliability_range',[0 1],@(x)validateattributes(x,{'numeric'},{'increasing','numel',2}));
+    p.parse();
+    default_params = p.Results;
+    cell_info_fields = {'dv_range','ap_range','ml_range','spike_width_ms_range','reliability_range'};
     p.parse(varargin{:});
-    params=p.Results;
+    params=p.Results;    
+    cell_info_needed=false;
+    check_range=false(numel(cell_info_fields),1);
+    for f=1:length(cell_info_fields)
+        if any(default_params.(cell_info_fields{f})~=params.(cell_info_fields{f}))
+            check_range(f)=true;
+            cell_info_needed=true;
+        end
+    end
+    if ~isempty(params.region)
+        cell_info_needed=true;
+    end
     validatestring(params.recency_mode,{'run','cell'},'get_glm_fits','recency_mode');
     unmatched = fieldnames(p.Unmatched);
     unrecognized = unmatched(~ismember(unmatched,union(P.glmfit_catalog_keys,P.glmfit_catalog_params)));
@@ -29,9 +42,6 @@ function [fits,T] = get_glm_fits(varargin)
     end
     %% load all parameters files
     T = add_parameter_struct(T);
-    
-    % TO DO: figure out which cell_infos to load (based on unique rat and
-    % session) and load them.
     count=0;
     %% assemble a fits structure with cells matching criteria but do not load the fits yet.
     fprintf('Determining which cells match criteria from %g sessions ...',height(T));
@@ -39,8 +49,21 @@ function [fits,T] = get_glm_fits(varargin)
         [saved_cells,file_paths] = get_saved_cellnos(T.fit_path{i});
         responsive_cells = T.params{i}.cellno(T.params{i}.responsive_enough);
         is_responsive = find(ismember(saved_cells,responsive_cells));
-        % comment: below loop can be easily vectorized
-        for k=is_responsive(:)'
+        if cell_info_needed
+            cell_info_path = fullfile(strrep(fileparts(T.fit_path{1}),'fits','cells'),'cell_info.mat'); % b/c the cells path in T is the tiger path. why?
+            if ~isfile(cell_info_path)
+                error('Could not load cell_info file at %s.',cell_info_path);
+            end
+            include = cell_info.DV>=params.dv_range(1) && cell_info.DV<=params.dv_range(2) && ...
+                        cell_info.AP>=params.ap_range(1) && cell_info.AP<=params.ap_range(2) && ...
+                        cell_info.ML>=params.ml_range(1) && cell_info.ML<=params.ml_range(2) && ...
+                        cell_info.reliability>=params.reliability_range(1) && cell_info.reliability<=params.reliability_range(2) && ...
+                        cell_info.spike_width_ms_range>=params.spike_width_ms_range(1) && cell_info.spike_width_ms<=params.spike_width_ms_range(2);
+            include = include && cellfun(@(x)any(ismember(x.regions,params.regions)));
+        end 
+        include = is_responsive(:) && include(:);
+        % comment: below loop can be easily vectorized        
+        for k=include'
             % skip load for unresponsive cells. responsive bug meant some
             % of these were saved. would be good to programmatically
             % control this. i want to see what happens with these cells.
@@ -52,9 +75,7 @@ function [fits,T] = get_glm_fits(varargin)
             fits.sess_date(count,1)=T.sess_date(i);
             fits.cellno(count,1) = saved_cells(k);
             fits.save_time(count,1) = T.save_time(i);
-        end
-        % TO DO: select list of cells matching anatomical criteria in
-        % associated cells files
+        end        
         % load the fit files for each cell 
     end
     fprintf(' took %s.\n',timestr(toc));
@@ -75,6 +96,12 @@ function [T,include] = select_rows(T,varargin)
     p.KeepUnmatched=true;
     p.parse(varargin{:});
     fields = fieldnames(p.Unmatched);
+    bad_fields = fields(~ismember(fields,T.Properties.VariableNames));
+    if ~isempty(bad_fields)
+        fprintf('Some unrecognized fields in the table:\n');
+        display(bad_fields)
+    end
+    fields = intersect(fields,T.Properties.VariableNames);
     include=true(height(T),1);
     for f=1:length(fields)
         value = p.Unmatched.(fields{f});
