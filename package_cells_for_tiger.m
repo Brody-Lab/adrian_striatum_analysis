@@ -8,6 +8,8 @@ function package_cells_for_tiger(varargin)
     recordings_table = read_recordings_log(P.recordings_path);
     tagged = recordings_table.D2Phototagging==1;
     tagged = tagged(recordings_table.striatum_glm==1);
+    laser_power_mW = recordings_table.laser_power_mW;
+    laser_power_mW = laser_power_mW(recordings_table.striatum_glm==1);    
     curated_cells_files = recordings_table.curated_cells_file(recordings_table.striatum_glm==1);
     cells_files = recordings_table.cells_file(recordings_table.striatum_glm==1);
     cells_files(~ismissing(curated_cells_files))=curated_cells_files(~ismissing(curated_cells_files));
@@ -15,6 +17,7 @@ function package_cells_for_tiger(varargin)
         warning('%g missing cells files. Skipping.\n',sum(ismissing(cells_files)));
     end    
     tagged = tagged(~ismissing(cells_files));
+    laser_power_mW = laser_power_mW(~ismissing(cells_files));
     cells_files = cells_files(~ismissing(cells_files));
     fix_path = @(x)strrep(char(x),'"','');
     for i=1:length(cells_files)
@@ -47,6 +50,7 @@ function package_cells_for_tiger(varargin)
                 if length(fields)==1
                     Cells=Cells.(fields{1}); % if not saved with -struct flag
                 end   
+                Cells.laser_power_mW = laser_power_mW(i);
                 cell_info = make_cell_info(Cells,tagged(i));
                 save(cell_info_path,'cell_info');
                 fprintf(' took %s.\n-----------------\n',timestr(toc));

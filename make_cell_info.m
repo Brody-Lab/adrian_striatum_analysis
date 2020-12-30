@@ -9,7 +9,8 @@ function cell_info = make_cell_info(Cells,tag_flag)
                       'probe_serial','distance_from_tip','DV','AP','ML','regions','ks_good',...
                       'like_axon','mean_uv','peak_trough_width','peak_uv','peak_width_s',...
                       'spike_width_ms','mean_uV','width_ms','reliability','signrank','tp',...
-                      'auc','mi','dp','days_implanted','distance_from_fiber_tip','first_sig_time_s'};  
+                      'auc','mi','dp','days_implanted','days_since_viral_injection',...
+                      'distance_from_fiber_tip','first_sig_time_s','laser_power_mW'};  
     missing_vals = num2cell(NaN(numel(fields),1));
     missing_vals{1}=NaT;
     missing_vals{3}=NaT;    
@@ -68,7 +69,7 @@ function cell_info = make_cell_info(Cells,tag_flag)
     elseif unique(Cells.sessid)==703121 % special case for A242 session     
         Cells.sess_date = datetime('2019-06-10');              
     end
-    Cells.days_implanted = days(datetime(Cells.sess_date) - datetime(Cells.penetration.date_implanted));    
+    Cells.days_implanted = days(datetime(Cells.sess_date) - datetime(Cells.penetration.date_implanted)); 
     Cells.last_modified = datetime(Cells.last_modified);
     Cells.probe_serial = string(Cells.probe_serial);    
     for f=1:length(fields)
@@ -94,12 +95,16 @@ function cell_info = make_cell_info(Cells,tag_flag)
            % happens frequently, warning messages are not useful
         end
     end
-    if cell_info.rat(1)=="A249" || cell_info.rat(1)=="A256"
+    if cell_info.rat(1)=="A249"
+        cell_info.days_since_viral_injection = days(datetime(cell_info.sess_date) - datetime('2019-12-17'));
+        cell_info.distance_from_fiber_tip = sqrt((cell_info.AP - 1.6).^2 + (cell_info.DV - 3.9).^2);        
+    elseif cell_info.rat(1)=="A256"
+        cell_info.days_since_viral_injection = days(datetime(cell_info.sess_date) - datetime('2019-12-18'));        
         cell_info.distance_from_fiber_tip = sqrt((cell_info.AP - 1.6).^2 + (cell_info.DV - 3.9).^2);
     end
     tag_fields = {'reliability','signrank','tp','auc','mi','dp'};
     if tag_flag
-        Cells = compute_laser_modulation(Cells);
+        Cells = tagging.compute_laser_modulation(Cells);
         cell_info.first_sig_time_s = cellfun(@(x)x.bin_pval2(end),Cells.PPTH.first_sig_time_s); % p=0.05 using the pre-laser times as the null distribution
         % add all statistics from the "prepost" field of
         % Cells.PPTH.combined_pulse_stats (i.e. comparing the 100ms before
