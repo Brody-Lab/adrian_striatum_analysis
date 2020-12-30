@@ -33,6 +33,10 @@ function catalog_glmfits(varargin)
             cells_path = correct_file_path(cells_path);
             if exist(cells_path,'file')
                 Cells{i} = load(cells_path);
+                fields = fieldnames(Cells{i});
+                if length(fields)==1
+                    Cells{i} = Cells{i}.(fields{1});
+                end
             else
                 error('Error locating cells file for this session.');
             end

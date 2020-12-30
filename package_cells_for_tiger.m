@@ -18,6 +18,9 @@ function package_cells_for_tiger(varargin)
     cells_files = cells_files(~ismissing(cells_files));
     fix_path = @(x)strrep(char(x),'"','');
     for i=1:length(cells_files)
+%         if ~tagged(i)
+%             continue
+%         end
         destination=fullfile(P.data_path,'cells',char(regexprep(cells_files(i),'.*Adrian(.*)','$1')));       
         if ~exist(fix_path(cells_files(i)),'file')
             error('File not found: %s.',fix_path(cells_files(i)));

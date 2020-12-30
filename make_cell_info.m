@@ -9,7 +9,7 @@ function cell_info = make_cell_info(Cells,tag_flag)
                       'probe_serial','distance_from_tip','DV','AP','ML','regions','ks_good',...
                       'like_axon','mean_uv','peak_trough_width','peak_uv','peak_width_s',...
                       'spike_width_ms','mean_uV','width_ms','reliability','signrank','tp',...
-                      'auc','mi','dp','days_implanted','distance_from_fiber_tip'};  
+                      'auc','mi','dp','days_implanted','distance_from_fiber_tip','first_sig_time_s'};  
     missing_vals = num2cell(NaN(numel(fields),1));
     missing_vals{1}=NaT;
     missing_vals{3}=NaT;    
@@ -100,15 +100,12 @@ function cell_info = make_cell_info(Cells,tag_flag)
     tag_fields = {'reliability','signrank','tp','auc','mi','dp'};
     if tag_flag
         Cells = compute_laser_modulation(Cells);
-    end
-    % add all statistics from the "prepost" field of
-    % Cells.PPTH.combined_pulse_stats (i.e. comparing the 100ms before
-    % and after the laser across all pulses)
-    for f=1:length(tag_fields)  
-        if tag_flag
+        cell_info.first_sig_time_s = cellfun(@(x)x.bin_pval2(end),Cells.PPTH.first_sig_time_s); % p=0.05 using the pre-laser times as the null distribution
+        % add all statistics from the "prepost" field of
+        % Cells.PPTH.combined_pulse_stats (i.e. comparing the 100ms before
+        % and after the laser across all pulses)
+        for f=1:length(tag_fields)  
             cell_info.(tag_fields{f}) = cellfun(@(x)x.prepost.(tag_fields{f}),Cells.PPTH.combined_pulse_stats);
-        else
-            cell_info.(tag_fields{f}) = NaN(height(cell_info),1);
         end
     end
 end
