@@ -51,6 +51,7 @@ function package_cells_for_tiger(varargin)
                     Cells=Cells.(fields{1}); % if not saved with -struct flag
                 end   
                 Cells.laser_power_mW = laser_power_mW(i);
+                Cells.mat_file_name = string(cells_files{i});
                 cell_info = make_cell_info(Cells,tagged(i));
                 save(cell_info_path,'cell_info');
                 fprintf(' took %s.\n-----------------\n',timestr(toc));

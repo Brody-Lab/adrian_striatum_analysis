@@ -121,8 +121,12 @@ function catalog_glmfits(varargin)
                     case 'link'
                         T(count).(this_field) = func2str(glmfit_params(t).params.link.Link);
                     case 'save_time'
-                        if isfield(glmfit_params(t).params,this_field) && ~isa(glmfit_params(t).params.(this_field),'datetime')
-                            T(count).save_time = datetime(glmfit_params(t).params.(this_field),'InputFormat','yyyy_MM_dd_HH_mm_ss');
+                        if isfield(glmfit_params(t).params,this_field)
+                            if ~isa(glmfit_params(t).params.(this_field),'datetime')
+                                T(count).save_time = datetime(glmfit_params(t).params.(this_field),'InputFormat','yyyy_MM_dd_HH_mm_ss');
+                            else
+                                T(count).save_time = glmfit_params(t).params.save_time;
+                            end
                         end
                     otherwise
                         if isfield(glmfit_params(t).params,this_field)                

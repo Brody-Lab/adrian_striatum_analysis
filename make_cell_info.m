@@ -10,7 +10,7 @@ function cell_info = make_cell_info(Cells,tag_flag)
                       'like_axon','mean_uv','peak_trough_width','peak_uv','peak_width_s',...
                       'spike_width_ms','mean_uV','width_ms','reliability','signrank','tp',...
                       'auc','mi','dp','days_implanted','days_since_viral_injection',...
-                      'distance_from_fiber_tip','first_sig_time_s','laser_power_mW'};  
+                      'distance_from_fiber_tip','first_sig_time_s','laser_power_mW','mat_file_name'};  
     missing_vals = num2cell(NaN(numel(fields),1));
     missing_vals{1}=NaT;
     missing_vals{3}=NaT;    
@@ -18,6 +18,7 @@ function cell_info = make_cell_info(Cells,tag_flag)
     missing_vals{12}=missing; %string    
     missing_vals{13}=missing; %string        
     missing_vals{18}={};
+    missing_vals{39} = missing;
     % keep adding special missings
     Cells = import_penetration(Cells);
     num_clusters = numel(Cells.spike_time_s.cpoke_in);

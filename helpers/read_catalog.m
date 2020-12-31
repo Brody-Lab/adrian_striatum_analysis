@@ -3,8 +3,6 @@ function T = read_catalog(P)
         P=get_parameters();
     end
     fprintf('Loading glmfit catalog at %s ...',P.glmfit_catalog_path); tic;   
-    opts = detectImportOptions(P.glmfit_catalog_path);
-    opts=setvaropts(opts,'save_time','InputFormat','dd-MM-yyyy HH:mm:ss');
-    T = readtable(P.glmfit_catalog_path,opts);  
+    T = readtable(P.glmfit_catalog_path);  
     fprintf(' took %s.\n',timestr(toc));
 end
