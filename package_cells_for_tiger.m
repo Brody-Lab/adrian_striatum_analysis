@@ -10,6 +10,10 @@ function package_cells_for_tiger(varargin)
     tagged = tagged(recordings_table.striatum_glm==1);
     laser_power_mW = recordings_table.laser_power_mW;
     laser_power_mW = laser_power_mW(recordings_table.striatum_glm==1);    
+    session_notes = recordings_table.notes;
+    session_notes = session_notes(recordings_table.striatum_glm==1);    
+    D2Phototagging = recordings_table.D2Phototagging;
+    D2Phototagging = D2Phototagging(recordings_table.striatum_glm==1);        
     curated_cells_files = recordings_table.curated_cells_file(recordings_table.striatum_glm==1);
     cells_files = recordings_table.cells_file(recordings_table.striatum_glm==1);
     cells_files(~ismissing(curated_cells_files))=curated_cells_files(~ismissing(curated_cells_files));
@@ -18,6 +22,8 @@ function package_cells_for_tiger(varargin)
     end    
     tagged = tagged(~ismissing(cells_files));
     laser_power_mW = laser_power_mW(~ismissing(cells_files));
+    session_notes = session_notes(~ismissing(cells_files));
+    D2Phototagging = D2Phototagging(~ismissing(cells_files));    
     cells_files = cells_files(~ismissing(cells_files));
     fix_path = @(x)strrep(char(x),'"','');
     for i=1:length(cells_files)
@@ -51,6 +57,8 @@ function package_cells_for_tiger(varargin)
                     Cells=Cells.(fields{1}); % if not saved with -struct flag
                 end   
                 Cells.laser_power_mW = laser_power_mW(i);
+                Cells.session_notes = session_notes(i);
+                Cells.D2Phototagging = D2Phototagging(i);
                 Cells.mat_file_name = string(cells_files{i});
                 cell_info = make_cell_info(Cells,tagged(i));
                 save(cell_info_path,'cell_info');
