@@ -67,7 +67,7 @@ function [fits,T] = get_glm_fits(varargin)
         fits = select_most_recent_cell(fits);
     end
     %% now load the fit statistics
-    
+    n_cells = height(fits);
     fprintf('\n%s: Loading fits for %i cells...\n', mfilename, n_cells);
     tic;    
     stats_path = fits.stats_path;

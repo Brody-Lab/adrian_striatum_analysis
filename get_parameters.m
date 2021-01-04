@@ -27,7 +27,10 @@ P.glmfit_catalog_path = fullfile(P.data_path,'glmfit_log.csv');
 P.cells_table_path = fullfile(P.data_path,'cells_table.csv');
 P.glmfit_catalog_keys = {'phi','tau_phi','fit_adaptation','bin_size_s','include_mono_clicks','choice_time_back_s','kfold','distribution','link','within_stream','lambda'}; % if all these parameters are the same for a cell's fit, the fits should be identical, except perhaps for very minor changes in the fitting algorithm.
 P.glmfit_catalog_params = [P.glmfit_catalog_keys 'rat','sess_date','sessid','run','cells_file','git_branch','git_commit','hostname','save_time'];
-    
+
+%% tagging
+P.tagging_metrics={'reliability','dp','tp','signrank','auc','mi'};
+P.tagging_metric_names = {'reliability','d-prime','p-value of paired t-test','p-value of sign rank test','area under ROC curve','modulation index'};
 
 %% plotting
 P.figure_image_format = {'png'};
