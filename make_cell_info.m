@@ -22,14 +22,6 @@ function cell_info = make_cell_info(Cells,tag_flag)
     missing_vals{39} = missing;
     missing_vals{40} = missing;
     % keep adding special missings
-    Cells = import_penetration(Cells);
-    num_clusters = numel(Cells.spike_time_s.cpoke_in);
-    if ~isfield(Cells,'ks_good')
-        % calculate refractory period violations a la Kilosort
-        for i=1:num_clusters
-            Cells.ks_good(i) = is_ks_good(Cells.raw_spike_time_s{i});
-        end
-    end
     cell_info=table();    
     n_cells = numel(Cells.raw_spike_time_s);    
     for f=1:length(fields)
@@ -57,24 +49,9 @@ function cell_info = make_cell_info(Cells,tag_flag)
            end
         end
         Cells = rmfield(Cells,'waveform');
+    else
+        fprintf('Cells file for sessid %s does not have waveform field.',string(Cells.sessid));
     end
-    try
-        Cells.probe_serial = Cells.ap_meta.imDatPrb_sn;
-    catch
-        Cells.probe_serial = Cells.rec.ap_meta.imDatPrb_sn;        
-    end
-    if isfield(Cells,'sess_date')
-        Cells.sess_date = datetime(Cells.sess_date);
-    elseif unique(Cells.sessid)==701531 % special case for A242 session
-        Cells.sess_date = datetime('2019-06-03');
-    elseif unique(Cells.sessid)==702016 % special case for A242 session
-        Cells.sess_date = datetime('2019-06-06');      
-    elseif unique(Cells.sessid)==703121 % special case for A242 session     
-        Cells.sess_date = datetime('2019-06-10');              
-    end
-    Cells.days_implanted = days(datetime(Cells.sess_date) - datetime(Cells.penetration.date_implanted)); 
-    Cells.last_modified = datetime(Cells.last_modified);
-    Cells.probe_serial = string(Cells.probe_serial);    
     for f=1:length(fields)
         if isfield(Cells,fields{f})
             if isscalar(Cells.(fields{f}))
@@ -107,7 +84,6 @@ function cell_info = make_cell_info(Cells,tag_flag)
     end
     tag_fields = {'reliability','signrank','tp','auc','mi','dp'};
     if tag_flag
-        Cells = tagging.compute_laser_modulation(Cells);
         cell_info.first_sig_time_s = cellfun(@(x)x.bin_pval2(end),Cells.PPTH.first_sig_time_s); % p=0.05 using the pre-laser times as the null distribution
         % add all statistics from the "prepost" field of
         % Cells.PPTH.combined_pulse_stats (i.e. comparing the 100ms before
