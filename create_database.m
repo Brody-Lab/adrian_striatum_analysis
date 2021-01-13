@@ -1,10 +1,12 @@
-function package_cells_for_tiger(varargin)
+function create_database(varargin)
+    % moves files from bucket into the repo database, and creates index
+    % files for easy searching of what's there
     P=get_parameters;
     p=inputParser;
-    p.addParameter('make_cell_info',false,@(x)validateattributes(x,{'logical'},{'scalar'}));
-    p.addParameter('remake',false,@(x)validateattributes(x,{'logical'},{'scalar'}));
-    p.addParameter('recopy',false,@(x)validateattributes(x,{'logical'},{'scalar'}));    
-    p.addParameter('resave',false,@(x)validateattributes(x,{'logical'},{'scalar'}));
+    p.addParameter('make_cell_info',false,@(x)validateattributes(x,{'logical'},{'scalar'})); % make cell_info and session_info files?
+    p.addParameter('remake',false,@(x)validateattributes(x,{'logical'},{'scalar'})); % add only new sessions?
+    p.addParameter('recopy',false,@(x)validateattributes(x,{'logical'},{'scalar'})); % write over cells files?   
+    p.addParameter('resave',false,@(x)validateattributes(x,{'logical'},{'scalar'})); % resave cells files after adding fields?
     p.parse(varargin{:});
     params = p.Results;
     recordings_table = read_recordings_log(P.recordings_path);
@@ -48,7 +50,8 @@ function package_cells_for_tiger(varargin)
         end
         if params.make_cell_info
             [parent,~,~] = fileparts(fix_path(destination));
-            cell_info_path = fullfile(parent,'cell_info.mat');            
+            cell_info_path = fullfile(parent,'cell_info.mat');    
+            session_info_path = fullfile(parent,'session_info.mat');
             if isfile(cell_info_path) && ~params.remake 
                 fprintf('%s exists.\n-----------------\n',cell_info_path);                         
             else
@@ -64,10 +67,10 @@ function package_cells_for_tiger(varargin)
                 Cells.D2Phototagging = D2Phototagging(i);
                 Cells.mat_file_name = string(cells_files{i});
                 Cells = import_penetration(Cells);    
-                num_clusters = numel(Cells.spike_time_s.cpoke_in);                
+                Cells.n_clusters = numel(Cells.spike_time_s.cpoke_in);                
                 if ~isfield(Cells,'ks_good')
                     % calculate refractory period violations a la Kilosort
-                    for k=1:num_clusters
+                    for k=1:Cells.n_clusters
                         Cells.ks_good(k) = is_ks_good(Cells.raw_spike_time_s{k});
                     end
                 end    
@@ -85,6 +88,7 @@ function package_cells_for_tiger(varargin)
                 elseif unique(Cells.sessid)==703121 % special case for A242 session     
                     Cells.sess_date = datetime('2019-06-10');              
                 end
+                Cells.sess_date = Cells.sess_date(1,:);                                
                 Cells.days_implanted = days(datetime(Cells.sess_date) - datetime(Cells.penetration.date_implanted)); 
                 Cells.last_modified = datetime(Cells.last_modified);
                 Cells.probe_serial = string(Cells.probe_serial);     
@@ -94,7 +98,10 @@ function package_cells_for_tiger(varargin)
                 fprintf('Making cell_info  ...');tic;      
                 if tagged(i)
                     Cells = tagging.compute_laser_modulation(Cells);
-                end                
+                end    
+                Cells.rat = Cells.rat(1,:);
+                Cells.sessid = Cells.sessid(1);
+                Cells.hemisphere = string(Cells.penetration.hemisphere);
                 cell_info = make_cell_info(Cells,tagged(i));
                 fprintf(' took %s.\n-----------------\n',timestr(toc));                
                 if params.resave
@@ -103,7 +110,27 @@ function package_cells_for_tiger(varargin)
                     fprintf(' took %s.\n-----------------\n',timestr(toc));                                    
                 end
                 save(cell_info_path,'cell_info');
-            end
+                % make and save session info too
+                session_info_fields = {'sess_date','rat','sessid','mat_file_name','probe_serial','days_implanted','n_clusters','craniotomy_AP','craniotomy_ML','depth_inserted','hemisphere','region_names','n_trials','violation_rate','percent_correct','laser_power_mW','D2Phototagging','session_notes'};
+                for f=1:length(session_info_fields)
+                    if isfield(Cells,session_info_fields{f})
+                        session_info.(session_info_fields{f}) = Cells.(session_info_fields{f}); 
+                    else
+                        if session_info_fields{f}=="region_names"
+                            session_info.region_names  = {Cells.penetration.regions.name};
+                        elseif session_info_fields{f}=="n_trials"
+                            session_info.n_trials = numel(Cells.Trials.is_hit);
+                        elseif session_info_fields{f}=="violation_rate"
+                            session_info.violation_rate = mean(Cells.Trials.violated);                
+                        elseif session_info_fields{f}=="percent_correct"
+                            session_info.percent_correct = 100*mean(Cells.Trials.is_hit(~Cells.Trials.violated));
+                        else
+                            session_info.(session_info_fields{f}) = Cells.penetration.(session_info_fields{f}); 
+                        end
+                    end
+                end
+                save(session_info_path,'session_info');                      
+            end      
         end
     end
 end
