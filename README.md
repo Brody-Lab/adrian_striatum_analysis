@@ -1,31 +1,62 @@
-# adrian_striatum_analysis
-*This repository contains the Matlab code that provides an interface to the database of chronic rat Neuropixels recordings performed by Adrian Bondy in various striatal subregions*
+# __adrian_striatum_analysis__
+###### *This repository contains the Matlab code that provides an interface to the database of chronic rat Neuropixels recordings performed by Adrian Bondy in various striatal subregions*
 
-### What dataset are we talking about?
+#### What dataset are we talking about?
 The dataset consists of several dozens of Neuropixels recordings from probes implanted chronically in rats performing the Poisson Clicks task. The recordings were performed to target a variety of sites in the striatum.
 
-### How to find the data
-The actual data resides in `\\bucket.pni.princeton.edu\brody\abondy\adrian_striatum_analysis`. To work locally for faster database access, copy this folder to some local directory `my_path` and then edit the file `get_parameters.m` such that the variable `pc_data_path` is set to `my_path`:<br>
-i.e. replace <br>
-`P.pc_data_path = fullfile('X:','abondy','adrian_striatum_analysis');` <br>
-with<br>
-`P.pc_data_path = my_path;`
+#### How do I see a list of what is in the dataset (i.e. cells, sessions, rats)?
+There are two ways you can see what's in the dataset, without loading in individual files:
+  1. In Matlab, run `sessions_table = load_sessions_table()` to load a table with rows corresponding to recording sessions in the database. Columns provide session-level information, such as the rat, recording date, recording location, behavioral performance, the path to the actual datafile, etc.
+  2. In Matlab, run `cells_table = load_cells_table()` to load a table with a row for each individual cell in the database, and columns describing features of those cells. Note that this table does not contain spike times but is useful for providing an overview of the properties of the cells in the database, for example the 3-D anatomical location of the entire database of recorded cells, the distribution of waveform properties across the dataset, or the contribution to the database of particular rats.
 
-There are two ways you can view an index of the data:
-  1. Run `paths = get_data_paths()` to get a cell array of strings listing the paths to the datafiles ("Cells" files) corresponding to individual sessions. These files include "all" the data, include the spike times and associated behavioral event times. See next section for a detailed description of a "Cells" file.
-  2. Run `T = load_cells_table()` to load into the workspace a table with a row for each individual cell in the database, and columns describing features of those cells, including:
-    - d
+  *N.B.: The above functions really just load into Matlab CSV files located in the main data directory (i.e. `my_path` below), which you can view directly using your method of choice, i.e. Julia, Google Sheets, etc. They are called `sessions_table.csv` and `cells_table.csv` respectively.*
 
-  This table does not contain spike times but is useful for providing an overview of the properties of the cells in the database, for example the 3-D anatomical location of the entire database of recorded cells, the distribution of waveform properties across the dataset, or the contribution to the database of particular rats.
+#### Where is the data?
 
-### "Cells" files
-A "Cells" file is the structure that will loaded into your workspace when loading one of the datafiles:<br>
-`Cells = load(paths{i})`
+  The actual data resides in `\\bucket.pni.princeton.edu\brody\abondy\adrian_striatum_analysis`. To work locally for faster database access, copy this folder to some local directory `my_path` and then edit the file `get_parameters.m` such that the variable `pc_data_path` is set to `my_path`, i.e.:<br><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+          replace <br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`P.pc_data_path = fullfile('X:','abondy','adrian_striatum_analysis');` <br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;with<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`P.pc_data_path = my_path;`<br><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Although note that you will need to regenerate the `sessions_table` and `cells_table` if you change the location of the data, by running: `make_cells_table()` and `make_sessions_table()` in Matlab.
 
-These contain a large number of fields providing information about the recording session. The key ones are:
- -
- -
- -
 
-### Dependencies
+
+  Within this top-level directory, the datafiles for each sessions, which contain the actual spike times and behavioral data, are located in `cells/[rat_name]/[recording_session_name]`. The column `mat_file_name` in `sessions_table` contains the path to each datafile.
+
+#### Datafile format
+Each datafile (sometimes called a "Cells" file) is a Matlab structure with a large number of fields providing information about the spiking and behavioral data of the recordings session:
+###### _Some key fields include:_
+- __spike_time_s__ : a structure with fields for each task event (i.e. cpoke_in, cpoke_out, left_clicks, etc.), specifying the spike times for each trial and cell, in units of seconds relative to the task event
+- __Trials__ : a structure with information about the task and behavior on each of the N trials. Key fields include:
+  - *stateTimes* : a structure with fields of length N for each task event, giving the times according to the BControl clock, when they occurred on each trial.
+  - *is_hit* : a boolean vector of length N stating whether reward was delivered on each trial.
+  - *violated* : a boolean vector of length N stating whether the animal broke fixation on each trial.
+  - *poked_R* : a boolean vector of length N indicating the animal's choice on each trial.
+  - *gamma* : a vector of length N stating what the signal level was on each trial (the log of the ratio of right / left click generative rates)
+  - *trial_type* : a character vector of length N indicating the type of trial ("a" = accumulation, "f" = free choice, "s" = side LED)      
+  - *stim_dur_s* : a vector of length N stating the stimulus durations of each trial
+  - *leftBups*,*rightBups* : a cell array of length N listing the times (in seconds relative to stimulus onset) of the left and right clicks on each trial
+  - *laser* : a structure with information about the laser stimulation parameters on each trial.
+- __rat__ : rat name
+- __sessid__ : unique behavioral session ID
+- __electrode__ : a vector specifying the electrode on which each neuron was recorded (1 being closest to the shank tip)
+- __nTrials__ : the number of completed behavioral trials
+- __laser_power_mW__ : the laser power in mW
+- __session_notes__ : a string of comments, taken from the Neuropixels recording log for that session
+- __D2Phototagging__ : a scalar boolean, indicating whether optogenetic tagging of D2 neurons was performed on that session
+- __penetration__ : a structure with information about the probe insertion coordinates, insertion depth and angle
+- __probe_serial__ : the serial number of the Neuropixels probe used
+- __AP__ : a vector specifying the anteroposterior location of each cell, relative to Bregma (in mm)
+- __ML__ : a vector specifying the mediolateral location of each cell, relative to the midline (in mm)
+- __DV__ : a vector specifying the depth of each cell below the brain surface (in mm)
+- __regions__ : a vector specifying the region index of each cell (see penetration.regions for info on what these indices correspond to)
+- __ks_good__ : a boolean vector indicating whether the refractory period indicates this cell is a single unit (see methods of Luo\*, Bondy\* et al. (2020) for definition of this metric)
+- __days_implanted__ : days elapsed since the probe implantation
+- __n_clusters__ : the number of cells in the recording (some of which may be multi-unit, see "ks_good")
+- __waveform__ : a structure with information about each cell's mean waveform shape (this field is missing for some older sessions)
+
+
+#### Dependencies
 There are a number of dependencies in this repository on other Brody Lab repositories, namely `npx-utils` and `labwide_pbups_analysis`.
