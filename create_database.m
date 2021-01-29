@@ -79,6 +79,9 @@ function create_database(varargin)
                 catch
                     Cells.probe_serial = Cells.rec.ap_meta.imDatPrb_sn;        
                 end
+                time_to_clicks = Cells.Trials.stateTimes.clicks_on - Cells.Trials.stateTimes.cpoke_in;
+                exclude_trials = Cells.Trials.violated | time_to_clicks<0.5;
+                Cells.autocorr = timescales.get_autocorr_from_Cells(Cells,'cpoke_in',[0 0.5],'exclude_trials',exclude_trials);                  
                 if isfield(Cells,'sess_date')
                     Cells.sess_date = datetime(Cells.sess_date);
                 elseif unique(Cells.sessid)==701531 % special case for A242 session

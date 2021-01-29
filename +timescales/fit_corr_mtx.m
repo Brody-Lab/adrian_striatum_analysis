@@ -9,7 +9,7 @@ function fit=fit_corr_mtx(corr_mtx,bin_size_ms)
     end
     validateattributes(corr_mtx,{'numeric'},{'matrix','square'},'plot_corr_mtx','corr_mtx',1);
     n=size(corr_mtx,1);  
-
+    autocorr = get_autocorr_from_corr_mtx(corr_mtx);
     diags= spdiags(corr_mtx);
     nans = triu(spdiags(NaN(n)));
     diags(~isnan(nans))=NaN;
