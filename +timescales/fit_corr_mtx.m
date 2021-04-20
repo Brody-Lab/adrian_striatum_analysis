@@ -1,4 +1,4 @@
-function fit=fit_corr_mtx(corr_mtx,bin_size_ms)
+function fit=fit_corr_mtx(corr_mtx,bin_size_ms,params)
     arguments
         corr_mtx 
         bin_size_ms (1,1) {isnumeric,mustBePositive,mustBeFinite}
@@ -8,12 +8,7 @@ function fit=fit_corr_mtx(corr_mtx,bin_size_ms)
         corr_mtx = nanmean(corr_mtx,3);
     end
     validateattributes(corr_mtx,{'numeric'},{'matrix','square'},'plot_corr_mtx','corr_mtx',1);
-    n=size(corr_mtx,1);  
-    autocorr = get_autocorr_from_corr_mtx(corr_mtx);
-    diags= spdiags(corr_mtx);
-    nans = triu(spdiags(NaN(n)));
-    diags(~isnan(nans))=NaN;
-    diags=nanmean(diags(:,n+1:end));
-    xs = (1:numel(diags)) * bin_size_ms;
-    fit = timescales.do_fit(xs,diags);    
+    autocorr = timescales.get_autocorr_from_corr_mtx(corr_mtx);
+    xs = (1:numel(autocorr)) * bin_size_ms;
+    fit = timescales.do_fit(xs,autocorr);    
 end
