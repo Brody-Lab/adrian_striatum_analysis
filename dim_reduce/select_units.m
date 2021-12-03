@@ -13,7 +13,7 @@ function units_select = select_units(Cells,varargin)
 
     p=inputParser;
     p.KeepUnmatched=true;
-    p.addRequired('Cells',@(x)validateattributes(x,{'struct'},{'isscalar'}));
+    p.addRequired('Cells',@(x)validateattributes(x,{'struct'},{'scalar'}));
     p.addParameter('thresh_stability',5,@(x)validateattributes(x,{'numeric'},{'scalar','nonnegative'})); 
     p.addParameter('thresh_presence',0.5,@(x)validateattributes(x,{'numeric'},{'scalar','nonnegative'}));
     p.addParameter('thresh_meanrate',0.1,@(x)validateattributes(x,{'numeric'},{'nonnegative','scalar'}));    
