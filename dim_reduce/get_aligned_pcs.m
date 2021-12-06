@@ -35,7 +35,13 @@ function aligned_pcs = get_aligned_pcs(Cells,varargin)
     kPETH.type.shuffled_right_clicks = kPETH.type.right_clicks;        
     kPETH.stdS.shuffled_left_clicks = kPETH.stdS.left_clicks;
     kPETH.stdS.shuffled_right_clicks = kPETH.stdS.right_clicks;        
+    trials=true(Cells.nTrials,1);
+    stateTimes = Cells.Trials.stateTimes;
+    % uncomment lines to get psths for a particular subset of trials (like
+    % hits or misses)
+    %trials = ~Cells.Trials.is_hit;    
+    %stateTimes = select_trials_from_statetimes(Cells.Trials.stateTimes,trials);
     for i=1:npcs
-        aligned_pcs(i) = import_continuous_variable(params.times,pca_stats.score(:,i),Cells.Trials.stateTimes,states,kSpikeWindowS,kPETH);
+        aligned_pcs(i) = import_continuous_variable(params.times,pca_stats.score(:,i),stateTimes,states,kSpikeWindowS,kPETH);
     end
 end
