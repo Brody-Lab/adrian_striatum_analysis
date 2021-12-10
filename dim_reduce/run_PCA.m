@@ -32,6 +32,5 @@ function stats = run_PCA(tot_cell_mat,varargin) %dim,norm_factor)
     
     %save coeff, weightings, and var explained
     [stats.coeff, stats.score,stats.latent, stats.tsquared, stats.explained] = pca(norm_cell_mat,'NumComponents',params.npcs);
-
     
 end
