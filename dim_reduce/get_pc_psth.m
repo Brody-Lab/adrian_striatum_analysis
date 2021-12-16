@@ -21,7 +21,7 @@ function psth = get_pc_psth(Cells,stats,varargin)
         for eves=states(:)'
             eve = eves{:}; % necessary for PETH
             [aligned_times,aligned_values] = group_continuous_values(stats.times,squeeze(stats.score(:,:,i)),stateTimes.(eve), kSpikeWindowS.(eve));
-            psth(i).(eve) = calc_psth_continuous(aligned_times,aligned_values, kPETH.timeS.(eve), 'kernel','LGAUSS', 'tau',0.01,'gpu',true,varargin{:});
+            psth(i).(eve) = calc_psth_continuous(aligned_times,aligned_values, kPETH.timeS.(eve), 'kernel','LGAUSS', 'tau',kPETH.stdS.(eve),'gpu',true,varargin{:});
         end
     end    
 end
