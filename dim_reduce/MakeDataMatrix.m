@@ -12,7 +12,7 @@ function [cells_mat,params] = MakeDataMatrix(Cells,varargin)
     %   MAKEDATAMATRIX(...,'units',UNITS) uses only units specified by
     %   the boolean vector UNITS.
     %
-    %   MAKEDATAMATRIX(...,'trials',TRIALS) uses only trials specified by
+    %   MAKEDATAMATRIX(...,'trial_idx',TRIALS) uses only trials specified by
     %   the boolean vector TRIALS.
     %
     %   MAKEDATAMATRIX(...,'time_edges_s',UNITS) uses binning
@@ -42,7 +42,7 @@ function [cells_mat,params] = MakeDataMatrix(Cells,varargin)
     p.parse(varargin{:});
     params = p.Results;
 
-    validatestring(params.ref_event,fieldnames(Cells.spike_time_s),'MakeDataMatrix_adrian','ref_event');
+    validatestring(params.ref_event,fieldnames(Cells.spike_time_s),'MakeDataMatrix','ref_event');
 
     params.trial_idx = find(params.trial_idx(:)' & ~isnan(Cells.Trials.stateTimes.(params.ref_event))');
     

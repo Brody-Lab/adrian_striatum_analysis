@@ -9,19 +9,11 @@ function stats = get_pcs(Cells,varargin)
     
     % Adrian Bondy, 2021 -- based partly on code by Wynne Stagnaro    
     
-    
-    %% parse and validate inputs
-    p=inputParser;
-    p.KeepUnmatched=true;
-    p.addParameter('make_psth',false,@(x)validateattributes(x,{'logical'},{}));
-    p.parse(varargin{:});
-    
     %% select units
     units = select_units(Cells,varargin{:});
     
     %% make data matrix on which to run PCA
     [cells_mat,params] = MakeDataMatrix(Cells,varargin{:},'units',units);
-
     
     %% perform PCA
     stats = run_PCA(cells_mat,varargin{:});
@@ -38,10 +30,10 @@ function stats = get_pcs(Cells,varargin)
     stats.label = [Cells.rat,' - ',Cells.sess_date,' - ',Cells.probe_serial,' - ',num2str(npcs)',' PCs'];
     stats.repo_path = fileparts(mfilename('fullpath'));
     [stats.git_branch,stats.commit] = return_git_status(stats.repo_path);
-    stats.dim = npcs;
-
-    if p.Results.make_psth
-        stats.psth = get_pc_psth(Cells,stats,varargin{:});
-    end
-    
+    stats.dim = npcs;    
+    % copy some fields from the cells file for data integrity
+    fields={'rec','Trials','sessid','last_modified','rat','sess_date','kSpikeWindowS','penetration','regions','probe_serial'};
+    for f=1:length(fields)
+        stats.(fields{f}) = Cells.(fields{f});
+    end       
 end

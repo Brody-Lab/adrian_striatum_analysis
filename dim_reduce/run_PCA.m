@@ -5,12 +5,12 @@ function stats = run_PCA(tot_cell_mat,varargin) %dim,norm_factor)
     %[coeff,score,explained,norm_cell_mat] = run_PCA(tot_cell_mat)
     % calculates PCs for neural data and returns key metrics and normalized
     % data
-    %   
-    %run_PCA(tot_cell_mat,'dim',DIM) indicates which dim space should be
-    %used to calculate PCs 1 is neural 2 is time
     %
     %run_PCA(tot_cell_mat,'norm_factor',NORM) specifies a value for soft
     %normalization in the denominator 
+    %
+    %run_PCA(tot_cell_mat,'npcs',NPCS) specifies the number of principal
+    %components to use
     
     p=inputParser;
     p.KeepUnmatched=true;
