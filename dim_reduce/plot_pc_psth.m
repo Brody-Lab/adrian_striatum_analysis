@@ -18,6 +18,7 @@ function handle = plot_pc_psth(psth,state,varargin)
     p.addParameter('time_lim_s',kPETH.timeLimS.(state),@(x)validateattributes(x,{'numeric'},{'vector','numel',2,'increasing'}));
     p.addParameter('view',[160 10],@(x)validateattributes(x,{'numeric'},{'vector','numel',2})); % azimuth and elevation for 3d plots    
     p.addParameter('baseline',[]);
+    p.addParameter('start_at_zero',false);
     p.parse(psth,state,varargin{:});
     params = p.Results;
     if ~isfield(psth,state)
@@ -35,6 +36,12 @@ function handle = plot_pc_psth(psth,state,varargin)
         baseline_vals = cat(1,params.baseline.(state))';
         baseline_vals = baseline_vals(good_idx,params.pcs);
         vals = vals - baseline_vals;
+    end
+    
+    if params.start_at_zero
+        for i=1:size(vals,2)
+            vals(:,i) = vals(:,i) - vals(1,i);
+        end
     end
     
 

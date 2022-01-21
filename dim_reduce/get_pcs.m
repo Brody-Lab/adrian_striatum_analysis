@@ -34,6 +34,8 @@ function stats = get_pcs(Cells,varargin)
     % copy some fields from the cells file for data integrity
     fields={'rec','Trials','sessid','last_modified','rat','sess_date','kSpikeWindowS','penetration','regions','probe_serial'};
     for f=1:length(fields)
-        stats.(fields{f}) = Cells.(fields{f});
+        try
+            stats.(fields{f}) = Cells.(fields{f});
+        end
     end       
 end
