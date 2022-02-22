@@ -1,3 +1,9 @@
+addpath(genpath('C:\github\neuroGLM'));
+addpath(genpath('C:\github\npx-utils'));
+addpath(genpath('C:\github\labwide_pbups_analysis'));
+addpath(genpath('C:\ratter\ExperPort\'));
+addpath(genpath('C:\github\abondy\circular'));
+
 file_old=load('C:\Users\abondy\Downloads\Bondy_Post_Striatum.mat'); % 0-3.25 slow latents
 file=load('C:\Users\abondy\Downloads\Bondy_Post_Striatum_fast.mat'); %0-1.5 seconds fast latents
 

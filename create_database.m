@@ -66,6 +66,9 @@ function create_database(varargin)
                 Cells.session_notes = session_notes(i);
                 Cells.D2Phototagging = D2Phototagging(i);
                 Cells.mat_file_name = string(cells_files{i});
+                if ~isfield(Cells,'ap_meta') && isfield(Cells,'meta')
+                    Cells.ap_meta = Cells.meta.ap_meta;
+                end    
                 Cells = import_penetration(Cells);    
                 Cells.n_clusters = numel(Cells.spike_time_s.cpoke_in);                
                 if ~isfield(Cells,'ks_good')
@@ -80,10 +83,14 @@ function create_database(varargin)
                     Cells.probe_serial = Cells.rec.ap_meta.imDatPrb_sn;        
                 end
                 time_to_clicks = Cells.Trials.stateTimes.clicks_on - Cells.Trials.stateTimes.cpoke_in;
-                exclude_trials = Cells.Trials.violated | time_to_clicks<0.5;
+                exclude_trials = Cells.Trials.violated | time_to_clicks<0.5 | Cells.Trials.laser.isOn;
                 [Cells.autocorr,~,Cells.autocorr_fr_hz] = timescales.get_autocorr_from_Cells(Cells,'cpoke_in',[0 0.5],'exclude_trials',exclude_trials);                  
                 if isfield(Cells,'sess_date')
-                    Cells.sess_date = datetime(Cells.sess_date);
+                    try
+                        Cells.sess_date = datetime(Cells.sess_date);
+                    catch
+                        Cells.sess_date = datetime(Cells.sess_date,'InputFormat','uuuu_MM_dd');
+                    end
                 elseif unique(Cells.sessid)==701531 % special case for A242 session
                     Cells.sess_date = datetime('2019-06-03');
                 elseif unique(Cells.sessid)==702016 % special case for A242 session
@@ -91,8 +98,12 @@ function create_database(varargin)
                 elseif unique(Cells.sessid)==703121 % special case for A242 session     
                     Cells.sess_date = datetime('2019-06-10');              
                 end
+                Cells.rat = Cells.rat(1,:);                                
                 Cells.sess_date = Cells.sess_date(1,:);                                
                 Cells.days_implanted = days(datetime(Cells.sess_date) - datetime(Cells.penetration.date_implanted)); 
+                if ~isfield(Cells,'last_modified') && isfield(Cells,'meta')
+                    Cells.last_modified = Cells.meta.last_modified;
+                end
                 Cells.last_modified = datetime(Cells.last_modified);
                 Cells.probe_serial = string(Cells.probe_serial);     
                 if isfield(Cells,'PETH')
@@ -102,7 +113,6 @@ function create_database(varargin)
                 if tagged(i)
                     Cells = tagging.compute_laser_modulation(Cells);
                 end    
-                Cells.rat = Cells.rat(1,:);
                 Cells.sessid = Cells.sessid(1);
                 Cells.hemisphere = string(Cells.penetration.hemisphere);
                 cell_info = make_cell_info(Cells,tagged(i));

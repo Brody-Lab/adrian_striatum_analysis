@@ -36,6 +36,19 @@ function cell_info = make_cell_info(Cells,tag_flag)
     regions(Cells.regions>0) = region_names(Cells.regions(Cells.regions>0));
     Cells.regions = regions;
     if isfield(Cells,'waveform')
+        try
+            Cells.waveform.mean_uv = Cells.waveform.mean_uV;
+        end
+        if isfield(Cells.waveform,'mean_uv')
+            ncells = numel(Cells.raw_spike_time_s);
+            waveform=Cells.waveform;
+            Cells = rmfield(Cells,'waveform');
+            if size(waveform.mean_uv,1)==ncells
+                for c=1:ncells
+                    Cells.waveform(c) = calculate_waveform_stats(waveform.mean_uv(c,:),Cells.ap_meta.imSampRate) ;   
+                end
+            end
+        end
         waveform_fields = fieldnames(Cells.waveform);
         for i=1:length(waveform_fields)
            if ~strcmp(waveform_fields{i},'meanWfGlobalRaw') && ~strcmp(waveform_fields{i},'mean_uv')
