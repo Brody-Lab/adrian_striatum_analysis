@@ -12,7 +12,7 @@ function glmfit_all_sessions(varargin)
     p.addParameter('choice_time_back_s',0.75,@(x)validateattributes(x,{'numeric'},{'scalar','nonnegative'})); % choice kernels extend backwards acausally in time before stimulus end by this many seconds
     p.addParameter('time_per_job',23.99,@(x)validateattributes(x,{'numeric'},{'scalar','positive'})); % max time per job IN HOURS 
     p.addParameter('include_mono_clicks',true,@(x)validateattributes(x,{'logical'},{'scalar'}));
-    p.addParameter('job_array',true,@(x)validateattributes(x,{'logical'},{'scalar'})); % use a job array to parallelize over cells (useful if you are fitting adaptation params which takes a long time)
+    p.addParameter('job_array',false,@(x)validateattributes(x,{'logical'},{'scalar'})); % use a job array to parallelize over cells (useful if you are fitting adaptation params which takes a long time)
     p.parse(varargin{:});
     params=p.Results;    
     cells_paths = get_data_paths('data_path',fullfile(P.data_path,'cells'),varargin{:});
@@ -35,11 +35,11 @@ function glmfit_all_sessions(varargin)
         mkdir(output_dir);
         fprintf('   Made output directory: %s\n   ',output_dir); 
         if params.job_array
-            matlab_command = sprintf(['fit_glm_to_Cells(''%s'',''save_path'',''%s'',''save'',true,''bin_size_s'',%g,',...
+            matlab_command = sprintf(['try;fit_glm_to_Cells(''%s'',''save_path'',''%s'',''save'',true,''bin_size_s'',%g,',...
                 '''kfold'',%g,''fit_adaptation'',logical(%g),''phi'',%0.10g,''tau_phi'',%0.10g,''choice_time_back_s'',%0.10g,''include_mono_clicks'',logical(%g));'],...
                 cells_paths{i},output_dir,params.bin_size_s,params.kfold,params.fit_adaptation,params.phi,params.tau_phi,params.choice_time_back_s,params.include_mono_clicks);
             save_param_command = matlab_command(1:end-2);
-            save_param_command=[save_param_command,[',''fit'',false);']];
+            save_param_command=[save_param_command,[',''fit'',false);catch ME;rethrow(ME);end;']];
             eval(save_param_command);
             params_path=fullfile(output_dir,'glmfit_params.mat');
             if exist(params_path,'file')
