@@ -23,7 +23,7 @@ set -e
 matlab_command=$1
 
 module purge
-module load matlab/R2017a
+module load matlab/R2020b
 
 if [ $SLURM_ARRAY_TASK_COUNT -eq 1 ]; then
   echo "Matlab command is: ${matlab_command}"
