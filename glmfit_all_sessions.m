@@ -35,11 +35,11 @@ function glmfit_all_sessions(varargin)
         mkdir(output_dir);
         fprintf('   Made output directory: %s\n   ',output_dir); 
         if params.job_array
-            matlab_command = sprintf(['try;fit_glm_to_Cells(''%s'',''save_path'',''%s'',''save'',true,''bin_size_s'',%g,',...
+            matlab_command = sprintf(['fit_glm_to_Cells(''%s'',''save_path'',''%s'',''save'',true,''bin_size_s'',%g,',...
                 '''kfold'',%g,''fit_adaptation'',logical(%g),''phi'',%0.10g,''tau_phi'',%0.10g,''choice_time_back_s'',%0.10g,''include_mono_clicks'',logical(%g));'],...
                 cells_paths{i},output_dir,params.bin_size_s,params.kfold,params.fit_adaptation,params.phi,params.tau_phi,params.choice_time_back_s,params.include_mono_clicks);
             save_param_command = matlab_command(1:end-2);
-            save_param_command=[save_param_command,[',''fit'',false);catch ME;rethrow(ME);end;']];
+            save_param_command=[save_param_command,[',''fit'',false);exit;']];
             eval(save_param_command);
             params_path=fullfile(output_dir,'glmfit_params.mat');
             if exist(params_path,'file')
@@ -50,13 +50,13 @@ function glmfit_all_sessions(varargin)
             error_file = fullfile(output_dir,'job%A_cell%a.stderr');
             out_file = fullfile(output_dir,'job%A_cell%a.stdout');            
             array_string=sprintf('%g,',glmfit_params.params.cellno(glmfit_params.params.responsive_enough));
-            matlab_command = ['"',matlab_command(1:end-2),',''cellno'',id,''save_params'',false);','exit;catch ME;rethrow(ME);exit(100);end"'];
+            matlab_command = ['"',matlab_command(1:end-2),',''cellno'',id,''save_params'',false);','exit;"'];
             system(sprintf('sbatch -e %s -o %s -t %g -J "%s" --array=%s --mem-per-cpu=4G submit_matlab_job.slurm %s',error_file,out_file,round(params.time_per_job*60),[rat,',',date,'_glm'],array_string(1:end-1),matlab_command));   
         else
             error_file = fullfile(output_dir,'job%A.stderr');
             out_file = fullfile(output_dir,'job%A.stdout');             
-            matlab_command = sprintf(['"try;fit_glm_to_Cells(''%s'',''save_path'',''%s'',''save'',true,''bin_size_s'',%g,',...
-                '''kfold'',%g,''fit_adaptation'',logical(%g),''phi'',%0.10g,''tau_phi'',%0.10g,''choice_time_back_s'',%0.10g,''include_mono_clicks'',logical(%g));exit;catch ME;rethrow(ME);exit(100);end"'],...
+            matlab_command = sprintf(['"fit_glm_to_Cells(''%s'',''save_path'',''%s'',''save'',true,''bin_size_s'',%g,',...
+                '''kfold'',%g,''fit_adaptation'',logical(%g),''phi'',%0.10g,''tau_phi'',%0.10g,''choice_time_back_s'',%0.10g,''include_mono_clicks'',logical(%g));exit;"'],...
                 cells_paths{i},output_dir,params.bin_size_s,params.kfold,params.fit_adaptation,params.phi,params.tau_phi,params.choice_time_back_s,params.include_mono_clicks);            
             system(sprintf('sbatch -e %s -o %s -t %g -J "%s" --mail-type=FAIL,TIME_LIMIT submit_matlab_job.slurm %s',error_file,out_file,round(params.time_per_job*60),[rat,',',date,'_glm'],matlab_command));               
         end
