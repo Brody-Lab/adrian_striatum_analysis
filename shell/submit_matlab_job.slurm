@@ -22,6 +22,8 @@ matlab_command=$1
 module purge
 module load matlab/R2020b
 
+matlab -batch "blahtl;exit;"
+
 if [ $SLURM_ARRAY_TASK_COUNT -eq 1 ]; then
   echo "Matlab command is: ${matlab_command}"
   matlab -wait -batch "${matlab_command}"
