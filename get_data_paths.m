@@ -19,6 +19,7 @@ function paths=get_data_paths(varargin)
         warning('%g missing cells files. Skipping.\n',sum(ismissing(cells_files)));
     end
     cells_files = cells_files(~ismissing(cells_files));
+    rat_names = rat_names(~ismissing(cells_files));
     fix_path = @(x)strrep(strrep(strrep(char(x),'"',''),'\',filesep),'/',filesep);
     for i=1:length(cells_files)
         paths{i}=fullfile(params.data_path,fix_path(char(regexprep(cells_files(i),'.*Adrian(.*)','$1'))));   
