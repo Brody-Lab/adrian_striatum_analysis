@@ -15,29 +15,27 @@ function glmfit_all_sessions(varargin)
     p.addParameter('job_array',false,@(x)validateattributes(x,{'logical'},{'scalar'})); % use a job array to parallelize over cells (useful if you are fitting adaptation params which takes a long time)
     p.parse(varargin{:});
     params=p.Results;    
-    cells_paths = get_data_paths('data_path',fullfile(P.data_path,'cells'),varargin{:});
-    fits_paths = get_data_paths('data_path',fullfile(P.data_path,'fits'),'parent_dir',true,varargin{:},'must_exist',false);
+    paths = get_data_paths('warn_existence',true,varargin{:});
+    if ~all([paths.all_exist])
+        error('Cannot continue because database is not fully accessible.');
+    end
     time_string =datestr(now,'YYYY_mm_DD_HH_MM_SS');
-    for i=1:length(cells_paths)
-        fprintf('\n---------Submitting job %g of %g-----------\n',i,length(cells_paths));
-        if ~exist(cells_paths{i},'file') 
-            error('Cells file not found: %s.',cells_paths{i});
-        end
-        fprintf('   Found data file at %s\n',cells_paths{i});
+    for i=1:length(paths)
+        fprintf('\n---------Submitting job %g of %g-----------\n',i,length(paths));
         try
-            [rat,date] = extract_info_from_npx_path(cells_paths{i});
+            [rat,date] = extract_info_from_npx_path(paths(i).cells_file);
         catch
             warning('Failed to extract rat and date from path so job name will be uninformative.\n');
             rat='';
             date='';
         end
-        output_dir=fullfile(fits_paths{i},['glmfit_',time_string]);
+        output_dir=fullfile(strrep(paths(i).parent_dir,'cells','fits'),['glmfit_',time_string]);
         mkdir(output_dir);
         fprintf('   Made output directory: %s\n   ',output_dir); 
         if params.job_array
             matlab_command = sprintf(['fit_glm_to_Cells(''%s'',''save_path'',''%s'',''save'',true,''bin_size_s'',%g,',...
                 '''kfold'',%g,''fit_adaptation'',logical(%g),''phi'',%0.10g,''tau_phi'',%0.10g,''choice_time_back_s'',%0.10g,''include_mono_clicks'',logical(%g));'],...
-                cells_paths{i},output_dir,params.bin_size_s,params.kfold,params.fit_adaptation,params.phi,params.tau_phi,params.choice_time_back_s,params.include_mono_clicks);
+                paths(i).cells_file,output_dir,params.bin_size_s,params.kfold,params.fit_adaptation,params.phi,params.tau_phi,params.choice_time_back_s,params.include_mono_clicks);
             save_param_command = matlab_command(1:end-2);
             save_param_command=[save_param_command,[',''fit'',false);exit;']];
             eval(save_param_command);
@@ -57,7 +55,7 @@ function glmfit_all_sessions(varargin)
             out_file = fullfile(output_dir,'job%A.stdout');             
             matlab_command = sprintf(['"fit_glm_to_Cells(''%s'',''save_path'',''%s'',''save'',true,''bin_size_s'',%g,',...
                 '''kfold'',%g,''fit_adaptation'',logical(%g),''phi'',%0.10g,''tau_phi'',%0.10g,''choice_time_back_s'',%0.10g,''include_mono_clicks'',logical(%g));exit;"'],...
-                cells_paths{i},output_dir,params.bin_size_s,params.kfold,params.fit_adaptation,params.phi,params.tau_phi,params.choice_time_back_s,params.include_mono_clicks);            
+                paths(i).cells_file,output_dir,params.bin_size_s,params.kfold,params.fit_adaptation,params.phi,params.tau_phi,params.choice_time_back_s,params.include_mono_clicks);            
             system(sprintf('sbatch -e %s -o %s -t %g -J "%s" --mail-type=FAIL,TIME_LIMIT submit_matlab_job.slurm %s',error_file,out_file,round(params.time_per_job*60),[rat,',',date,'_glm'],matlab_command));               
         end
     end   

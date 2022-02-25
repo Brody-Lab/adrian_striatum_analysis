@@ -12,7 +12,7 @@ P.recordings_path = fullfile(P.repository_path,'recordings_log.csv');
 [~,P.hostname] = system('hostname');
 P.hostname=deblank(P.hostname);
 P.pc_data_path = fullfile('D:','adrian_striatum_analysis');
-P.tiger_data_path = '/tigress/abondy';
+P.tiger_data_path = '/scratch/gpfs/abondy';
 if strncmp(P.hostname,'tiger',5)
     P.on_tiger=true;
     P.data_path = P.tiger_data_path;
