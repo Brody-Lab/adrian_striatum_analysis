@@ -4,9 +4,9 @@ function T = make_sessions_table(varargin)
 %     p.parse(varargin{:});
 %     params=p.Results;
     T=table();
-    paths = get_data_paths('session_info',true);
+    paths = get_data_paths();
     for i=1:length(paths)
-        load(paths{i});
+        load(paths(i).session_info);
         session_info.region_names = {session_info.region_names};
         T = cat(1,T,struct2table(session_info));
     end

@@ -6,7 +6,7 @@ function T = make_cells_table(varargin)
     T=table();
     paths = get_data_paths('cell_info',true);
     for i=1:length(paths)
-        load(paths{i});
+        load(paths(i).cell_info);
         cell_info.cellno = [1:height(cell_info)]';
         T = cat(1,T,cell_info);
     end

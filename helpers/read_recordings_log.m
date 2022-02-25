@@ -5,5 +5,6 @@ function recordings_table = read_recordings_log(csvfile)
     opts = opts.setvartype('date','datetime');
     opts=opts.setvaropts('date','InputFormat','yyyy_MM_dd');    
     opts = opts.setvaropts('date','DatetimeFormat','dd-MMM-uuuu');    
+    warning('off','MATLAB:table:ModifiedAndSavedVarnames');
     recordings_table=readtable(csvfile,opts);
 end

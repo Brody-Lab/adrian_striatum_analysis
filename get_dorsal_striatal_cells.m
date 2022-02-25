@@ -2,7 +2,7 @@ function is_in_dorsal_striatum = get_dorsal_striatal_cells(T)
     if istable(T) % cells table
         is_in_dorsal_striatum = false(height(T),1);
         for i=1:height(T)
-            if ~isempty(T.regions{i}) && any(ismember({'TS','DMS','DLS'},T.regions{i}))
+            if ~isempty(T.regions{i}) && any(ismember({'TS','DMS','DLS','ADS','dStr'},T.regions{i}))
                 is_in_dorsal_striatum(i)=true;
             end
         end

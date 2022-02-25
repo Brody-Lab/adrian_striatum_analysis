@@ -10,6 +10,11 @@ function [stability,presence,mean_rate] = calculate_unit_stability(Cells,params)
         matrix(:,k) = cellfun(@numel,Cells.spike_time_s.(params.ref_event){k}); % make a matrix of number of spikes per trial for each cell [ntrials x ncells]
     end
     ntrials = size(matrix,1);
+    if ntrials/params.chunk_size<=1
+        error('calculate_unit_stability: number of trials (%g) is less than chunk_size (%g). Cannot proceed.',ntrials,params.chunk_size);
+    elseif ntrials/params.chunk_size<1.5
+        warning('calculate_unit_stability: only %g trials means a small %1.2g:1 of trials to chunk_size. stability calculation may be inaccurate.',ntrials,ntrials/params.chunk_size);
+    end
     for i = params.n_repeats:-1:1
         idx = randperm(ntrials-params.chunk_size+1,1);
         idx_range = idx:idx+params.chunk_size-1;
@@ -19,7 +24,13 @@ function [stability,presence,mean_rate] = calculate_unit_stability(Cells,params)
     end
     stability = std(samples)./std(samples_shuffled); % final metric is the ratio of sd's of this distribution
     %N.B: cutoff of around 4 or 5 seems reasonable for a chunk size of 100 trials
-    mean_rate = mean(matrix) ./ diff(Cells.kSpikeWindowS.(params.ref_event));
+    if isfield(Cells,'kSpikeWindowS')
+        kspikewindow_range = diff(Cells.kSpikeWindowS.(params.ref_event));
+    else
+        spike_window = estimate_spike_window(Cells,params.ref_event);
+        kspikewindow_range = diff(spike_window);
+    end
+    mean_rate = mean(matrix) ./ kspikewindow_range;
     presence = mean(matrix>0);
 end
 

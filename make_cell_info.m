@@ -1,21 +1,21 @@
-function cell_info = make_cell_info(Cells,tag_flag)
+function cell_info = make_cell_info(Cells,save_path)
     % makes a table from the Cells structure with no spike times but just info
     % about each cell which is useful to have alongside, for instance, GLM
     % fits
     % this standardizes the fields so that these tables can be directly
     % concatenated across sessions
-    fields = {'last_modified','rat','sess_date','sessid','bank','electrode','unitCount',...
+    fields = {'rat','sess_date','recording_name','sessid','bank','electrode','unitCount',...
                       'unitISIRatio','unitLRatio','unitIsoDist','unitVppRaw','hemisphere',...
                       'probe_serial','distance_from_tip','DV','AP','ML','regions','ks_good',...
                       'like_axon','mean_uv','peak_trough_width','peak_uv','peak_width_s',...
                       'spike_width_ms','mean_uV','width_ms','reliability','signrank','tp',...
                       'auc','mi','dp','days_implanted','days_since_viral_injection',...
                       'distance_from_fiber_tip','first_sig_time_s','laser_power_mW','mat_file_name',...
-                      'session_notes','D2_phototagging','autocorr','autocorr_fr_hz'};  
+                      'notes','D2_phototagging','autocorr','autocorr_fr_hz','presence_ratio','stability','mean_rate_hz','last_modified'};  
     missing_vals = num2cell(NaN(numel(fields),1));
-    missing_vals{1}=NaT;
-    missing_vals{3}=NaT;    
-    missing_vals{2}=missing; %string
+    missing_vals{end}=NaT;
+    missing_vals{2}=NaT;    
+    missing_vals{1}=missing; %string
     missing_vals{12}=missing; %string    
     missing_vals{13}=missing; %string        
     missing_vals{18}={};
@@ -31,40 +31,10 @@ function cell_info = make_cell_info(Cells,tag_flag)
             cell_info.(fields{f}) = repmat(missing_vals{f},n_cells,1);            
         end
     end
+    fields = setdiff(fields,{'regions'}); % so it doesn't automatically overwrite with the Cells.regino which is a number
     region_names = {Cells.penetration.regions.name};
-    regions = cell(n_cells,1);
-    regions(Cells.regions>0) = region_names(Cells.regions(Cells.regions>0));
-    Cells.regions = regions;
-    if isfield(Cells,'waveform')
-        try
-            Cells.waveform.mean_uv = Cells.waveform.mean_uV;
-        end
-        if isfield(Cells.waveform,'mean_uv')
-            ncells = numel(Cells.raw_spike_time_s);
-            waveform=Cells.waveform;
-            Cells = rmfield(Cells,'waveform');
-            if size(waveform.mean_uv,1)==ncells
-                for c=1:ncells
-                    Cells.waveform(c) = calculate_waveform_stats(waveform.mean_uv(c,:),Cells.ap_meta.imSampRate) ;   
-                end
-            end
-        end
-        waveform_fields = fieldnames(Cells.waveform);
-        for i=1:length(waveform_fields)
-           if ~strcmp(waveform_fields{i},'meanWfGlobalRaw') && ~strcmp(waveform_fields{i},'mean_uv')
-               if strcmp(waveform_fields{i},'peak_width_s') % fix bug in peak_width_s calculation in some files
-                   Cells.peak_width_s = NaN(n_cells,1);
-                    scalar_idx=arrayfun(@(x)numel(x.peak_width_s),Cells.waveform)==1;
-                    Cells.peak_width_s(scalar_idx) = cat(1,Cells.waveform(scalar_idx).peak_width_s);
-               else
-                    Cells.(waveform_fields{i}) = cat(1,Cells.waveform.(waveform_fields{i}));
-               end
-           end
-        end
-        Cells = rmfield(Cells,'waveform');
-    else
-        fprintf('Cells file for sessid %s does not have waveform field.',string(Cells.sessid));
-    end
+    cell_info.regions = cell(n_cells,1);
+    cell_info.regions(Cells.regions>0) = region_names(Cells.regions(Cells.regions>0));
     for f=1:length(fields)
         if isfield(Cells,fields{f})
             if isscalar(Cells.(fields{f}))
@@ -96,7 +66,7 @@ function cell_info = make_cell_info(Cells,tag_flag)
         cell_info.distance_from_fiber_tip = sqrt((cell_info.AP - 1.6).^2 + (cell_info.DV - 3.9).^2);
     end
     tag_fields = {'reliability','signrank','tp','auc','mi','dp'};
-    if tag_flag
+    if Cells.D2Phototagging==1
         cell_info.first_sig_time_s = cellfun(@(x)x.bin_pval2(end),Cells.PPTH.first_sig_time_s); % p=0.05 using the pre-laser times as the null distribution
         % add all statistics from the "prepost" field of
         % Cells.PPTH.combined_pulse_stats (i.e. comparing the 100ms before
@@ -105,5 +75,8 @@ function cell_info = make_cell_info(Cells,tag_flag)
             cell_info.(tag_fields{f}) = cellfun(@(x)x.prepost.(tag_fields{f}),Cells.PPTH.combined_pulse_stats);
         end
     end
+    
+    % save
+    save(save_path,'cell_info');
 end
 
