@@ -8,7 +8,7 @@
 #SBATCH --cpus-per-task=7        # cpu-cores per task (>1 if multi-threaded tasks)
 #SBATCH --gres=gpu:1             # number of gpus per node
 #SBATCH --partition=gpu          # send to gpu partition
-#SBATCH --mem-per-cpu=12G         # important for long sessions or small time binning
+#SBATCH --mem-per-cpu=8G         # important for long sessions or small time binning
 #SBATCH --mail-type=FAIL,TIME_LIMIT,ARRAY_TASKS         # email only upon error or time limit
 #SBATCH --mail-user=abondy@princeton.edu
 
