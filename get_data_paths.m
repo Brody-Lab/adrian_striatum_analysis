@@ -34,6 +34,9 @@ function paths=get_data_paths(varargin)
             error('');
         end
         paths(i).original_cells_file = recordings_table.cells_file(i);
+        paths(i).rat_name = recordings_table.rat_name(i);
+        paths(i).recording_name = recordings_table.recording_name(i);
+        paths(i).date = recordings_table.date(i);  
         paths(i).parent_dir = fileparts(paths(i).cells_file);
         paths(i).cell_info = fullfile(paths(i).parent_dir,'cell_info.mat');
         paths(i).session_info = fullfile(paths(i).parent_dir,'session_info.mat');    

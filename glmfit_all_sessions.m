@@ -22,13 +22,8 @@ function glmfit_all_sessions(varargin)
     time_string =datestr(now,'YYYY_mm_DD_HH_MM_SS');
     for i=1:length(paths)
         fprintf('\n---------Submitting job %g of %g-----------\n',i,length(paths));
-        try
-            [rat,date] = extract_info_from_npx_path(paths(i).cells_file);
-        catch
-            warning('Failed to extract rat and date from path so job name will be uninformative.\n');
-            rat='';
-            date='';
-        end
+        job_name = strcat(paths(i).recording_name,'_glmfit_',time_string);
+        fprintf('Job name will be %s.\n',job_name);
         output_dir=fullfile(strrep(paths(i).parent_dir,'cells','fits'),['glmfit_',time_string]);
         mkdir(output_dir);
         fprintf('   Made output directory: %s\n   ',output_dir); 
@@ -49,14 +44,17 @@ function glmfit_all_sessions(varargin)
             out_file = fullfile(output_dir,'job%A_cell%a.stdout');            
             array_string=sprintf('%g,',glmfit_params.params.cellno(glmfit_params.params.responsive_enough));
             matlab_command = ['"',matlab_command(1:end-2),',''cellno'',id,''save_params'',false);','exit;"'];
-            system(sprintf('sbatch -e %s -o %s -t %g -J "%s" --array=%s --mem-per-cpu=4G submit_matlab_job.slurm %s',error_file,out_file,round(params.time_per_job*60),[rat,',',date,'_glm'],array_string(1:end-1),matlab_command));   
+            sbatch_command = sprintf('sbatch -e %s -o %s -t %g -J "%s" --array=%s --mem-per-cpu=4G submit_matlab_job.slurm %s',error_file,out_file,round(params.time_per_job*60),job_name,array_string(1:end-1),matlab_command);
+            system();   
         else
             error_file = fullfile(output_dir,'job%A.stderr');
             out_file = fullfile(output_dir,'job%A.stdout');             
             matlab_command = sprintf(['"fit_glm_to_Cells(''%s'',''save_path'',''%s'',''save'',true,''bin_size_s'',%g,',...
                 '''kfold'',%g,''fit_adaptation'',logical(%g),''phi'',%0.10g,''tau_phi'',%0.10g,''choice_time_back_s'',%0.10g,''include_mono_clicks'',logical(%g));exit;"'],...
                 paths(i).cells_file,output_dir,params.bin_size_s,params.kfold,params.fit_adaptation,params.phi,params.tau_phi,params.choice_time_back_s,params.include_mono_clicks);            
-            system(sprintf('sbatch -e %s -o %s -t %g -J "%s" --mail-type=FAIL,TIME_LIMIT submit_matlab_job.slurm %s',error_file,out_file,round(params.time_per_job*60),[rat,',',date,'_glm'],matlab_command));               
+            sbatch_command = sprintf('sbatch -e %s -o %s -t %g -J "%s" --mail-type=FAIL,TIME_LIMIT submit_matlab_job.slurm %s',error_file,out_file,round(params.time_per_job*60),job_name,matlab_command);
         end
+        fprintf('Sending following system command to initiate job:\n   %s\n',sbatch_command);
+        system(sbatch_command);                       
     end   
 end
