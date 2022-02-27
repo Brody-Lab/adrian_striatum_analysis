@@ -16,6 +16,12 @@ function glmfit_all_sessions(varargin)
     p.parse(varargin{:});
     params=p.Results;    
     paths = get_data_paths('warn_existence',true,varargin{:});
+    if P.on_tiger
+        % if on cluster, run computationally expensive jobs first
+        S = load_sessions_table();
+        [~,order] = sort(S.n_clusters.*S.n_trials,'descend');
+        paths = paths(order);        
+    end
     if ~all([paths.all_exist])
         error('Cannot continue because database is not fully accessible.');
     end
