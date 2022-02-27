@@ -45,7 +45,8 @@ function [glmfit_params,saved_cells] = load_glmfit_params(remove_empty_runs)
                     % load params file
                     params_path=fullfile(run_list{i}{k},'glmfit_params.mat');
                     if exist(params_path,'file')
-                        fprintf('Loading run %g for recording %g of %g: %s\n',fileparts(run_list{i}{k}),i,length(paths),paths(i).recording_name);tic;
+                        [~,run_name] = fileparts(run_list{i}{k});
+                        fprintf('Loading run %s for recording %g of %g: %s',run_name,i,length(paths),paths(i).recording_name);tic;
                         glmfit_params(k,i)=load(params_path);
                         fprintf('  ... took %s\n',timestr(toc));
                     else
@@ -63,7 +64,7 @@ function [glmfit_params,saved_cells] = load_glmfit_params(remove_empty_runs)
     
 end
 
-function T = make_catalog_from_params(glmfit_params,saved_cells)
+function glmfit_log = make_catalog_from_params(glmfit_params,saved_cells)
 
     P = get_parameters();
 
@@ -117,9 +118,9 @@ function T = make_catalog_from_params(glmfit_params,saved_cells)
             end            
         end
     end
-    T=struct2table(T);
+    glmfit_log=struct2table(T);
     fprintf('Saving catalog to %s\n',P.glmfit_catalog_path);tic;
-    writetable(T,P.glmfit_catalog_path); 
+    save(P.glmfit_catalog_path,'glmfit_log');
     fprintf(' ... took %s.\n',timestr(toc));
 end
 
