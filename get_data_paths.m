@@ -5,9 +5,13 @@ function paths=get_data_paths(varargin)
     p.addParameter('rat','',@(x)validateattributes(x,{'char','cell'},{}));
     p.addParameter('recording_name','',@(x)validateattributes(x,{'char','string'},{}));    
     p.addParameter('warn_existence',false);
+    p.addParameter('data_path',P.data_path,@(x)validateattributes(x,{'char','string'},{'nonempty'}));
     p.parse(varargin{:});
     params=p.Results;
-    
+    P.data_path = params.data_path;
+    if ~isfolder(P.data_path)
+        error('Main data path %s does not exist.',P.data_path);
+    end
     recordings_table = get_striatum_glm_recordings_table();
     idx = true(height(recordings_table),1);
     if ~isempty(params.recording_name)
@@ -39,7 +43,8 @@ function paths=get_data_paths(varargin)
         paths(i).date = recordings_table.date(i);  
         paths(i).parent_dir = fileparts(paths(i).cells_file);
         paths(i).cell_info = fullfile(paths(i).parent_dir,'cell_info.mat');
-        paths(i).session_info = fullfile(paths(i).parent_dir,'session_info.mat');    
+        paths(i).session_info = fullfile(paths(i).parent_dir,'session_info.mat');   
+        paths(i).fit_path = fullfile(P.fit_path,'fits',recordings_table.recording_name(i));
         paths(i).all_exist=true;
         if ~exist(paths(i).cells_file,'file')
             paths(i).all_exist = false;
@@ -58,6 +63,6 @@ function paths=get_data_paths(varargin)
             if params.warn_existence
                 warning('Expected file in local database does not exist: %s.',paths(i).session_info);
             end
-        end   
+        end           
     end
 end

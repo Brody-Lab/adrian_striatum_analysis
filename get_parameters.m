@@ -12,22 +12,28 @@ P.recordings_path = fullfile(P.repository_path,'recordings_log.csv');
 [~,P.hostname] = system('hostname');
 P.hostname=deblank(P.hostname);
 P.pc_data_path = fullfile('D:','adrian_striatum_analysis');
+P.jukebox_data_path = fullfile('X:','abondy','adrian_striatum_analysis');
 P.tiger_data_path = '/scratch/gpfs/abondy/adrian_striatum_analysis';
 if strncmp(P.hostname,'tiger',5)
     P.on_tiger=true;
     P.data_path = P.tiger_data_path;
+    P.fit_path = P.tiger_data_path;    
 else
     P.on_tiger=false;
-    P.data_path = P.pc_data_path;    
+    P.data_path = P.pc_data_path;   
+    P.fit_path = P.jukebox_data_path;
 end
-if ~isdir(P.data_path)
+if ~isfolder(P.data_path)
    error('Data path does not exist: %s',P.data_path); 
 end
 P.glmfit_catalog_path = fullfile(P.data_path,'glmfit_log.csv');
 P.cells_table_path = fullfile(P.data_path,'cells_table.csv');
 P.sessions_table_path = fullfile(P.data_path,'sessions_table.csv');
-P.glmfit_catalog_keys = {'phi','tau_phi','fit_adaptation','bin_size_s','include_mono_clicks','choice_time_back_s','kfold','distribution','link','within_stream','lambda'}; % if all these parameters are the same for a cell's fit, the fits should be identical, except perhaps for very minor changes in the fitting algorithm.
-P.glmfit_catalog_params = [P.glmfit_catalog_keys 'rat','sess_date','sessid','run','cells_file','git_branch','git_commit','hostname','save_time'];
+% if all these parameters are the same for a cell's fit, the fits should be
+% identical, unless a code change produced changes in the fitting algorithm
+P.glmfit_catalog_keys = {'recording_name','phi','tau_phi','fit_adaptation','bin_size_s','include_mono_clicks','dm_scaling_mode',...
+    'choice_time_back_s','kfold','distribution','link','within_stream','lambda','git_branch','git_commit','include_stereo_click','maxIter'}; 
+P.glmfit_catalog_params = [P.glmfit_catalog_keys 'rat','sess_date','sessid','run','hostname','save_time','runtime_sec','saved_cells','responsive_cells','n_missing_cells'];
 
 %% tagging
 P.tagging_metrics={'reliability','dp','tp','signrank','auc','mi'};
