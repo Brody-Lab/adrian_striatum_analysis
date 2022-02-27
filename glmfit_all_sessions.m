@@ -27,7 +27,7 @@ function glmfit_all_sessions(varargin)
         output_dir=fullfile(strrep(paths(i).parent_dir,'cells','fits'),['glmfit_',time_string]);
         mkdir(output_dir);
         fprintf('   Made output directory: %s\n   ',output_dir); 
-        if params.job_array
+        if params.job_array && P.on_tiger
             matlab_command = sprintf(['fit_glm_to_Cells(''%s'',''save_path'',''%s'',''save'',true,''bin_size_s'',%g,',...
                 '''kfold'',%g,''fit_adaptation'',logical(%g),''phi'',%0.10g,''tau_phi'',%0.10g,''choice_time_back_s'',%0.10g,''include_mono_clicks'',logical(%g));'],...
                 paths(i).cells_file,output_dir,params.bin_size_s,params.kfold,params.fit_adaptation,params.phi,params.tau_phi,params.choice_time_back_s,params.include_mono_clicks);
@@ -54,7 +54,11 @@ function glmfit_all_sessions(varargin)
                 paths(i).cells_file,output_dir,params.bin_size_s,params.kfold,params.fit_adaptation,params.phi,params.tau_phi,params.choice_time_back_s,params.include_mono_clicks);            
             sbatch_command = sprintf('sbatch -e %s -o %s -t %g -J "%s" --mail-type=FAIL,TIME_LIMIT submit_matlab_job.slurm %s',error_file,out_file,round(params.time_per_job*60),job_name,matlab_command);
         end
-        fprintf('Sending following system command to initiate job:\n   %s\n',sbatch_command);
-        system(sbatch_command);                       
+        if P.on_tiger
+            fprintf('Sending following system command to initiate job:\n   %s\n',sbatch_command);
+            system(sbatch_command);                       
+        else
+            eval(matlab_command(2:end-1));
+        end
     end   
 end

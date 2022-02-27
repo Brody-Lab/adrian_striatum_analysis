@@ -18,4 +18,7 @@ function Cells = load_Cells_file(recording_name,use_local)
         Cells = load(paths.original_cells_file);
         fprintf('   ... took %s.\n-----------------\n',timestr(toc));                 
     end 
+    if isfield(Cells,'Cells')
+        Cells=Cells.Cells;
+    end
 end
