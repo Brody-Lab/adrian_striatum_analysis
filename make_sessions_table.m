@@ -1,14 +1,14 @@
-function T = make_sessions_table(varargin)
+function sessions_table = make_sessions_table(varargin)
     P = get_parameters;
 %     p=inputParser;
 %     p.parse(varargin{:});
 %     params=p.Results;
-    T=table();
+    sessions_table=table();
     paths = get_data_paths();
     for i=1:length(paths)
         load(paths(i).session_info);
         session_info.region_names = {session_info.region_names};
-        T = cat(1,T,struct2table(session_info));
+        sessions_table = cat(1,sessions_table,struct2table(session_info));
     end
-    writetable(T,P.sessions_table_path);        
+    save(P.sessions_table_path,'sessions_table');        
 end

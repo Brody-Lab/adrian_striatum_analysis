@@ -1,16 +1,22 @@
-function glmfit_catalog = catalog_glmfits(varargin)
+function glmfit_log = catalog_glmfits(varargin)
 
     %% parse and validate inputs
     p=inputParser;
     p.addParameter('remove_empty_runs',true,@(x)validateattributes(x,{'logical'},{'scalar'}));
     p.parse(varargin{:});
     params=p.Results;
+    P = get_parameters();
     
     %% load basic params of all glm fit runs in database
     [glmfit_params,saved_cells] = load_glmfit_params(params.remove_empty_runs);
     
     %% convert into a glmfit_catalog table
-    glmfit_catalog = make_catalog_from_params(glmfit_params,saved_cells);
+    glmfit_log = make_catalog_from_params(glmfit_params,saved_cells);
+    
+    %% save catalog
+    fprintf('Saving catalog to %s\n',P.glmfit_catalog_path);tic;
+    save(P.glmfit_catalog_path,'glmfit_log');
+    fprintf(' ... took %s.\n',timestr(toc));
     
 end
 
@@ -119,9 +125,6 @@ function glmfit_log = make_catalog_from_params(glmfit_params,saved_cells)
         end
     end
     glmfit_log=struct2table(T);
-    fprintf('Saving catalog to %s\n',P.glmfit_catalog_path);tic;
-    save(P.glmfit_catalog_path,'glmfit_log');
-    fprintf(' ... took %s.\n',timestr(toc));
 end
 
 function run_list = get_run_list(this_fit_path)       

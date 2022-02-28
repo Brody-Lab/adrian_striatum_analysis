@@ -1,4 +1,4 @@
-function T = load_sessions_table(varargin)
+function sessions_table = load_sessions_table(varargin)
     P = get_parameters;
-    T = readtable(P.sessions_table_path);        
+    load(P.sessions_table_path);        
 end

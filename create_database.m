@@ -1,4 +1,4 @@
-function create_database(varargin)
+function [sessions_table,cells_table] = create_database(varargin)
     % moves files from bucket into the repo database, and creates index
     % files for easy searching of what's there
     
@@ -55,6 +55,10 @@ function create_database(varargin)
             movefile(source,destination);
         end
     end
+    
+    %% make sessions_table and cells_table
+    sessions_table = make_sessions_table();
+    cells_table = make_cells_table();
     
 end
 

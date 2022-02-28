@@ -26,9 +26,9 @@ end
 if ~isfolder(P.data_path)
    error('Data path does not exist: %s',P.data_path); 
 end
-P.glmfit_catalog_path = fullfile(P.data_path,'glmfit_log.csv');
-P.cells_table_path = fullfile(P.data_path,'cells_table.csv');
-P.sessions_table_path = fullfile(P.data_path,'sessions_table.csv');
+P.glmfit_catalog_path = fullfile(P.data_path,'glmfit_log.mat');
+P.cells_table_path = fullfile(P.data_path,'cells_table.mat');
+P.sessions_table_path = fullfile(P.data_path,'sessions_table.mat');
 % if all these parameters are the same for a cell's fit, the fits should be
 % identical, unless a code change produced changes in the fitting algorithm
 P.glmfit_catalog_keys = {'recording_name','phi','tau_phi','fit_adaptation','bin_size_s','include_mono_clicks','dm_scaling_mode',...
