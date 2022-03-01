@@ -6,14 +6,13 @@ function is_in_dorsal_striatum = get_dorsal_striatal_cells(T)
                 is_in_dorsal_striatum(i)=true;
             end
         end
-    elseif isstruct(T) % cells file
-        T = import_penetration(T);
+    elseif isstruct(T) % cells file (already processed one in db that has up to date penetrations fields)
         ncells = numel(T.regions);
         is_in_dorsal_striatum = false(ncells,1);
         for i=1:ncells
             if T.regions(i)
                 names = T.penetration.regions(T.regions(i)).name;
-                if any(ismember({'TS','DMS','DLS'},names))
+                if any(ismember({'TS','DMS','DLS','ADS','dStr'},names))
                     is_in_dorsal_striatum(i)=true;
                 end
             end

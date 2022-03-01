@@ -3,7 +3,6 @@ function glmfit_log = catalog_glmfits(varargin)
     %% parse and validate inputs
     p=inputParser;
     p.addParameter('remove_empty_runs',true,@(x)validateattributes(x,{'logical'},{'scalar'}));
-    p.addParameter('remove_incomplete_runs',true,@(x)validateattributes(x,{'logical'},{'scalar'}));    
     p.parse(varargin{:});
     params=p.Results;
     P = get_parameters();
@@ -143,12 +142,11 @@ function glmfit_log = validate_glmfit_log(glmfit_log,remove_incomplete_runs)
     % "remove_incomplete_runs" is true, these files are deleted too, not
     % just removed from the log.
     % note 3/2022: this has not been extensively tested since incomplete runs
-    % haven't happened in a while. but works when there is a single
-    % complete run.
+    % haven't happened in a while.
     [run_idx,unique_runs] = findgroups(glmfit_log.run);
     n_runs = numel(unique_runs); 
     incomplete = false(n_runs,1);
-    keep_idx = false(height(glmfit_log),1);
+    keep_idx = false(height(glmfit_log,1));
     for i=1:n_runs
         this_idx = run_idx==i;
         %% check that all sessions are represented

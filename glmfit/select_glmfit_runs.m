@@ -21,8 +21,6 @@ function [glmfit_log,most_recent_run] = select_glmfit_runs(varargin)
     if all(missing_sessions)
         error('No glmfit runs matched these criteria.');
     end
-    
-    fprintf('select_glmfit_runs: most recent run given criteria is %s.\n',most_recent_run);
 
 end
 

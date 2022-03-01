@@ -140,7 +140,7 @@ function Cells = format_Cells_file(Cells,recordings_table,save_path)
     % computer laser modulation statistics for phototagging sessions
     if Cells.D2Phototagging==1
         fprintf('-----------------');                                                   
-        Cells = tagging.compute_laser_modulation(Cells);
+        %Cells = tagging.compute_laser_modulation(Cells);
         fprintf('-----------------\n');                                   
     end  
     
@@ -177,19 +177,21 @@ function Cells = format_Cells_file(Cells,recordings_table,save_path)
                 end                
             end
         end
-        waveform_fields = fieldnames(Cells.waveform);
-        for i=1:length(waveform_fields)
-           if ~strcmp(waveform_fields{i},'meanWfGlobalRaw') && ~strcmp(waveform_fields{i},'mean_uv')
-               if strcmp(waveform_fields{i},'peak_width_s') % fix bug in peak_width_s calculation in some files
-                   Cells.peak_width_s = NaN(Cells.n_clusters,1);
-                    scalar_idx=arrayfun(@(x)numel(x.peak_width_s),Cells.waveform)==1;
-                    Cells.peak_width_s(scalar_idx) = cat(1,Cells.waveform(scalar_idx).peak_width_s);
-               else
-                    Cells.(waveform_fields{i}) = cat(1,Cells.waveform.(waveform_fields{i}));
+        if ~isempty(Cells.waveform)
+            waveform_fields = fieldnames(Cells.waveform);
+            for i=1:length(waveform_fields)
+               if ~strcmp(waveform_fields{i},'meanWfGlobalRaw') && ~strcmp(waveform_fields{i},'mean_uv')
+                   if strcmp(waveform_fields{i},'peak_width_s') % fix bug in peak_width_s calculation in some files
+                       Cells.peak_width_s = NaN(Cells.n_clusters,1);
+                        scalar_idx=arrayfun(@(x)numel(x.peak_width_s),Cells.waveform)==1;
+                        Cells.peak_width_s(scalar_idx) = cat(1,Cells.waveform(scalar_idx).peak_width_s);
+                   else
+                        Cells.(waveform_fields{i}) = cat(1,Cells.waveform.(waveform_fields{i}));
+                   end
                end
-           end
+            end
+            Cells.waveform=[];
         end
-        Cells.waveform=[];
     else
         fprintf(' - warning: missing mean waveform data - ');
     end    
@@ -203,6 +205,9 @@ function Cells = format_Cells_file(Cells,recordings_table,save_path)
             Cells.spike_time_s = rmfield(Cells.spike_time_s,fields{f});
         end
     end    
+    
+    %% add field specifying where a cell is in dorsal striatum
+    Cells.is_in_dorsal_striatum = get_dorsal_striatal_cells(Cells);
     
     %% save cells files 
     fprintf('saving local cells file  ...');tic;      

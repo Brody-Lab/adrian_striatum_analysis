@@ -26,14 +26,19 @@ end
 if ~isfolder(P.data_path)
    error('Data path does not exist: %s',P.data_path); 
 end
-P.glmfit_catalog_path = fullfile(P.data_path,'glmfit_log.mat');
 P.cells_table_path = fullfile(P.data_path,'cells_table.mat');
 P.sessions_table_path = fullfile(P.data_path,'sessions_table.mat');
+
+%% analysis
+P.ap_groups = {[-Inf -1.5],[-1.5 0],[0 1.5],[1.5 Inf]};
+
+%% glm fitting
+P.glmfit_catalog_path = fullfile(P.data_path,'glmfit_log.mat');
 % if all these parameters are the same for a cell's fit, the fits should be
 % identical, unless a code change produced changes in the fitting algorithm
 P.glmfit_catalog_keys = {'recording_name','phi','tau_phi','fit_adaptation','bin_size_s','include_mono_clicks','dm_scaling_mode',...
     'choice_time_back_s','kfold','distribution','link','within_stream','lambda','git_branch','git_commit','include_stereo_click','maxIter'}; 
-P.glmfit_catalog_params = [P.glmfit_catalog_keys 'rat','sess_date','sessid','run','hostname','save_time','runtime_sec','saved_cells','responsive_cells','n_missing_cells'];
+P.glmfit_catalog_params = [P.glmfit_catalog_keys 'rat','sess_date','sessid','run','hostname','save_time','runtime_sec','saved_cells','responsive_cells','n_missing_cells','minSpkParamRatio','minResponsiveFrac','dm'];
 
 %% tagging
 P.tagging_metrics={'reliability','dp','tp','signrank','auc','mi'};
