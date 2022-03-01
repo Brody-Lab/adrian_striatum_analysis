@@ -19,7 +19,7 @@ function glmfit_all_sessions(varargin)
     if P.on_tiger
         % if on cluster, run computationally expensive jobs first
         S = load_sessions_table();
-        [~,order] = sort(S.n_clusters.*S.n_trials,'descend');
+        [~,order] = sort(S.n_clusters.*S.n_completed_acc_trials_no_stim,'descend');
         paths = paths(order);        
     end
     if ~all([paths.all_exist])
@@ -64,7 +64,7 @@ function glmfit_all_sessions(varargin)
             fprintf('Sending following system command to initiate job:\n   %s\n',sbatch_command);
             system(sbatch_command);                       
         else
-            eval(matlab_command(2:end-1));
+            eval(matlab_command(2:end-1)); %remove double quotation marks in character sequence
         end
     end   
 end
