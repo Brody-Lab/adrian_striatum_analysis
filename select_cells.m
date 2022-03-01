@@ -1,0 +1,77 @@
+function cells_table = select_cells(varargin)
+    
+    %% parse and validate inputs
+    P=get_parameters;
+    p=inputParser;
+    p.KeepUnmatched=true;
+    p.addParameter('DV',[-Inf Inf],@(x)validateattributes(x,{'numeric'},{'increasing','numel',2}));
+    p.addParameter('AP',[-Inf Inf],@(x)validateattributes(x,{'numeric'},{'increasing','numel',2}));
+    p.addParameter('ML',[0 Inf],@(x)validateattributes(x,{'numeric'},{'increasing','numel',2,'>=',0}));
+    p.addParameter('region',{},@(x)validateattributes(x,{'char','cell'},{}));
+    p.addParameter('spike_width_ms',[],@(x)validateattributes(x,{'numeric'},{'increasing','numel',2,'>=',0}));
+    p.addParameter('reliability',[],@(x)validateattributes(x,{'numeric'},{'increasing','numel',2}));
+    p.addParameter('D2Phototagging',[],@(x)validateattributes(x,{'logical'},{'scalar'}));    
+    p.parse(varargin{:});
+    select_cells_params=p.Results;  
+
+    %% make a cells_table with sessions columns
+    cells_table = load_cells_table();
+    sessions_table = load_sessions_table();
+    cells_table = join(cells_table,sessions_table);
+    
+    %% 
+    cells_table = validate_ranges(cells_table,select_cells_params);
+
+end
+
+
+function cells_table = validate_ranges(cells_table,params)
+    
+    select_cells_fields = fieldnames(params);
+    cells_table_fields = cells_table.Properties.VariableNames;
+    include = true(height(cells_table),length(select_cells_fields));                
+    for f=1:length(select_cells_fields)        
+        if ismember(select_cells_fields{f},cells_table_fields)
+            prop = select_cells_fields{f};
+            val = params.(select_cells_fields{f});
+            if isempty(val)
+                
+            elseif isscalar(val) && ~iscell(val)
+                
+                if isnan(val)
+                    include(:,f) = isnan(cells_table.(prop));
+                elseif islogical(val)
+                    if ~islogical(cells_table.(prop))
+                        warning('Converting property %s of cells_table to logical to match selection criteria.',prop);
+                    end
+                    include(:,f) = logical(cells_table.(prop)) == val ;
+                else
+                    include(:,f) = cells_table.(prop) == val;
+                end
+                
+            elseif isnumeric(val) && numel(val)==2
+                
+                include(:,f) = cells_table.(prop)>=val(1) & cells_table.(prop)<=val(2); % bounds are inclusive
+            elseif iscell(val)
+                
+                error(' haven''t implemented this yet.');
+            else 
+                warning('Value for %s has an unrecognized type or size.',val);
+            end
+        else
+            error('%s is not a column of either the cells_table or sessions_table.',prop);
+        end
+        if any(~include(:,f))
+            fprintf('Removed %g cells due to %s criterion.\n',sum(~include(:,f)),prop);
+        end
+    end   
+    include = all(include,2);
+    if ~any(include)
+        warning('No cells matched criteria.');
+    elseif all(include)
+        fprintf('ALL %g cells in database matched criteria.\n',sum(include));
+    else
+        fprintf('%g of %g cells in database (%g%%) matched criteria.\n',sum(include),numel(include),round(100*mean(include)));
+    end
+    cells_table = cells_table(include,:);
+end
