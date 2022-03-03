@@ -23,7 +23,7 @@ There are two ways you can see what's in the dataset, without loading in individ
 
 
 
-  Within this top-level directory, the datafiles for each sessions, which contain the actual spike times and behavioral data, are located in `cells/[rat_name]/[recording_session_name]`. The column `mat_file_name` in `sessions_table` contains the path to each datafile.
+  Within this top-level directory, the datafiles for each sessions, which contain the actual spike times and behavioral data, are located in `cells/[recording_name]/[recording_name]_Cells.mat`. 
 
 #### Datafile format
 Each datafile (sometimes called a "Cells" file) is a Matlab structure with a large number of fields providing information about the spiking and behavioral data of the recordings session:
