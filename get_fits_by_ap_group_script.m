@@ -1,7 +1,7 @@
 %% script for breaking down fits by ap group - 3/1/22
 
 P = get_parameters();
-[glmfit_log,run] = select_glmfit_runs();
+[glmfit_log,run] = select_glmfit_runs('choice_time_back_s',0);
 cells_table = select_cells('is_in_dorsal_striatum',true);
 [fits,is_responsive] = get_glm_fits(cells_table.recording_name,cells_table.cellno,glmfit_log);
 fits_table = [cells_table(is_responsive,:) fits];

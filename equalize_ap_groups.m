@@ -4,7 +4,7 @@ function ap_group = equalize_ap_groups(ap_group)
         n(i) = numel(idx{i});
     end
     min_n = min(n);
-    ap_group=zeros(size(ap_group));
+    ap_group=NaN(size(ap_group));
     for i=1:4
         idx{i} = randsample(idx{i},min_n);
         ap_group(idx{i}) = i;

@@ -121,7 +121,7 @@ function glmfit_log = make_catalog_from_params(glmfit_params,saved_cells)
             if ~isempty(unresponsive_cells_fit)
                 warning('%g saved cells that are not responsive enough!',length(unresponsive_cells_fit));
             end
-            T(count).n_missing_cells = ~isempty(setdiff(T(count).responsive_cells,saved_cells{t}));
+            T(count).n_missing_cells = numel(setdiff(T(count).responsive_cells,saved_cells{t}));
             if T(count).n_missing_cells
                 warning('%g missing cells for recording name %s run %s!',T(count).n_missing_cells,T(count).recording_name,T(count).run);
             end            

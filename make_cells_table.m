@@ -10,5 +10,6 @@ function cells_table = make_cells_table(varargin)
         cell_info.cellno = [1:height(cell_info)]';
         cells_table = cat(1,cells_table,cell_info);
     end
+    writetable(cells_table,strrep(P.cells_table_path,'.mat','.csv'));
     save(P.cells_table_path,'cells_table');        
 end

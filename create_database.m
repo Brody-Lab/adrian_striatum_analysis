@@ -20,7 +20,7 @@ function [sessions_table,cells_table] = create_database(varargin)
     paths = get_data_paths();
     
     %% loop over sessions to generate local formatted cells files if needed and then make cell info and session info structures
-    for i=1:n_sessions
+    for i=28:n_sessions
         fprintf('\n\nWorking on session %g of %g: %s\n-----------------\n',i,n_sessions,recordings_table.recording_name(i));
         if paths(i).all_exist && params.update
             fprintf('database does not need to be updated for %s.\n-----------------\n',recordings_table.recording_name(i));                         
@@ -140,7 +140,7 @@ function Cells = format_Cells_file(Cells,recordings_table,save_path)
     % computer laser modulation statistics for phototagging sessions
     if Cells.D2Phototagging==1
         fprintf('-----------------');                                                   
-        %Cells = tagging.compute_laser_modulation(Cells);
+        Cells = tagging.compute_laser_modulation(Cells);
         fprintf('-----------------\n');                                   
     end  
     
@@ -198,7 +198,7 @@ function Cells = format_Cells_file(Cells,recordings_table,save_path)
     
     
     %% keep a minimal set of spike_time_s fields
-    keepfields = {'cpoke_in','iti'}; % iti needed for computing laser modulation during optotagging sessions
+    keepfields = {'cpoke_in','iti','cpoke_out','clicks_on'}; % iti needed for computing laser modulation during optotagging sessions
     fields = fieldnames(Cells.spike_time_s);
     for f=1:length(fields)
         if ~ismember(fields{f},keepfields)

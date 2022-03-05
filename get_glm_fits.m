@@ -12,7 +12,8 @@ function [fits,is_responsive] = get_glm_fits(recording_name,cellno,run,varargin)
     p.addRequired('cellno',@(x)validateattributes(x,{'numeric'},{'vector','nonempty','positive','integer'}));
     p.addRequired('run',@(x)validateattributes(x,{'string','table'},{'nonempty'}));
     p.addParameter('parallel_load',true);
-    p.parse(recording_name,cellno,run,varargin{:});    
+    p.parse(recording_name,cellno,run,varargin{:});
+    params = p.Results;
     n_cells = numel(recording_name);
     if istable(run) && ismember('run',run.Properties.VariableNames) && numel(unique(run.run))==1
     elseif isscalar(run) && isstring(run)
