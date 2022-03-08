@@ -61,8 +61,17 @@ P.axes_properties = {'FontSize', P.font_size, ...
 P.panel_label_font_size = P.font_size * 1.5;
 P.panel_label_pos = [0.1, 0.9, 0.1, 0.1];
 P.panel_labels = char(65:90);
-P.ap_group_colors = hsv(4);
+P.ap_group_colors = copper(4);
+P.ap_group_colors = hsv(100);
+P.ap_group_colors = P.ap_group_colors([1 12 18 33],:);
+% P.ap_group_colors = redblue(8);
+% P.ap_group_colors = P.ap_group_colors([1 4 5 8],:);
 P.ap_group_labels_xtick = ["     site 1\newlinemost posterior" "2" "3" "     site 4\newlinemost anterior"];
 P.ap_group_labels = ["1 (most posterior)" "2" "3" "4 (most anterior)"];
+P.pref_color = [0 0 0];
+P.nonpref_color = [1 0 0];
+P.covariate_order = {'cpoke_in','stereo_click','left_clicks','right_clicks',...
+                     'cpoke_out_left','cpoke_out_right','spoke_left_hit','spoke_right_hit',...
+                     'spoke_left_miss','spoke_right_miss'};
 
                

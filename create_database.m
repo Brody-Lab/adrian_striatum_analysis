@@ -20,7 +20,7 @@ function [sessions_table,cells_table] = create_database(varargin)
     paths = get_data_paths();
     
     %% loop over sessions to generate local formatted cells files if needed and then make cell info and session info structures
-    for i=28:n_sessions
+    for i=i:n_sessions
         fprintf('\n\nWorking on session %g of %g: %s\n-----------------\n',i,n_sessions,recordings_table.recording_name(i));
         if paths(i).all_exist && params.update
             fprintf('database does not need to be updated for %s.\n-----------------\n',recordings_table.recording_name(i));                         
