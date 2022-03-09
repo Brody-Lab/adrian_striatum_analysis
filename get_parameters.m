@@ -66,12 +66,15 @@ P.ap_group_colors = hsv(100);
 P.ap_group_colors = P.ap_group_colors([1 12 18 33],:);
 % P.ap_group_colors = redblue(8);
 % P.ap_group_colors = P.ap_group_colors([1 4 5 8],:);
-P.ap_group_labels_xtick = ["     site 1\newlinemost posterior" "2" "3" "     site 4\newlinemost anterior"];
-P.ap_group_labels = ["1 (most posterior)" "2" "3" "4 (most anterior)"];
+P.ap_group_labels_xtick = ["     site 1\newlinemost posterior" "site 2" "site 3" "     site 4\newlinemost anterior"];
+P.ap_group_labels = ["site 1 (most posterior)" "site 2" "site 3" "site 4 (most anterior)"];
 P.pref_color = [0 0 0];
 P.nonpref_color = [1 0 0];
 P.covariate_order = {'cpoke_in','stereo_click','left_clicks','right_clicks',...
                      'cpoke_out_left','cpoke_out_right','spoke_left_hit','spoke_right_hit',...
                      'spoke_left_miss','spoke_right_miss'};
+P.covariate_names = {'Enter Center Port','First (Stereo) Click','Left Clicks','Right Clicks','Left Choice','Right Choice','Hit Left','Hit Right','Miss Left','Miss Right'};                 
+P.covariate_group_id = [1 2 2 2 3 3 4 4 5 5];
+P.covariate_group_names = {'Enter Center Port','Clicks','Choice','Hit','Miss'};
 
                
