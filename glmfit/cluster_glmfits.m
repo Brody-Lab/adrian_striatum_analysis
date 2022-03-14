@@ -7,7 +7,8 @@ function cluster_glmfits(fits_table,dspec,varargin)
     P=get_parameters();
     p=inputParser;
     p.addParameter('covariates',P.covariate_order(ismember(P.covariate_order,{dspec.covar.label})),@(x)validateattributes(x,{'cell'},{'nonempty'}));
-    p.addParameter('max_clust',14,@(x)validateattributes(x,{'numeric'},{'positive','nonempty','scalar'}));
+    p.addParameter('covariate_names',P.covariate_names,@(x)validateattributes(x,{'cell'},{'nonempty'}));        
+    p.addParameter('max_clust',[],@(x)validateattributes(x,{'numeric'},{'positive','nonempty','scalar'}));
     p.addParameter('linkage_method','ward',@(x)validateattributes(x,{'char','string'},{'nonempty'}));
     p.addParameter('metric','euclidean',@(x)validateattributes(x,{'char','string'},{'nonempty'}));
     p.addParameter('equalize_ap_groups',true,@(x)validateattributes(x,{'logical'},{'scalar'}));
@@ -18,7 +19,8 @@ function cluster_glmfits(fits_table,dspec,varargin)
     p.addParameter('group_by',fits_table.ap_group);
     p.addParameter('group_reorder',true,@(x)validateattributes(x,{'logical'},{'scalar'}));    
     p.addParameter('reorder_cells',false,@(x)validateattributes(x,{'logical'},{'scalar'}));  
-    p.addParameter('show_cell_no',false,@(x)validateattributes(x,{'logical'},{'scalar'}));            
+    p.addParameter('show_cell_no',false,@(x)validateattributes(x,{'logical'},{'scalar'}));      
+    p.addParameter('find_optimal_n_clust',false,@(x)validateattributes(x,{'logical'},{'scalar'}));              
     p.addParameter('smoothing_window_size',0,@(x)validateattributes(x,{'numeric'},{'nonnegative','nonempty','scalar'})); 
     p.addParameter('var_cutoff',1e-3,@(x)validateattributes(x,{'numeric'},{'positive','nonempty','scalar'}));        
     p.parse(varargin{:})
@@ -58,20 +60,21 @@ function cluster_glmfits(fits_table,dspec,varargin)
         bs= bs(responsiveness>cutoff,:);
         params.group_by = params.group_by(responsiveness>cutoff);   
     end
-    old_bs=bs;
-    cv = cov(bs);
-    mn = mean(bs);
-    %bs=mvnrnd(mn(:),cv,size(bs,1));
-    %bs=rand(size(bs));
-    count=0;
-    val=[3 4 5 6 8 10 12 14 16 18 20 30 50 100];
-    for k=val
-        count=count+1;
-    for i=1:50
-    n=numel(params.group_by);
-    idx(:,i)= randsample(n,round(n*0.95),false);
-    bs=old_bs(idx(:,i),:);
-    %params.group_by = params.group_by(idx);
+    
+    if params.find_optimal_n_clust
+        [params.max_clust,ARI,ARI_rand,vals] = find_optimal_n_clust(bs,params);
+        figure('color',[1 1 1],'units','normalized','position',[0.17 0.64 0.19 0.26]);
+        plot(vals,ARI-ARI_rand,'k','LineWidth',1.5);
+        yl=get(gca,'ylim');
+        set(gca,'box','off',P.axes_properties{:},'FontSize',16,...
+            'XTick',20:20:100,'xlim',[0 100],'ylim',[0 yl(2)]);
+        ylabel({'Excess Cluster Stability','(ARI)'});
+        xlabel('Number of Clusters');
+        [~,max_idx] = max(ARI-ARI_rand);
+        hold on;scatter(params.max_clust,ARI(max_idx)-ARI_rand(max_idx),500,[0 1 0],'.');
+        text(params.max_clust+2,ARI(max_idx)-ARI_rand(max_idx)+0.01,sprintf('n=%g',params.max_clust),'FontSize',16,'color','g');
+        line(ones(1,2)*params.max_clust,get(gca,'ylim'),'color','g','LineWidth',1.5,'LineStyle','--');
+    end
     ngroups= numel(unique(params.group_by));
     ncells = numel(params.group_by);
     
@@ -80,20 +83,13 @@ function cluster_glmfits(fits_table,dspec,varargin)
     
     %% determine distance cutoff to produce desired number of clusters   
     clusterfun = @(cutoff)cluster(tree,'Cutoff',cutoff,'Criterion','distance'); 
-    [cutoff,T(:,i)] = find_cutoff(clusterfun,k,5,10);
-    end
-    ar2(count) = get_RI(T,idx);
-    end
-    %T = spectralcluster(bs,params.max_clust);  
-    %T=kmeans(bs,params.max_clust);
-    %[~,outperm] = sort(T);
-    %bs=bs(outperm,:);
-    %params.group_by = params.group_by(outperm);      
-    %end
+    [cutoff,T] = find_cutoff(clusterfun,params.max_clust,5,10);
+
     %% cluster and plot the color-thresholded dendrogram
-    figure('Units','normalized','Position',[0.05 0.05 0.74 0.87],'color','w');
-    dendrogram_ax = axes('Position',[0.03 0.1 0.07 0.8]);
-    [~,~,outperm] = dendrogram(tree,Inf,'orientation','left','ColorThreshold',cutoff,'CheckCrossing',true);
+    figure('Units','normalized','Position',[0.05 0.05 0.74 0.87],'color',[1 1 1]);
+    [~,~,outperm] = dendrogram(tree,0,'orientation','left','ColorThreshold',cutoff,'CheckCrossing',false);
+    dendrogram_ax = gca;
+    set(gca,'position',[0.03 0.1 0.07 0.8]);  
     if params.reorder_cells
         [~,idx] = sort(params.group_by);
         bs = bs(idx,:);
@@ -138,7 +134,7 @@ function cluster_glmfits(fits_table,dspec,varargin)
     click_ticks = [0 0.1 1];
     covariate_ticks = [-1 -0.5 0 0.5 1];
     bs=log10(exp(bs));
-    clim = [min(bs(:)) max(bs(:))]/2;
+    clim = [min(bs(:)) max(bs(:))]/2.5;
     clim=(clim-mean(clim));
     time_range = cellfun(@range,tr);
     gap=0.01;
@@ -158,17 +154,17 @@ function cluster_glmfits(fits_table,dspec,varargin)
             these_cols = (edim(i-1)+1) : edim(i);
             pos = [pos(1)+gap+pos(3) 0.1 4e-2*time_range(i) 0.8]; % and here. this is a bit hacky and i should automatically pick this value to cover the desired range of the images in the plot          
         end
-        img_axes(i) = axes('Position',pos);                  
+        img_axes(i) = axes('Position',pos,'ydir','reverse');                  
         if contains(params.covariates{i},"click")        
-            imagesc(1:numel(tr{i}),1:ncells,bs(:,these_cols));set(gca,'clim',clim);colormap(redblue);
+            imagesc(1:numel(tr{i}),1:ncells,bs(:,these_cols));set(gca,'clim',clim,'ylim',[0.5 ncells],'xlim',[1 numel(tr{i})]);
         else
-            imagesc(tr{i},1:ncells,bs(:,these_cols));set(gca,'clim',clim);colormap(redblue);            
+            imagesc(tr{i},1:ncells,bs(:,these_cols));set(gca,'clim',clim,'ylim',[0.5 ncells],'xlim',[min(tr{i}) max(tr{i})]);     
         end
         xl=get(gca,'xlim'); 
         yl=get(gca,'ylim'); 
         ax=gca;        
         if i==1
-            xlabel('Time (s)');   
+            g=xlabel('Time (s)');   g.FontSize=14;
             if (params.group_reorder || params.reorder_cells) && params.show_cell_no
                 set(gca,'ytick',[0:100:ncells]);h=ylabel('Cells');  
                 yruler = ax.YRuler;
@@ -198,15 +194,15 @@ function cluster_glmfits(fits_table,dspec,varargin)
                 line(xl,ones(1,2)*linepos(k),'Color','k','LineWidth',1 );
             end 
         end
-        ax.FontSize = 12;           
-        title(strsplit(P.covariate_names{i},' '));
+        ax.FontSize = 14;           
+        title(strsplit(params.covariate_names{i},' '));
         if i == numel(params.covariates)
             originalSize = get(gca, 'Position');            
             h=colorbar('Location','manual');
             h.Label.String = 'Gain';
             h.Label.Position = [0.5 2 0];
             h.Label.Rotation=0;
-            h.FontSize=12;
+            h.FontSize=14;
             h.Box='off';
             h.LineWidth=0.75;
             h.TickLength=0.05;
@@ -219,21 +215,21 @@ function cluster_glmfits(fits_table,dspec,varargin)
             set(gca,'Position',originalSize);
         end
     end
-
+    colormap(redblue);
 
     if ~params.reorder_cells
         axes('Position',[0.85 0.1 0.1 0.8]) ;    
         h=barh(fracs,'stacked');axis off;xl=get(gca,'xlim');set(gca,'ydir','reverse','ylim',[0.5 params.max_clust+0.5],'xlim',[eps xl(2)]);
         for i=1:4;h(i).FaceColor = P.ap_group_colors(i,:);end    
         l=legend(h,P.ap_group_labels);
-        l.FontSize=12;
+        l.FontSize=13;
         l.Position = [0.85,0.025,0.1,0.06];
     else
         groups = sort(params.group_by);        
         for i=1:ngroups
             height = mean(find(groups == i));
             axes(img_axes(1));
-            text(-2,height,P.ap_group_labels_xtick{i},'color',P.ap_group_colors(i,:),'FontSize',16,'HorizontalAlignment','center');
+            text(-2.5,height,P.ap_group_labels_xtick{i},'color',P.ap_group_colors(i,:),'FontSize',19,'HorizontalAlignment','center');
         end       
     end
    
@@ -264,7 +260,7 @@ function [cutoff,T] = find_cutoff(clusterfun,max_clust,guess,step)
             guess=guess+step;
         elseif n_clust==max_clust
             cutoff=guess;
-            fprintf('Found cutoff of %g for %g clusters in %g iterations.\n',cutoff,n_clust,count);
+            %fprintf('Found cutoff of %g for %g clusters in %g iterations.\n',cutoff,n_clust,count);
             return
         elseif n_clust<max_clust
             if guess>last_guess
@@ -294,4 +290,27 @@ for i=1:size(T,2)
     end
 end
 AR2 = mean(AR2);
+end
+
+function [nclust,ARI,ARI_rand,nclusts] = find_optimal_n_clust(X,params)
+    mn = mean(X);
+    n = size(X,1);
+    X_rand=mvnrnd(mn(:),cov(X),n);
+    nrep=70;
+    count=0;
+    nclusts=[3:30 35 40 45 50 60 70 80 90 100];
+    for k=nclusts
+        count=count+1;
+        for i=nrep:-1:1
+            if count==1
+                idx(:,i)= randsample(n,round(n*0.95),false);  
+            end
+            T(:,i) = clusterdata(X(idx(:,i),:),'maxclust',k,'linkage',"ward",'criterion','distance','savememory','off');   
+            T_rand(:,i) = clusterdata(X_rand(idx(:,i),:),'maxclust',k,'linkage',"ward",'criterion','distance','savememory','off');                        
+        end
+        ARI(count) = get_RI(T,idx);
+        ARI_rand(count) = get_RI(T_rand,idx);
+    end  
+    [~,idx] = max(ARI-ARI_rand);
+    nclust = nclusts(idx);
 end

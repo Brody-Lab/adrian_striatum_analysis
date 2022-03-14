@@ -30,7 +30,7 @@ P.cells_table_path = fullfile(P.data_path,'cells_table.mat');
 P.sessions_table_path = fullfile(P.data_path,'sessions_table.mat');
 
 %% analysis
-P.ap_groups = {[-Inf -1.5],[-1.5 0],[0 1.5],[1.5 Inf]};
+P.ap_groups = {[1.5 Inf],[0 1.5],[-1.5 0],[-Inf -1.5]};
 
 %% glm fitting
 P.glmfit_catalog_path = fullfile(P.data_path,'glmfit_log.mat');
@@ -56,18 +56,19 @@ P.axes_properties = {'FontSize', P.font_size, ...
                      'XColor', [0,0,0], ...
                      'YColor', [0,0,0], ...
                      'LabelFontSizeMultiplier', 1,...
-                     'ActivePositionProperty','Position',...
                      'box','off'};  
 P.panel_label_font_size = P.font_size * 1.5;
 P.panel_label_pos = [0.1, 0.9, 0.1, 0.1];
 P.panel_labels = char(65:90);
 P.ap_group_colors = copper(4);
-P.ap_group_colors = hsv(100);
-P.ap_group_colors = P.ap_group_colors([1 12 18 33],:);
+P.ap_group_colors = cool(4);
+P.ap_group_colors = parula(6);
+P.ap_group_colors = P.ap_group_colors(2:5,:);
+%P.ap_group_colors = P.ap_group_colors([1 12 18 33],:);
 % P.ap_group_colors = redblue(8);
 % P.ap_group_colors = P.ap_group_colors([1 4 5 8],:);
-P.ap_group_labels_xtick = ["     site 1\newlinemost posterior" "site 2" "site 3" "     site 4\newlinemost anterior"];
-P.ap_group_labels = ["site 1 (most posterior)" "site 2" "site 3" "site 4 (most anterior)"];
+P.ap_group_labels_xtick = ["     site 1\newlinemost anterior" "site 2" "site 3" "     site 4\newlinemost posterior"];
+P.ap_group_labels = ["site 1 (most anterior)" "site 2" "site 3" "site 4 (most posterior)"];
 P.pref_color = [0 0 0];
 P.nonpref_color = [1 0 0];
 P.covariate_order = {'cpoke_in','stereo_click','left_clicks','right_clicks',...
@@ -76,5 +77,5 @@ P.covariate_order = {'cpoke_in','stereo_click','left_clicks','right_clicks',...
 P.covariate_names = {'Enter Center Port','First (Stereo) Click','Left Clicks','Right Clicks','Left Choice','Right Choice','Hit Left','Hit Right','Miss Left','Miss Right'};                 
 P.covariate_group_id = [1 2 2 2 3 3 4 4 5 5];
 P.covariate_group_names = {'Enter Center Port','Clicks','Choice','Hit','Miss'};
-
+P.gamma_color_groups = flip(copper(4));
                
