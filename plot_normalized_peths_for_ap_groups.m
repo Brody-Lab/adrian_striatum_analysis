@@ -40,13 +40,13 @@ for i=1:4
     err = nanstd(this_psth,[],3) ./ sqrt(size(this_psth,3));
     %line([-1 1],[0 0],'color',[0 0 0 ]+0.5,'linewidth',2);hold on;
     for k=1:4
-        g(k)=errorbar(kPETH.timeS.clicks_on(20:10:end),nanmean(this_psth(k,:,:),3),err(k,:),'LineWidth',1.5);colororder(P.gamma_color_groups);hold on;
+        g(k)=errorbar(kPETH.timeS.clicks_on(20:10:end),nanmean(this_psth(k,:,:),3),err(k,:),'LineWidth',2);colororder(P.gamma_color_groups);hold on;
         g(k).CapSize=0;
     end
     gammas={'strong preferred','weak preferred','weak null','strong null'};
     if i==1
         for k=1:4
-            text(0.02,2.6-0.3*k,gammas{k},'color',P.gamma_color_groups(k,:),'FontSize',14);
+            text(0.02,2.6-0.3*k,gammas{k},'color',P.gamma_color_groups(k,:),'FontSize',16);
         end
     end
     set(gca,'xlim',[0 0.8],P.axes_properties{:});
@@ -69,7 +69,6 @@ for i=1:4
     if i==1
         %text(0.02,1.5,{'Normalized','Firing','Rate'},'HorizontalAlignment','left','FontSize',14);
     end
-    title(P.ap_group_labels{i},'color',P.ap_group_colors(i,:));
     d{i} = daspect;
     pb{i} = pbaspect;    
     yl{i} = get(gca,'ylim');    
@@ -83,9 +82,12 @@ for i=1:4
     if i==3
         pos(2)=pos(2)+0.04;
     elseif i==4
-        pos(2) = pos(2)+0.065;
+        pos(2) = pos(2)+0.055;
     end
-    set(h(i),'units','normalized',P.axes_properties{:},'position',pos,'XAxisLocation','origin');
+    pos(1)=pos(1)+0.05;
+    set(h(i),'units','normalized',P.axes_properties{:},'position',pos,'XAxisLocation','origin','FontSize',16,'LineWidth',1.4);
+    title(P.ap_group_labels{i},'color',P.ap_group_colors(i,:),'FontSize',21);    
+    grid off;
     
     
         

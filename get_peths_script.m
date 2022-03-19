@@ -42,17 +42,17 @@ for i=1:numel(recording_names)
         trial_idx = find(Cells.Trials.gamma>gamma_ranges(k) & Cells.Trials.gamma<gamma_ranges(k+1) & ~exclude_trials);        
         psth(:,k) = get_psth(Cells,cellnos,'trial_idx',trial_idx,'kPETH',kPETH,'states',{'clicks_on'});
         nan_inds = kPETH.timeS.clicks_on> stim_dur(trial_idx);        
-        for c=1:1
-            psth(91,k).clicks_on(nan_inds)=NaN;
-            psth(91,k,:).clicks_on = (psth(91,k).clicks_on);
+        for c=1:numel(cellnos)
+            psth(c,k).clicks_on(nan_inds)=NaN;
+            psth(c,k).clicks_on = nanmean(psth(c,k).clicks_on);                        
             if k==4
-%                 this_row = find(these_rows & cells_table.cellno==cellnos(c));
-%                 if numel(this_row)~=1
-%                     error('');
-%                 end
-                %cells_table.psth_clicks_on(this_row) = {cat(1,psth(c,:).clicks_on)};
-                %cells_table.pref_left_MI(this_row) = pref_left(c);
-                %cells_table.pref_left_MI_pval(this_row) = pval(c);           
+                this_row = find(these_rows & cells_table.cellno==cellnos(c));
+                if numel(this_row)~=1
+                    error('');
+                end
+                cells_table.psth_clicks_on(this_row) = {cat(1,psth(c,:).clicks_on)};
+                cells_table.pref_left_MI(this_row) = pref_left(c);
+                cells_table.pref_left_MI_pval(this_row) = pval(c);           
                 %cells_table.pref_left_stim_MI(this_row) = pref_left_stim(c);
                 %cells_table.pref_left_stim_MI_pval(this_row) = stim_pval(c);                   
             end
