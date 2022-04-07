@@ -4,7 +4,7 @@
 #### What dataset are we talking about?
 The dataset consists of 81 Neuropixels recording sessions from probes implanted chronically in 12 rats performing the Poisson Clicks task. The recordings were performed to target 4 sites spanning the AP axis of dorsal striatum. Over 14,000 cells were recorded, of which around 10,000 were in the target striatal regions (i.e. the black regions in the picture below). Several rats were implanted with multiple probes, and recording sessions from the same date correspond to simultaneous recordings from those sets of probes. Times and trial numbers in such files are identical. For more information on the procedure for chronic implantation of Neuropixels probes in rats, see [Luo*, Bondy* et al. (2020). eLife](https://elifesciences.org/articles/59716)
 
-![Anatomical Overview](https://github.com/Brody-Lab/adrian_striatum_analysis/images/anatomical_overview.png)
+![Anatomical Overview](adrian_striatum_analysis/blob/master/images/anatomical_overview.png)
 
 #### How do I see a list of what is in the dataset (i.e. cells, sessions, rats)?
 There are two ways you can see what's in the dataset, without loading in individual files:
