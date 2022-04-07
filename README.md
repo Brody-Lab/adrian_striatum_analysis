@@ -4,7 +4,8 @@
 ### What dataset are we talking about?
 The dataset consists of 81 Neuropixels recording sessions from probes implanted chronically in 12 rats performing the Poisson Clicks task. The recordings were performed to target 4 sites spanning the AP axis of dorsal striatum. Over 14,000 cells were recorded, of which around 10,000 were in the target striatal regions (i.e. the black regions in the picture below). Several rats were implanted with multiple probes, and recording sessions from the same date correspond to simultaneous recordings from those sets of probes. Times and trial numbers in such files are identical. For more information on the procedure for chronic implantation of Neuropixels probes in rats, see [Luo*, Bondy* et al. (2020). eLife](https://elifesciences.org/articles/59716)
 
-<img src="images/anatomical_overview.png" alt="Anatomical Overview" width="500"/>
+
+<img src="images/anatomical_overview.png" alt="Anatomical Overview" width="600"/>
 
 ###### Anatomical overview of the recordings. Four sites spanning the anteroposterior axis of striatum were chosen, going from ADS (anterior dorsal striatum) to TS (tail of the striatum). Black regions of each probe shank correspond to dorsal striatum, i.e. the region of primary interest. Also shown is a horizontal slice through a cleared brain volume of a rat with two probes simultaneously implanted in ADS and TS. Fluorescent marks indicate the probes locations.
 
