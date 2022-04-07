@@ -2,7 +2,9 @@
 ###### *This repository contains the Matlab code that provides an interface to the database of chronic rat Neuropixels recordings performed by Adrian Bondy in various striatal subregions*
 
 #### What dataset are we talking about?
-The dataset consists of several dozens of Neuropixels recordings from probes implanted chronically in rats performing the Poisson Clicks task. The recordings were performed to target a variety of sites in the striatum.
+The dataset consists of 81 Neuropixels recording sessions from probes implanted chronically in 12 rats performing the Poisson Clicks task. The recordings were performed to target 4 sites spanning the AP axis of dorsal striatum. Over 14,000 cells were recorded, of which around 10,000 were in the target striatal regions (i.e. the black regions in the picture below). Several rats were implanted with multiple probes, and recording sessions from the same date correspond to simultaneous recordings from those sets of probes. Times and trial numbers in such files are identical. For more information on the procedure for chronic implantation of Neuropixels probes in rats, see [Luo*, Bondy* et al. (2020). eLife](https://elifesciences.org/articles/59716)
+
+![Anatomical Overview](https:/https://github.com/Brody-Lab/adrian_striatum_analysis/images/anatomical_overview.png)
 
 #### How do I see a list of what is in the dataset (i.e. cells, sessions, rats)?
 There are two ways you can see what's in the dataset, without loading in individual files:
@@ -26,8 +28,8 @@ There are two ways you can see what's in the dataset, without loading in individ
   Within this top-level directory, the datafiles for each sessions, which contain the actual spike times and behavioral data, are located in `cells/[recording_name]/[recording_name]_Cells.mat`. 
 
 #### Datafile format
-Each datafile (sometimes called a "Cells" file) is a Matlab structure with a large number of fields providing information about the spiking and behavioral data of the recordings session:
-###### _Some key fields include:_
+Each datafile (sometimes called a "Cells" file) is a Matlab structure with a large number of fields providing information about the spiking and behavioral data of the recordings session. Each cells file is defined by a unique identifier called its "recording_name" which usually takes the form [ratname]_[YYYY]_[MM]_[DD]. When multiple sessions were acquired from the same rat on the same day (for example when two probes were recorded simultaneously) then an additional suffix is added to the recording name. To load in a specific cells file, you can run `cells_file = load_cells_file(recording_name)`. 
+###### _Some key fields in a cells file include:_
 - __spike_time_s__ : a structure with fields for each task event (i.e. cpoke_in, cpoke_out, left_clicks, etc.), specifying the spike times for each trial and cell, in units of seconds relative to the task event
 - __Trials__ : a structure with information about the task and behavior on each of the N trials. Key fields include:
   - *stateTimes* : a structure with fields of length N for each task event, giving the times according to the BControl clock, when they occurred on each trial.
@@ -56,6 +58,8 @@ Each datafile (sometimes called a "Cells" file) is a Matlab structure with a lar
 - __days_implanted__ : days elapsed since the probe implantation
 - __n_clusters__ : the number of cells in the recording (some of which may be multi-unit, see "ks_good")
 - __waveform__ : a structure with information about each cell's mean waveform shape (this field is missing for some older sessions)
+- __is_in_dorsal_striatum__ : a Boolean vector specifying whether or not each cells was in dorsal striatum. For most analyses we are interested in, we confine analysis to cells where this value is TRUE. Cells for which this value is 0 may include cells in cortex, ventral striatum, or other areas incidentally recorded on the probe. The "regions" field provides more thorough information on what brain region each cell was in.
+- __ap_group__ : a value from 1 to 4 specifying which of the 4 target sites this recording corresponds to.
 
 
 #### Dependencies
