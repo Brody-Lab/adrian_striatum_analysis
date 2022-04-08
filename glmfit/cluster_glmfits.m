@@ -17,14 +17,17 @@ function cluster_glmfits(fits_table,dspec,varargin)
     p.addParameter('responsive_cutoff_prctile',0,@(x)validateattributes(x,{'numeric'},{'scalar','nonnegative','<=',100}));
     p.addParameter('biasCol',true,@(x)validateattributes(x,{'logical'},{'scalar'}));
     p.addParameter('use_combined_weights',false,@(x)validateattributes(x,{'logical'},{'scalar'}));
-    p.addParameter('group_by',fits_table.ap_group);
+    p.addParameter('group_by',ones(size(fits_table,1),1));
     p.addParameter('group_reorder',true,@(x)validateattributes(x,{'logical'},{'scalar'}));    
     p.addParameter('reorder_cells',false,@(x)validateattributes(x,{'logical'},{'scalar'}));  
     p.addParameter('show_cell_no',false,@(x)validateattributes(x,{'logical'},{'scalar'}));      
     p.addParameter('find_optimal_n_clust',false,@(x)validateattributes(x,{'logical'},{'scalar'}));     
     p.addParameter('variable_bar_size',false,@(x)validateattributes(x,{'logical'},{'scalar'}));                  
     p.addParameter('smoothing_window_size',0,@(x)validateattributes(x,{'numeric'},{'nonnegative','nonempty','scalar'})); 
-    p.addParameter('var_cutoff',1e-3,@(x)validateattributes(x,{'numeric'},{'positive','nonempty','scalar'}));        
+    p.addParameter('var_cutoff',1e-3,@(x)validateattributes(x,{'numeric'},{'positive','nonempty','scalar'}));       
+    p.addParameter('clim_multiplier',2);
+    p.addParameter('group_colors',P.ap_group_colors);
+    p.addParameter('group_labels',P.ap_group_labels);
     p.parse(varargin{:})
     params=p.Results;
     
@@ -106,12 +109,12 @@ function cluster_glmfits(fits_table,dspec,varargin)
     for i=1:params.max_clust
         these_groups = params.group_by(T(outperm)==clusters_in_order(i));
         n_cells_per_group(i)  = numel(these_groups);
-        fracs(i,:) = histcounts(these_groups,[0.5 1.5 2.5 3.5 4.5])./n_cells_per_group(i);
+        fracs(i,:) = histcounts(these_groups,(0:ngroups) + 0.5)./n_cells_per_group(i);
     end
     
     %% if desired, reorder cells by cluster membership fraction
     if params.group_reorder
-        avg_group = wmean(repmat([1 2 3 4],params.max_clust,1),fracs,2);   
+        avg_group = wmean(repmat(1:ngroups,params.max_clust,1),fracs,2);   
         [~,idx] = sort(avg_group);
         bs_old = bs;
         group_idx=[];
@@ -127,19 +130,19 @@ function cluster_glmfits(fits_table,dspec,varargin)
         cla(dendrogram_ax);
     end
         
-    
     %% optional smooth across cells for visualization
     if params.smoothing_window_size
         bs = filterArray(bs,gausswin(params.smoothing_window_size));
     end
+    
     %% draw the image
     click_ticks = [0 0.1 1];
     covariate_ticks = [-1 -0.5 0 0.5 1];
     bs=log10(exp(bs));
-    clim = [min(bs(:)) max(bs(:))]/2.5;
+    clim = [min(bs(:)) max(bs(:))]/params.clim_multiplier;
     clim=(clim-mean(clim));
     time_range = cellfun(@range,tr);
-    gap=0.013;
+    gap=0.013; % horizontal gap between covariates
     bad_cols=[];
     for i=1:numel(params.covariates)
         if ~ismember(params.covariates{i},params.covariates_to_plot)
@@ -258,9 +261,9 @@ function cluster_glmfits(fits_table,dspec,varargin)
                 end
                 axes('Position',[0.85  0.9-0.8*linepos(i)./ncells + (real_width-width)/2  0.1 width]);                                   
                 h=barh(repmat(fracs(i,:),2,1),'stacked','BarWidth',1);axis off;xl=get(gca,'xlim');set(gca,'ydir','reverse','xlim',[eps xl(2)],'ylim',[0.5 1.5]);                    
-                for k=1:4;h(k).FaceColor = P.ap_group_colors(k,:);h(k).LineWidth=1;end                      
+                for k=1:ngroups;h(k).FaceColor = params.group_colors(k,:);h(k).LineWidth=1;end                      
             end
-        l=legend(h,P.ap_group_labels);
+        l=legend(h,params.group_labels);
         l.FontSize=18;
         l.Position = [0.85,0.025,0.1,0.06];            
             
@@ -269,8 +272,8 @@ function cluster_glmfits(fits_table,dspec,varargin)
         
         axes('Position',[0.85 0.1 0.1 0.8]) ;    
         h=barh(fracs,'stacked');axis off;xl=get(gca,'xlim');set(gca,'ydir','reverse','ylim',[0.5 params.max_clust+0.5],'xlim',[eps xl(2)]);
-        for i=1:4;h(i).FaceColor = P.ap_group_colors(i,:);h(i).LineWidth=1;end    
-        l=legend(h,P.ap_group_labels);
+        for i=1:4;h(i).FaceColor = params.group_colors(i,:);h(i).LineWidth=1;end    
+        l=legend(h,params.group_labels);
         l.FontSize=18;
         l.Position = [0.85,0.025,0.1,0.06];
         end
@@ -279,7 +282,7 @@ function cluster_glmfits(fits_table,dspec,varargin)
         for i=1:ngroups
             height = mean(find(groups == i));
             axes(img_axes(1));
-            text(-2.4,height,P.ap_group_labels{i},'color',P.ap_group_colors(i,:),'FontSize',26,'HorizontalAlignment','center');
+            text(-2.4,height,params.group_labels{i},'color',params.group_colors(i,:),'FontSize',26,'HorizontalAlignment','center');
         end       
     end
    
@@ -345,8 +348,8 @@ end
 function [nclust,ARI,ARI_rand,nclusts] = find_optimal_n_clust(X,params)
     mn = mean(X);
     n = size(X,1);
-    X_rand=mvnrnd(mn(:),cov(X),n);
-    nrep=70;
+    X_rand=mvnrnd(mn(:),cov(X),n); % generate a simulated dataset of the same size with the same first and second moments (i.e. mvnormal distribution)
+    nrep=70; % resample 95% of the real and simulated data this many times for each cluster size
     count=0;
     nclusts=[3:30 35 40 45 50 60 70 80 90 100];
     for k=nclusts
