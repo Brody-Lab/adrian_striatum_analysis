@@ -71,11 +71,12 @@ P.ap_group_labels_xtick = ["     site 1\newlineADS" "site 2" "site 3" "     site
 P.ap_group_labels = ["site 1 (ADS)" "site 2" "site 3" "site 4 (TS)"];
 P.pref_color = [0 0 0];
 P.nonpref_color = [1 0 0];
-P.covariate_order = {'cpoke_in','stereo_click','left_clicks','right_clicks',...
+P.covariate_order = {...
+                     'cpoke_in','stereo_click','left_clicks','right_clicks',...
                      'cpoke_out_left','cpoke_out_right','spoke_left_hit','spoke_right_hit',...
                      'spoke_left_miss','spoke_right_miss'};
-P.covariate_names = {'Initiate Fixation','First (Stereo) Click','Left Clicks','Right Clicks','Left Choice','Right Choice','Hit Left','Hit Right','Miss Left','Miss Right'};                 
-P.covariate_group_id = [1 2 2 2 3 3 4 4 5 5];
-P.covariate_group_names = {'Initiate Fixation','Clicks','Choice','Hit','Miss'};
+P.covariate_names = {'Initiate Fixation','First (Stereo) Click','Left Clicks','Right Clicks','Left Choice','Right Choice','Left Correct','Right Correct','Left Error','Right Error'};                 
+P.covariate_group_id = [1 1 1 1 2 3 3 3 4 4 5 5 6 6];
+P.covariate_group_names = {'Trial History','Initiate Fixation','Clicks','Choice','Hit','Miss'};
 P.gamma_color_groups = flip(copper(4));
                
