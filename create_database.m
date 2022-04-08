@@ -20,14 +20,15 @@ function [sessions_table,cells_table] = create_database(varargin)
     paths = get_data_paths();
     
     %% loop over sessions to generate local formatted cells files if needed and then make cell info and session info structures
-    for i=i:n_sessions
-        fprintf('\n\nWorking on session %g of %g: %s\n-----------------\n',i,n_sessions,recordings_table.recording_name(i));
+    recording_name = recordings_table.recording_name;
+    parfor i=1:n_sessions
+        fprintf('\n\nWorking on session %g of %g: %s\n-----------------\n',i,n_sessions,recording_name(i));
         if paths(i).all_exist && params.update
-            fprintf('database does not need to be updated for %s.\n-----------------\n',recordings_table.recording_name(i));                         
+            fprintf('database does not need to be updated for %s.\n-----------------\n',recording_name(i));                         
         else
             
             % load cells file
-            Cells = load_Cells_file(recordings_table.recording_name(i),params.use_local);
+            Cells = load_Cells_file(recording_name(i),params.use_local);
             
             if ~params.use_local || params.reformat
                 % add extra fields to Cells, correct for database consistency and saves it locally
@@ -63,6 +64,9 @@ function [sessions_table,cells_table] = create_database(varargin)
 end
 
 function Cells = format_Cells_file(Cells,recordings_table,save_path)    
+    
+    P = get_parameters();
+
     %% remove uninitiated trials
     remove_idx = isnan(Cells.Trials.stateTimes.cpoke_in);
     if any(remove_idx)
@@ -128,6 +132,14 @@ function Cells = format_Cells_file(Cells,recordings_table,save_path)
     Cells.probe_serial = string(Cells.probe_serial);
     if isfield(Cells,'PETH')
         Cells = rmfield(Cells,'PETH');
+    end
+    
+    for i=1:numel(P.ap_groups)
+        mean_ap_striatal = mean(Cells.AP(Cells.is_in_dorsal_striatum));
+        if mean_ap_striatal>P.ap_groups{i}(1) && mean_ap_striatal<P.ap_groups{i}(2)
+            Cells.ap_group=i;
+            break
+        end
     end
     
     % add stateTimes for clicks if not there in Thomas' sessions

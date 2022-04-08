@@ -10,7 +10,7 @@ function cell_info = make_cell_info(Cells,save_path)
               'like_axon','mean_uv','peak_trough_width','peak_uv','peak_width_s',...
               'spike_width_ms','mean_uV','width_ms','reliability','signrank','tp',...
               'auc','mi','dp','distance_from_fiber_tip','first_sig_time_s',...
-              'autocorr','autocorr_fr_hz','presence_ratio','stability','mean_rate_hz','is_in_dorsal_striatum'};  
+              'autocorr','autocorr_fr_hz','presence_ratio','stability','mean_rate_hz','is_in_dorsal_striatum','ap_group'};  
     missing_vals = num2cell(NaN(numel(fields),1));
     missing_vals{end}=NaT;
     missing_vals{2}=NaT;    
@@ -30,7 +30,7 @@ function cell_info = make_cell_info(Cells,save_path)
             cell_info.(fields{f}) = repmat(missing_vals{f},n_cells,1);            
         end
     end
-    fields = setdiff(fields,{'regions'}); % so it doesn't automatically overwrite with the Cells.regino which is a number
+    fields = setdiff(fields,{'regions'}); % so it doesn't automatically overwrite with the Cells.region which is a number
     region_names = {Cells.penetration.regions.name};
     cell_info.regions = cell(n_cells,1);
     cell_info.regions(Cells.regions>0) = region_names(Cells.regions(Cells.regions>0));
