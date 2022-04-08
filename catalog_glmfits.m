@@ -37,40 +37,45 @@ function [glmfit_params,saved_cells] = find_glmfit_params(remove_empty_runs)
     end
     
     %% loop over recordings and fit runs, loading the params file and checking that files have been made for all cells
-    % loop over recordings
-    for i=length(paths):-1:1 
-        % get glmfit runs for this recording. (just based on folder existence. run may have failed.)             
-        run_list{i} = get_run_list(paths(i).fit_path); 
-        % loop over glm fit runs for this recording
-        for k=1:length(run_list{i})
-            stats_dir = fullfile(run_list{i}{k},'stats');
-            if isfolder(stats_dir)
-                tmp=dir(stats_dir);
-                size=[tmp.bytes];
-                if sum(size)==0
-                    if remove_empty_runs % empty stats folder 
-                        remove_run(run_list{i}{k});
-                    end
-                else
-                    % load params file
-                    params_path=fullfile(run_list{i}{k},'glmfit_params.mat');
-                    if exist(params_path,'file')
-                        [~,run_name] = fileparts(run_list{i}{k});
-                        fprintf('Loading run %s for recording %g of %g: %s',run_name,i,length(paths),paths(i).recording_name);tic;
-                        glmfit_params(k,i)=load(params_path);
-                        fprintf('  ... took %s\n',timestr(toc));
-                    else
-                       error('Params file not found: %s.\n',params_path); % something has gone wrong if you've got to this line.
-                    end
-                    % check which scells have been saved               
-                    saved_cells{k,i} = cellfun(@(x)str2double(x),regexprep({tmp(size>0).name},'.*cell(.*).mat','$1'),'uni',0);
-                    saved_cells{k,i}=[saved_cells{k,i}{:}];
-                end
-            elseif remove_empty_runs % no stats folder made
-                remove_run(run_list{i}{k});          
-            end
-        end 
+    % loop over recordings   
+    parfor i=1:length(paths)
+        [glmfit_params(:,i),saved_cells(:,i)] = find_glmfit_params_internal(paths(i),remove_empty_runs);
     end
+    
+end
+
+function [glmfit_params,saved_cells] = find_glmfit_params_internal(path,remove_empty_runs)
+    % get glmfit runs for this recording. (just based on folder existence. run may have failed.)             
+    run_list = get_run_list(path.fit_path); 
+    % loop over glm fit runs for this recording
+    for k=length(run_list):-1:1
+        stats_dir = fullfile(run_list{k},'stats');
+        if isfolder(stats_dir)
+            tmp=dir(stats_dir);
+            size=[tmp.bytes];
+            if sum(size)==0
+                if remove_empty_runs % empty stats folder 
+                    remove_run(run_list{k});
+                end
+            else
+                % load params file
+                params_path=fullfile(run_list{k},'glmfit_params.mat');
+                if exist(params_path,'file')
+                    [~,run_name] = fileparts(run_list{k});
+                    fprintf('Loading run %s for recording: %s',run_name,path.recording_name);tic;
+                    glmfit_params(k)=load(params_path);
+                    fprintf('  ... took %s\n',timestr(toc));
+                else
+                   error('Params file not found: %s.\n',params_path); % something has gone wrong if you've got to this line.
+                end
+                % check which scells have been saved               
+                saved_cells{k} = cellfun(@(x)str2double(x),regexprep({tmp(size>0).name},'.*cell(.*).mat','$1'),'uni',0);
+                saved_cells{k}=[saved_cells{k}{:}];
+            end
+        elseif remove_empty_runs % no stats folder made
+            remove_run(run_list{k});          
+        end
+    end 
     
 end
 
@@ -102,12 +107,15 @@ function glmfit_log = make_catalog_from_params(glmfit_params,saved_cells)
                             end
                         elseif this_field=="sess_date"
                            [~, T(count).(this_field)] = extract_info_from_npx_path(glmfit_params(t).params.save_path);
+                        elseif this_field=="use_trial_history"
+                            T(count).(this_field) = false;
                         end
                 end
                 if isfield(T(count),this_field) && ischar(T(count).(this_field))
                     T(count).(this_field) = string(T(count).(this_field));
                 end
             end
+            T(count).dm.dspec.expt = rmfield(T(count).dm.dspec.expt,'trial');            
             % check that all cells have been saved and throw warnings
             % otherwise
             T(count).responsive_cells = glmfit_params(t).params.cellno(glmfit_params(t).params.responsive_enough);
