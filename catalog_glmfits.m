@@ -64,6 +64,9 @@ function [glmfit_params,saved_cells] = find_glmfit_params_internal(path,remove_e
                     [~,run_name] = fileparts(run_list{k});
                     fprintf('Loading run %s for recording: %s',run_name,path.recording_name);tic;
                     glmfit_params(k)=load(params_path);
+                    %glmfit_params(k).params = trim_params(glmfit_params(k).params); % used to get rid of bases and zscore in older files
+                    %params = glmfit_params(k).params;
+                    %save(params_path,'params','-v7');
                     fprintf('  ... took %s\n',timestr(toc));
                 else
                    error('Params file not found: %s.\n',params_path); % something has gone wrong if you've got to this line.
@@ -184,4 +187,11 @@ function glmfit_log = validate_glmfit_log(glmfit_log,remove_incomplete_runs)
         end
     end
     glmfit_log = glmfit_log(keep_idx,:);
+end
+
+function params = trim_params(params)
+for i=1:numel(params.dm.dspec.covar);params.dm.dspec.covar(i).basis = rmfield(params.dm.dspec.covar(i).basis,{'B','tr'});end
+params = rmfield(params,'zscore');
+
+
 end
