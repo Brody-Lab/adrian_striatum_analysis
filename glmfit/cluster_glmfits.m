@@ -17,7 +17,7 @@ function cluster_glmfits(fits_table,dspec,varargin)
     p.addParameter('responsive_cutoff_prctile',0,@(x)validateattributes(x,{'numeric'},{'scalar','nonnegative','<=',100}));
     p.addParameter('biasCol',true,@(x)validateattributes(x,{'logical'},{'scalar'}));
     p.addParameter('use_combined_weights',false,@(x)validateattributes(x,{'logical'},{'scalar'}));
-    p.addParameter('group_by',ones(size(fits_table,1),1));
+    p.addParameter('group_by',ones(size(fits_table,1),1)); % should be ascending natural numbers starting at 1. should be relaxed.
     p.addParameter('group_reorder',true,@(x)validateattributes(x,{'logical'},{'scalar'}));    
     p.addParameter('reorder_cells',false,@(x)validateattributes(x,{'logical'},{'scalar'}));  
     p.addParameter('show_cell_no',false,@(x)validateattributes(x,{'logical'},{'scalar'}));      
@@ -25,7 +25,7 @@ function cluster_glmfits(fits_table,dspec,varargin)
     p.addParameter('variable_bar_size',false,@(x)validateattributes(x,{'logical'},{'scalar'}));                  
     p.addParameter('smoothing_window_size',0,@(x)validateattributes(x,{'numeric'},{'nonnegative','nonempty','scalar'})); 
     p.addParameter('var_cutoff',1e-3,@(x)validateattributes(x,{'numeric'},{'positive','nonempty','scalar'}));       
-    p.addParameter('clim_multiplier',2);
+    p.addParameter('clim_multiplier',1.2);
     p.addParameter('group_colors',P.ap_group_colors);
     p.addParameter('group_labels',P.ap_group_labels);
     p.parse(varargin{:})
