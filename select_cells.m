@@ -41,9 +41,9 @@ function cells_table = validate_ranges(cells_table,params)
                     include(:,f) = isnan(cells_table.(prop));
                 elseif islogical(val)
                     if ~islogical(cells_table.(prop))
-                        warning('select_cells: Converting property %s of cells_table to logical to match selection criteria.',prop);
+                        warning('select_cells: property %s of cells_table is not logical but selection criteria is. Check results carefully.',prop);
                     end
-                    include(:,f) = logical(cells_table.(prop)) == val ;
+                    include(:,f) = cells_table.(prop) == double(val) ;
                 else
                     include(:,f) = cells_table.(prop) == val;
                 end

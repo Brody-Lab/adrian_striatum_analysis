@@ -178,7 +178,7 @@ function glmfit_log = validate_glmfit_log(glmfit_log,remove_incomplete_runs)
             if remove_incomplete_runs
                 these_recordings = glmfit_log.recording_name(this_idx);
                 run_folders = get_run_folder(repmat(unique_runs(i),numel(these_recordings),1),these_recordings);
-                for k=1:numel(run_folders)
+                parfor k=1:numel(run_folders)
                     remove_run(run_folders(k));
                 end
             end
