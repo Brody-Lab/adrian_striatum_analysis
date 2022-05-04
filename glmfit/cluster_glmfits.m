@@ -1,11 +1,17 @@
 function cluster_glmfits(fits_table,dspec,varargin)
 
+    % takes a set of glm fits and displays them as an image where rows are
+    % cells and clumns are covariates. optionally perform hierarchical
+    % clustering to determine cell ordering. 
+
     %% parse and validate inputs
     P=get_parameters();
     p=inputParser;
-    p.addParameter('covariates',P.covariate_order(ismember(P.covariate_order,{dspec.covar.label})),@(x)validateattributes(x,{'cell'},{'nonempty'}));
+    default_covariates = P.covariate_order(ismember(P.covariate_order,{dspec.covar.label}));
+    p.addParameter('covariates',default_covariates,@(x)validateattributes(x,{'cell'},{'nonempty'}));
     p.addParameter('covariate_names',P.covariate_names(ismember(P.covariate_order,{dspec.covar.label})),@(x)validateattributes(x,{'cell'},{'nonempty'}));   
-    p.addParameter('covariates_to_plot',P.covariate_order(ismember(P.covariate_order,{dspec.covar.label})),@(x)validateattributes(x,{'cell'},{'nonempty'}));
+    p.addParameter('covariates_to_plot',default_covariates,@(x)validateattributes(x,{'cell'},{'nonempty'}));
+    p.addParameter('covariates_to_cluster',default_covariates,@(x)validateattributes(x,{'cell'},{'nonempty'}));    
     p.addParameter('max_clust',[],@(x)validateattributes(x,{'numeric'},{'positive','nonempty','scalar'}));
     p.addParameter('linkage_method','ward',@(x)validateattributes(x,{'char','string'},{'nonempty'}));
     p.addParameter('metric','euclidean',@(x)validateattributes(x,{'char','string'},{'nonempty'}));
@@ -29,6 +35,8 @@ function cluster_glmfits(fits_table,dspec,varargin)
     p.addParameter('covariate_ticks',-5:0.5:5);    % ticks outside of the plotted range are ignored
     p.addParameter('covariate_gap',0.01); % horizontal gap between covariates
     p.addParameter('link','log');
+    p.addParameter('colormap',redblue);
+    p.addParameter('fig_pos',[0.05 0.05 0.6 0.8]);
     p.parse(varargin{:})
     params=p.Results;
         
@@ -37,26 +45,30 @@ function cluster_glmfits(fits_table,dspec,varargin)
     
     %% remove bad elements (where group variable is NaN or unresponsive)
     [bs,params.group_by] = remove_bad_rows(bs,params);
-    ngroups= numel(unique(params.group_by));
+    params.ngroups= numel(unique(params.group_by));
     params.ncells = numel(params.group_by);    
     
     %% get columns to use for clustering (if you want clustering to be performed on only certain covariates)
-    %clust_cols;
+    clust_idx = find(ismember(params.covariates,params.covariates_to_cluster));
+    e  = [0 edim];
+    clust_cols=[];
+    for i=clust_idx(:)'
+        clust_cols = union(clust_cols,(e(i)+1):e(i+1));
+    end
     
     %% optionally find optimal number of clusters
     if params.find_optimal_n_clust   
-        [params.max_clust,params.ARI,params.ARI_rand,params.vals] = find_optimal_n_clust(bs);
+        [params.max_clust,params.ARI,params.ARI_rand,params.vals] = find_optimal_n_clust(bs(:,clust_cols));
     end
     
     %% determine tree structure
-    tree = linkage(bs,params.linkage_method,params.metric);
+    tree = linkage(bs(:,clust_cols),params.linkage_method,params.metric);
     
     %% determine distance cutoff to produce desired number of clusters   
     clusterfun = @(cutoff)cluster(tree,'Cutoff',cutoff,'Criterion','distance'); 
     [cutoff,T] = find_cutoff(clusterfun,params.max_clust,5,10);
 
     %% initialize figure
-    params.fig_pos = [0.05 0.05 0.74 0.87];
     figure('Units','normalized','Position',params.fig_pos,'color',[1 1 1]);    
     
     %% compute dendrogram order
@@ -83,9 +95,9 @@ function cluster_glmfits(fits_table,dspec,varargin)
         for i=params.max_clust:-1:1
             these_groups = params.group_by(T(outperm)==clusters_in_order(i));
             n_cells_per_group(i)  = numel(these_groups);
-            fracs(i,:) = histcounts(these_groups,(0:ngroups) + 0.5)./n_cells_per_group(i);
+            params.fracs(i,:) = histcounts(these_groups,(0:params.ngroups) + 0.5)./n_cells_per_group(i);
         end        
-        avg_group = wmean(repmat(1:ngroups,params.max_clust,1),fracs,2);   
+        avg_group = wmean(repmat(1:params.ngroups,params.max_clust,1),params.fracs,2);   
         [~,idx] = sort(avg_group);
         bs_old = bs;
         group_idx=[];
@@ -94,7 +106,7 @@ function cluster_glmfits(fits_table,dspec,varargin)
             group_idx = [group_idx;params.group_by(T(outperm) == clusters_in_order(idx(i)))];
             bs = [bs;bs_old(T(outperm) == clusters_in_order(idx(i)),:)];
         end
-        fracs = fracs(idx,:);       
+        params.fracs = params.fracs(idx,:);       
         n_cells_per_group = n_cells_per_group(idx);
     end
         
@@ -110,9 +122,9 @@ function cluster_glmfits(fits_table,dspec,varargin)
     params.clim  = [-1 1] * params.clim_multiplier * std(bs(:)); % clim is set relative to the s.d. to be insensitive to outliers
     time_range = cellfun(@range,tr);
     if params.reorder_cells
-        linepos = find(diff(sort(params.group_by)));
+        params.linepos = find(diff(sort(params.group_by)));
     else
-        linepos = cumsum(n_cells_per_group);            
+        params.linepos = cumsum(n_cells_per_group);            
     end    
     params.width = 0.82 - 0.115; % this defines the edges of the main plotting area (covariates), with dendrogram optionally on the left and group fractions optionally on the right
     params.effective_width = params.width - (numel(params.covariates_to_plot)-1)*params.covariate_gap; % this defines the total time range, i.e. width minus sum of the gaps.
@@ -124,17 +136,24 @@ function cluster_glmfits(fits_table,dspec,varargin)
         % get data matrix indices and axis position
         if i==1
             these_cols = 1:edim(1);
-            pos = [0.115 0.1 w 0.8];                 
+            pos = [0.115 0.1 w(i) 0.8];                 
         else
             these_cols = (edim(i-1)+1) : edim(i);
-            pos = [0.115 + pos*(i-1)+cumsum(w(1:i-1)) 0.1 w 0.8];             
+            pos = [0.115 + params.covariate_gap*(i-1)+sum(w(1:i-1)) 0.1 w(i) 0.8];             
         end   
         
         % main plotting routine
-        plot_this_covariate(params,tr{i},bs(:,these_cols),pos,params.covariates_to_plot{i},params.covariate_names{i},linepos);
+        plot_this_covariate(params,tr{i},bs(:,these_cols),pos,params.covariates_to_plot{i},params.covariate_names{i});
         
-        % add cell numbers and time label if first covariate
+        % add cell numbers, group labels and time label if first covariate
         if i==1
+            if params.reorder_cells
+                groups = sort(params.group_by);        
+                for k=1:params.ngroups
+                    height = mean(find(groups == k));
+                    text(-2.4,height,params.group_labels{k},'color',params.group_colors(k,:),'FontSize',22,'HorizontalAlignment','center');
+                end    
+            end  
             g=xlabel('Time (s)');  
             g.FontSize=20;
             if (params.group_reorder || params.reorder_cells) && params.show_cell_no
@@ -149,60 +168,14 @@ function cluster_glmfits(fits_table,dspec,varargin)
     end
     
     %% make colorbar
-    originalSize = get(gca, 'Position'); % remember current axis position so it can be reset in case colorbar squeezes it        
-    h=colorbar('Location','manual');
-    ticks = log10([0.01:0.01:0.09 0.1:0.1:1 2 3 4 5 6 7 8 9 10 20 30 40]);
-    idx = ~ismember(ticks,[-2 -1 0 1]);
-    TickLabels = arrayfun(@num2str,[0.01:0.01:0.09 0.1:0.1:1 2 3 4 5 6 7 8 9 10 20 30 40],'uni',0);
-    TickLabels(idx) = deal({''});    
-    set(h,'FontSize',14,'box','off','LineWidth',0.75,'TickLength',0.05,'Position',[pos(1)+params.covariate_gap+pos(3) 0.8 0.01 0.1],'Ticks',ticks,'TickLabels',TickLabels);
-    set(h.Label,'String','Gain','Position',[0.5 2 0],'Rotation',0);    
-    set(gca,'Position',originalSize);
+    draw_colorbar(pos,params);
         
-    colormap(redblue);
+    %% set colormap
+    colormap(params.colormap);
 
-    if ~params.reorder_cells
-        
-        if params.variable_bar_size
-            for i=1:numel(linepos)
-                if i==1
-                    real_width = 0.8*linepos(i)./params.ncells;
-                else
-                    real_width = 0.8*diff(linepos([i-1 i]))./params.ncells;           
-                end
-                if real_width>0.02
-                    width = real_width - 0.01;
-                else
-                    width = real_width;
-                end
-                axes('Position',[0.87  0.9-0.8*linepos(i)./params.ncells + (real_width-width)/2  0.1 width]);                                   
-                h=barh(repmat(fracs(i,:),2,1),'stacked','BarWidth',1);axis off;xl=get(gca,'xlim');set(gca,'ydir','reverse','xlim',[eps xl(2)],'ylim',[0.5 1.5]);                    
-                for k=1:ngroups;h(k).FaceColor = params.group_colors(k,:);h(k).LineWidth=1;end                      
-            end
-        l=legend(h,params.group_labels);
-        l.FontSize=14;
-        l.Position = [0.87,0.025,0.1,0.06];            
-            
-            
-        else
-        
-        axes('Position',[0.85 0.1 0.1 0.8]) ;    
-        h=barh(fracs,'stacked');axis off;xl=get(gca,'xlim');set(gca,'ydir','reverse','ylim',[0.5 params.max_clust+0.5],'xlim',[eps xl(2)]);
-        for i=1:4;h(i).FaceColor = params.group_colors(i,:);h(i).LineWidth=1;end    
-        l=legend(h,params.group_labels);
-        l.FontSize=18;
-        l.Position = [0.85,0.025,0.1,0.06];
-        end
-    else
-        groups = sort(params.group_by);        
-        for i=1:ngroups
-            height = mean(find(groups == i));
-            axes(img_axes(1));
-            text(-2.4,height,params.group_labels{i},'color',params.group_colors(i,:),'FontSize',26,'HorizontalAlignment','center');
-        end       
-    end
-   
-
+    %% draw bars indicating fraction of clusters from each group 
+    draw_cluster_fractions(params);
+ 
 end
 
 function [bs,edim,tr] = get_data_matrix(stats,dspec,params)
@@ -217,7 +190,7 @@ function [bs,edim,tr] = get_data_matrix(stats,dspec,params)
     else
         % get combined weight matrix
         for i=numel(params.covariates):-1:1
-            [ws,tr{i}] = get_combined_weights_downsample(stats,params.covariates{i});
+            [ws,tr{i}] = get_combined_weights_downsample(stats,params.covariates{i},10); % downsample by a factor of 10
             bs{i} = ws.data;
             good_idx = var(bs{i})>params.var_cutoff;
             bs{i} = bs{i}(:,good_idx);
@@ -258,7 +231,6 @@ function [column_idx,edim] = select_beta_columns(dspec,covariates)
     edim = cellfun(@numel,column_idx);
     column_idx = cat(1,column_idx{:});
 end
-
 
 function [cutoff,T] = find_cutoff(clusterfun,max_clust,guess,step)
     last_guess=guess;
@@ -367,9 +339,10 @@ function [bs,tr,edim] = select_covariates_to_plot(bs,tr,edim,params)
     tr=tr(~bad_idx);
 end
 
-function plot_this_covariate(params,tr,bs,pos,covariate_to_plot,covariate_name,linepos)
+function plot_this_covariate(params,tr,bs,pos,covariate_to_plot,covariate_name)
     P = get_parameters();
-    ax = axes('Position',pos,'ydir','reverse');                  
+    axes('Position',pos,'ydir','reverse');     
+    ax=gca;
     if contains(covariate_to_plot,"click")        
         imagesc(1:numel(tr),1:params.ncells,bs);
         for k = numel(params.click_ticks):-1:1
@@ -382,10 +355,60 @@ function plot_this_covariate(params,tr,bs,pos,covariate_to_plot,covariate_name,l
         set(ax,'xlim',[min(tr) max(tr)],'xtick',params.covariate_ticks);
         line([0 0],ax.YLim,'LineWidth',1.5,'LineStyle','--','color',ones(1,3)/2);           
     end
-    for k=1:numel(linepos)
-        line(ax.XLim,ones(1,2)*linepos(k),'Color','k','LineWidth',1.5 );
+    for k=1:numel(params.linepos)
+        line(ax.XLim,ones(1,2)*params.linepos(k),'Color','k','LineWidth',1.5 );
     end   
     set(ax,'FontSize',16,'clim',params.clim,'ylim',[0.5 params.ncells],P.axes_properties{:});box off;
     ax.YAxis.Visible='off';      
     title(strsplit(covariate_name,' '),'FontSize',20);
+end
+
+function draw_colorbar(pos,params)
+    originalSize = get(gca, 'Position'); % remember current axis position so it can be reset in case colorbar squeezes it        
+    h=colorbar('Location','manual');
+    ticks = log10([0.01:0.01:0.09 0.1:0.1:1 2 3 4 5 6 7 8 9 10 20 30 40]);
+    idx = ~ismember(ticks,[-2 -1 0 1]);
+    TickLabels = arrayfun(@num2str,[0.01:0.01:0.09 0.1:0.1:1 2 3 4 5 6 7 8 9 10 20 30 40],'uni',0);
+    TickLabels(idx) = deal({''});    
+    set(h,'FontSize',14,'box','off','LineWidth',0.75,'TickLength',0.05,'Position',[pos(1)+params.covariate_gap+pos(3) 0.8 0.01 0.1],'Ticks',ticks,'TickLabels',TickLabels);
+    set(h.Label,'String','Gain','Position',[0.5 2 0],'Rotation',0);    
+    set(gca,'Position',originalSize);
+end
+
+function draw_cluster_fractions(params)
+    if ~params.reorder_cells 
+        if params.variable_bar_size
+            for i=1:numel(params.linepos)
+                if i==1
+                    real_width = 0.8*params.linepos(i)./params.ncells;
+                else
+                    real_width = 0.8*diff(params.linepos([i-1 i]))./params.ncells;           
+                end
+                if real_width>0.02
+                    width = real_width - 0.01;
+                else
+                    width = real_width;
+                end
+                axes('Position',[0.87  0.9-0.8*params.linepos(i)./params.ncells + (real_width-width)/2  0.1 width]);                                   
+                h=barh(repmat(params.fracs(i,:),2,1),'stacked','BarWidth',1);
+                axis off;
+                xl=get(gca,'xlim');
+                set(gca,'ydir','reverse','xlim',[eps xl(2)],'ylim',[0.5 1.5]);                    
+                for k=1:params.ngroups
+                    h(k).FaceColor = params.group_colors(k,:);
+                    h(k).LineWidth=1;
+                end                      
+            end              
+        else    
+            axes('Position',[0.87 0.1 0.1 0.8]) ;    
+            h=barh(params.fracs,'stacked');
+            axis off;
+            xl=get(gca,'xlim');
+            set(gca,'ydir','reverse','ylim',[0.5 params.max_clust+0.5],'xlim',[eps xl(2)]);
+            for i=1:4;h(i).FaceColor = params.group_colors(i,:);h(i).LineWidth=1;end    
+        end   
+        l=legend(h,params.group_labels);
+        l.FontSize=14;
+        l.Position = [0.87,0.025,0.1,0.06];           
+    end
 end

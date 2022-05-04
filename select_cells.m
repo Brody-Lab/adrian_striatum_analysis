@@ -10,6 +10,7 @@ function cells_table = select_cells(varargin)
     p.addParameter('reliability',[],@(x)validateattributes(x,{'numeric'},{'increasing','numel',2}));
     p.addParameter('D2Phototagging',[],@(x)validateattributes(x,{'logical'},{'scalar'}));    
     p.addParameter('is_in_dorsal_striatum',[],@(x)validateattributes(x,{'logical'},{'scalar'}));        
+    p.addParameter('recording_name',"",@(x)validateattributes(x,{'string'},{'scalar'}));
     p.parse(varargin{:});
     select_cells_params=p.Results;  
 
@@ -34,7 +35,8 @@ function cells_table = validate_ranges(cells_table,params)
         val = params.(select_cells_fields{f});        
         if ismember(prop,cells_table_fields)
             if isempty(val)
-                
+            elseif isstring(val)
+                include(:,f) = cells_table.(prop) == val;
             elseif isscalar(val) && ~iscell(val)
                 
                 if isnan(val)

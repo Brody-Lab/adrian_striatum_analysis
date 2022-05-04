@@ -14,14 +14,18 @@ function [fits,is_responsive] = get_glm_fits(recording_name,cellno,run,varargin)
     p.addParameter('parallel_load',true);
     p.parse(recording_name,cellno,run,varargin{:});
     params = p.Results;
-    n_cells = numel(recording_name);
+    n_cells = numel(cellno);
     if istable(run) && ismember('run',run.Properties.VariableNames) && numel(unique(run.run))==1
+        run=run.run(1);
     elseif isscalar(run) && isstring(run)
     else
         error('Run must be a glmfit_log table with only entries having the same run name or it must be a scalar string specifying the runname.');
     end        
-    if numel(cellno)~=n_cells
+    if numel(recording_name)~=n_cells && ~isscalar(recording_name)
         error('Number of elements of recording_name must match number of elements of cellno.');
+    end
+    if isscalar(recording_name)
+        recording_name = repmat(recording_name,n_cells,1);
     end
     
     %% add is_responsive column to cells_table based on run being used
@@ -33,7 +37,7 @@ function [fits,is_responsive] = get_glm_fits(recording_name,cellno,run,varargin)
     %% load fits for each cell
     fits = table();
     fprintf('get_glm_fits: Getting paths for stats files ');        tic;
-    fits.stats_path = get_stats_path(run.run(1),recording_name,cellno);
+    fits.stats_path = get_stats_path(run,recording_name,cellno);
     fprintf(' ... took %s.\n',timestr(toc));
     fprintf('get_glm_fits: Loading %g stats files ... ',n_cells);tic;  
     if params.parallel_load
