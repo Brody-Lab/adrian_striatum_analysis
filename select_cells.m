@@ -36,7 +36,9 @@ function cells_table = validate_ranges(cells_table,params)
         if ismember(prop,cells_table_fields)
             if isempty(val)
             elseif isstring(val)
-                include(:,f) = cells_table.(prop) == val;
+                if ~isempty(char(val))
+                    include(:,f) = cells_table.(prop) == val;                    
+                end
             elseif isscalar(val) && ~iscell(val)
                 
                 if isnan(val)

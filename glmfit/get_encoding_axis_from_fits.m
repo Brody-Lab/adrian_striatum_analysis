@@ -9,16 +9,19 @@ function choice_axis = get_encoding_axis_from_fits(stats,covariate,varargin)
     
     if iscell(covariate)
         if numel(covariate)==1
-            [choice_axis,tr] = get_combined_weights_downsample(stats,covariate{1},10);            
-        elseif numel(covariate)==2          % if coviate is a two-elements cell array, take the difference (useful for left-right difference encoding)   
-            [ws_left,tr] = get_combined_weights_downsample(stats,covariate{1},10);
-            ws_right = get_combined_weights_downsample(stats,covariate{2},10);
+            choice_axis = get_combined_weights(stats,covariate{1});            
+        elseif numel(covariate)==2          % if covariate is a two-elements cell array, take the difference (useful for left-right difference encoding)   
+            ws_left = get_combined_weights(stats,covariate{1});
+            ws_right = get_combined_weights(stats,covariate{2});
+            tr = buildGLM.get_tr(ws_left.tr);            
             choice_axis = ws_right.data - ws_left.data;
         else
             error('Cell array input for "covariate" must have size 1 or 2.');
         end
     else
-        [choice_axis,tr] = get_combined_weights_downsample(stats,covariate,10);                    
+        choice_axis = get_combined_weights(stats,covariate);       
+        tr  = buildGLM.get_tr(choice_axis.tr);
+        choice_axis = choice_axis.data;
     end
     
     idx = tr > params.time_lim_s(1) & tr < params.time_lim_s(2);
