@@ -3,13 +3,15 @@ function glmfit_log = catalog_glmfits(varargin)
     %% parse and validate inputs
     p=inputParser;
     p.addParameter('remove_empty_runs',true,@(x)validateattributes(x,{'logical'},{'scalar'}));
+    p.addParameter('delete_spikes',false,@(x)validateattributes(x,{'logical'},{'scalar'}));    
+    p.addParameter('trim_params',false,@(x)validateattributes(x,{'logical'},{'scalar'}));        
     p.addParameter('remove_incomplete_runs',true,@(x)validateattributes(x,{'logical'},{'scalar'}));    
     p.parse(varargin{:});
     params=p.Results;
     P = get_parameters();
     
     %% load basic params of all glm fit runs in database
-    [glmfit_params,saved_cells] = find_glmfit_params(params.remove_empty_runs);
+    [glmfit_params,saved_cells] = find_glmfit_params(params);
     
     %% convert into a glmfit_catalog table
     glmfit_log = make_catalog_from_params(glmfit_params,saved_cells);
@@ -24,7 +26,7 @@ function glmfit_log = catalog_glmfits(varargin)
     
 end
 
-function [glmfit_params,saved_cells] = find_glmfit_params(remove_empty_runs)
+function [glmfit_params,saved_cells] = find_glmfit_params(params)
     
     %% get database paths
     paths = get_data_paths();
@@ -39,22 +41,34 @@ function [glmfit_params,saved_cells] = find_glmfit_params(remove_empty_runs)
     %% loop over recordings and fit runs, loading the params file and checking that files have been made for all cells
     % loop over recordings   
     parfor i=1:length(paths)
-        [glmfit_params(:,i),saved_cells(:,i)] = find_glmfit_params_internal(paths(i),remove_empty_runs);
+        [glmfit_params{i},saved_cells{i}] = find_glmfit_params_internal(paths(i),params);
     end
-    
+    glmfit_params = [glmfit_params{:}];
+    saved_cells = [saved_cells{:}];
 end
 
-function [glmfit_params,saved_cells] = find_glmfit_params_internal(path,remove_empty_runs)
+function [glmfit_params,saved_cells] = find_glmfit_params_internal(path,params)
     % get glmfit runs for this recording. (just based on folder existence. run may have failed.)             
     run_list = get_run_list(path.fit_path); 
     % loop over glm fit runs for this recording
     for k=length(run_list):-1:1
         stats_dir = fullfile(run_list{k},'stats');
+        if params.delete_spikes
+            spikes_dir = fullfile(run_list{k},'spikes');
+            if isfolder(spikes_dir)            
+                fprintf('Removing spikes folder %s  ...',spikes_dir);tic;
+                status=rmdir(spikes_dir,'s');
+                if ~status
+                    error('Failed to delete spikes folder: %s.\n',spikes_dir);
+                end                    
+                fprintf('took %s.\n',timestr(toc));
+            end                
+        end     
         if isfolder(stats_dir)
             tmp=dir(stats_dir);
             size=[tmp.bytes];
             if sum(size)==0
-                if remove_empty_runs % empty stats folder 
+                if params.remove_empty_runs % empty stats folder 
                     remove_run(run_list{k});
                 end
             else
@@ -64,9 +78,11 @@ function [glmfit_params,saved_cells] = find_glmfit_params_internal(path,remove_e
                     [~,run_name] = fileparts(run_list{k});
                     fprintf('Loading run %s for recording: %s',run_name,path.recording_name);tic;
                     glmfit_params(k)=load(params_path);
-                    glmfit_params(k).params = trim_params(glmfit_params(k).params); % used to get rid of bases and zscore in older files
-                    params = glmfit_params(k).params;
-                    save(params_path,'params','-v7');
+                    if params.trim_params
+                        glmfit_params(k).params = trim_params(glmfit_params(k).params); % used to get rid of bases and zscore in older files
+                        params = glmfit_params(k).params;
+                        save(params_path,'params','-v7');
+                    end
                     fprintf('  ... took %s\n',timestr(toc));
                 else
                    error('Params file not found: %s.\n',params_path); % something has gone wrong if you've got to this line.
@@ -75,7 +91,7 @@ function [glmfit_params,saved_cells] = find_glmfit_params_internal(path,remove_e
                 saved_cells{k} = cellfun(@(x)str2double(x),regexprep({tmp(size>0).name},'.*cell(.*).mat','$1'),'uni',0);
                 saved_cells{k}=[saved_cells{k}{:}];
             end
-        elseif remove_empty_runs % no stats folder made
+        elseif params.remove_empty_runs % no stats folder made
             remove_run(run_list{k});          
         end
     end 
