@@ -11,7 +11,7 @@ function glmfit_all_sessions(varargin)
     p.addParameter('fit_adaptation',false,@(x)validateattributes(x,{'logical'},{'scalar'})); % whether or not to fit phi and tau_phi for each neuron using gradient descent
     p.addParameter('choice_time_back_s',0.75,@(x)validateattributes(x,{'numeric'},{'scalar','nonnegative'})); % choice kernels extend backwards acausally in time before stimulus end by this many seconds
     p.addParameter('time_per_job',5,@(x)validateattributes(x,{'numeric'},{'scalar','positive'})); % max time per job IN HOURS 
-    p.addParameter('distribution','poisson',@(x)validateattributes(x,{'char'},{'nonempty'})); % max time per job IN HOURS     
+    p.addParameter('distribution','poisson',@(x)validateattributes(x,{'char'},{'nonempty'})); 
     p.addParameter('include_mono_clicks',true,@(x)validateattributes(x,{'logical'},{'scalar'}));
     p.addParameter('use_trial_history',false,@(x)validateattributes(x,{'logical'},{'scalar'}));    
     p.addParameter('job_array',false,@(x)validateattributes(x,{'logical'},{'scalar'})); % use a job array to parallelize over cells (useful if you are fitting adaptation params which takes a long time)

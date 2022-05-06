@@ -49,7 +49,7 @@ function [fits,is_responsive] = get_glm_fits(recording_name,cellno,run,varargin)
         parfor i=1:n_cells % with 6 workers, parallel loading is about 4x faster than serial loading for fits on jukebox.
             stats(i,1) = load(stats_path(i));
         end
-        fits.stats=stats;        
+        fits.stats=stats;   clear stats;     
     else
         count=0;
         for i=n_cells:-1:1 
