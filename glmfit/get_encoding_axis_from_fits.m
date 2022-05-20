@@ -3,7 +3,7 @@ function choice_axis = get_encoding_axis_from_fits(ws,covariate,varargin)
     p.addRequired('covariate',@(x)validateattributes(x,{'char','cell'},{'nonempty'}));
     p.addParameter('time_lim_s',[0 1]);
     p.addParameter('time_average',false);
-    p.addParameter('unit_norm',false);    
+    p.addParameter('unit_norm',false); 
     p.parse(covariate,varargin{:});
     params = p.Results;
     

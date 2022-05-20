@@ -1,4 +1,4 @@
-function [scalar_proj,cos_sim,norma,normb] = get_projection_stats(a,b)
+function [scalar_proj,scalar_proj_orthogonal,cos_sim,norma,normb] = get_projection_stats(a,b)
     % project vector B onto A
     % if B is a matrix, project each column separately
     if isempty(a) || isempty(b)
@@ -15,4 +15,6 @@ function [scalar_proj,cos_sim,norma,normb] = get_projection_stats(a,b)
     normb = sqrt(sum(b.^2));
     cos_sim = dotprod ./ (norma * normb);
     scalar_proj = cos_sim .* normb;
+    vector_proj = (a ./ norma) * scalar_proj ;
+    scalar_proj_orthogonal = sqrt(sum((b-vector_proj).^2));
 end
