@@ -15,8 +15,11 @@ function glmfit_all_sessions(varargin)
     p.addParameter('include_mono_clicks',true,@(x)validateattributes(x,{'logical'},{'scalar'}));
     p.addParameter('use_trial_history',false,@(x)validateattributes(x,{'logical'},{'scalar'}));    
     p.addParameter('job_array',false,@(x)validateattributes(x,{'logical'},{'scalar'})); % use a job array to parallelize over cells (useful if you are fitting adaptation params which takes a long time)
+    p.addParameter('nClickBins',1,@(x)validateattributes(x,{'numeric'},{'scalar','positive'}));
+    p.addParameter('separate_clicks_by','time_from_clicks_off',@(x)validateattributes(x,{'char'},{'nonempty'}));    
     p.parse(varargin{:});
     params=p.Results;    
+    validatestring(params.separate_clicks_by,{'time_from_clicks_on','time_from_clicks_off','latency'},'glmfit_all_sessions','separate_clicks_by');        
     paths = get_data_paths('warn_existence',true,varargin{:});
     if P.on_tiger
         % if on cluster, run computationally expensive jobs first
@@ -38,9 +41,9 @@ function glmfit_all_sessions(varargin)
         if params.job_array && P.on_tiger
             matlab_command = sprintf(['fit_glm_to_Cells(''%s'',''save_path'',''%s'',''save'',true,''bin_size_s'',%g,',...
                 '''kfold'',%g,''fit_adaptation'',logical(%g),''phi'',%0.10g,''tau_phi'',%0.10g,''choice_time_back_s'',%0.10g,'...
-                '''distribution'',''%s'',''include_mono_clicks'',logical(%g),''use_trial_history'',logical(%g));'],...
+                '''distribution'',''%s'',''include_mono_clicks'',logical(%g),''use_trial_history'',logical(%g),''nClickBins'',%g,''separate_clicks_by'',''%s'');'],...
                 paths(i).cells_file,output_dir,params.bin_size_s,params.kfold,params.fit_adaptation,params.phi,...
-                params.tau_phi,params.choice_time_back_s,params.distribution,params.include_mono_clicks,params.use_trial_history);
+                params.tau_phi,params.choice_time_back_s,params.distribution,params.include_mono_clicks,params.use_trial_history,params.nClickBins,params.separate_clicks_by);
             save_param_command = matlab_command(1:end-2);
             save_param_command=[save_param_command,[',''fit'',false);exit;']];
             eval(save_param_command);
@@ -61,9 +64,9 @@ function glmfit_all_sessions(varargin)
             out_file = fullfile(output_dir,'job%A.stdout');             
             matlab_command = sprintf(['"fit_glm_to_Cells(''%s'',''save_path'',''%s'',''save'',true,''bin_size_s'',%g,',...
                 '''kfold'',%g,''fit_adaptation'',logical(%g),''phi'',%0.10g,''tau_phi'',%0.10g,''choice_time_back_s'',%0.10g,'...
-                '''distribution'',''%s'',''include_mono_clicks'',logical(%g),''use_trial_history'',logical(%g));exit;"'],...
+                '''distribution'',''%s'',''include_mono_clicks'',logical(%g),''use_trial_history'',logical(%g),''nClickBins'',%g,''separate_clicks_by'',''%s'');exit;"'],...
                 paths(i).cells_file,output_dir,params.bin_size_s,params.kfold,params.fit_adaptation,params.phi,params.tau_phi,...
-                params.choice_time_back_s,params.distribution,params.include_mono_clicks,params.use_trial_history);            
+                params.choice_time_back_s,params.distribution,params.include_mono_clicks,params.use_trial_history,params.nClickBins,params.separate_clicks_by);           
             sbatch_command = sprintf('sbatch -e %s -o %s -t %g -J "%s" --mail-type=FAIL,TIME_LIMIT submit_matlab_job.slurm %s',error_file,out_file,round(params.time_per_job*60),job_name,matlab_command);
         end
         if P.on_tiger
