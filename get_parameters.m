@@ -21,7 +21,8 @@ if strncmp(P.hostname,'tiger',5)
 else
     P.on_tiger=false;
     P.data_path = P.pc_data_path;   
-    P.fit_path = P.jukebox_data_path;
+    %P.fit_path = P.jukebox_data_path;
+    P.fit_path = P.pc_data_path;
 end
 if ~isfolder(P.data_path)
    error('Data path does not exist: %s',P.data_path); 
