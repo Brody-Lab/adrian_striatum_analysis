@@ -38,8 +38,9 @@ P.glmfit_catalog_path = fullfile(P.data_path,'glmfit_log.mat');
 % if all these parameters are the same for a cell's fit, the fits should be
 % identical, unless a code change produced changes in the fitting algorithm
 P.glmfit_catalog_keys = {'recording_name','phi','tau_phi','fit_adaptation','bin_size_s','include_mono_clicks','dm_scaling_mode','use_trial_history',...
-    'choice_time_back_s','kfold','distribution','link','within_stream','lambda','git_branch','git_commit','include_stereo_click','maxIter'}; 
-P.glmfit_catalog_params = [P.glmfit_catalog_keys 'rat','sess_date','sessid','run','hostname','save_time','runtime_sec','saved_cells','responsive_cells','n_missing_cells','minSpkParamRatio','minResponsiveFrac','dm'];
+    'choice_time_back_s','kfold','distribution','link','within_stream','lambda','git_branch','git_commit','include_stereo_click','maxIter','nClickBins','separate_clicks_by'}; 
+P.glmfit_catalog_params = [P.glmfit_catalog_keys 'rat','sess_date','sessid','run','hostname','save_time','runtime_sec','saved_cells','responsive_cells',...
+    'n_missing_cells','minSpkParamRatio','minResponsiveFrac','dm'];
 
 %% tagging
 P.tagging_metrics={'reliability','dp','tp','signrank','auc','mi'};
