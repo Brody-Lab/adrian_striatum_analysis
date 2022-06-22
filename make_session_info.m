@@ -4,9 +4,9 @@ function session_info = make_session_info(Cells,save_path)
     
     session_info_fields = {'recording_name','sess_date','rat','sessid','probe_serial',...
         'days_implanted','n_clusters','craniotomy_AP','craniotomy_ML','depth_inserted',...
-        'hemisphere','region_names','n_trials','violation_rate','percent_correct',...
-        'laser_power_mW','D2Phototagging','days_since_viral_injection','notes','n_completed_acc_trials_no_stim',...
-        'n_completed_acc_trials_no_stim_percent_correct','mat_file_name','last_modified','ap_group'};
+        'hemisphere','region_names','n_trials','violation_rate','percent_correct','nic','stim_dur_range',...
+        'laser_power_mW','D2Phototagging','days_since_viral_injection','notes','mat_file_name',...
+        'last_modified','ap_group'};
     
     for f=1:length(session_info_fields)
         
@@ -18,21 +18,24 @@ function session_info = make_session_info(Cells,save_path)
                 session_info.region_names  = {Cells.penetration.regions.name};                        
             
             elseif session_info_fields{f}=="n_trials"
-                session_info.n_trials = numel(Cells.Trials.is_hit);
+                exclude = validate_trials(Cells.Trials,'mode','agb_glm','quiet',true);
+                session_info.n_trials = numel(Cells.Trials.is_hit(~exclude));
             
             elseif session_info_fields{f}=="violation_rate"
-                session_info.violation_rate = mean(Cells.Trials.violated);                
+                exclude = validate_trials(Cells.Trials,'mode','agb_glm','quiet',true,'exclude_violations',false,...
+                    'exclude_no_cpoke_out_trials',false,'exclude_no_spoke_trials',false);                
+                session_info.violation_rate = mean(Cells.Trials.violated(~exclude));                
             
             elseif session_info_fields{f}=="percent_correct"
-                session_info.percent_correct = 100*mean(Cells.Trials.is_hit(~Cells.Trials.violated));
-            
-            elseif session_info_fields{f}=="n_completed_acc_trials_no_stim" 
-                % accumulation trials that were completed and had no laser stim (i.e. the ones useful for glm fitting)                                
-                session_info.n_completed_acc_trials_no_stim = sum(~Cells.Trials.violated & char(Cells.Trials.trial_type)=='a' & ~Cells.Trials.laser.isOn);  
-            
-            elseif session_info_fields{f}=="n_completed_acc_trials_no_stim_percent_correct" 
-                % accumulation trials that were completed and had no laser stim (i.e. the ones useful for glm fitting)                                
-                session_info.n_completed_acc_trials_no_stim_percent_correct = mean(Cells.Trials.is_hit(~Cells.Trials.violated & char(Cells.Trials.trial_type)=='a' & ~Cells.Trials.laser.isOn))*100;                         
+                exclude = validate_trials(Cells.Trials,'mode','agb_glm','quiet',true);                
+                session_info.percent_correct = 100*mean(Cells.Trials.is_hit(~exclude));
+                
+            elseif session_info_fields{f}=="stim_dur_range"
+                exclude = validate_trials(Cells.Trials,'mode','agb_glm','quiet',true);                
+                session_info.stim_dur_range = [min(Cells.Trials.stim_dur_s(~exclude)) max(Cells.Trials.stim_dur_s(~exclude))];
+                
+            elseif session_info_fields{f}=="nic"
+                session_info.nic = median(Cells.Trials.nic);
             
             elseif session_info_fields{f}=="notes"
                 if isfield(Cells,'session_notes')
