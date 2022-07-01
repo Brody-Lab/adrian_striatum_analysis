@@ -13,9 +13,9 @@ function [mismatch,click_mismatch] = remake_trials(Cells,Trials,varargin)
     %% compare old and new trials structs and load data if necessary for the first time load
     for i=1:numel(paths)
         %fprintf('\nFile %g.\n',i);
-        %Cells{i} = load(paths(i).cells_file);
+        Cells{i} = load(paths(i).cells_file);
         %Trials{i} = PB_process_data(paths(i).rat_name,datestr(paths(i).date,'yyyy_mm_dd'));
-        [remove{i},remove2{i}] = compare_old_new_trials(Cells{i}.Trials,Trials{i});  
+        %[remove{i},remove2{i}] = compare_old_new_trials(Cells{i}.Trials,Trials{i});  
     end
     
     %% calculate and check new aligned spike times and click times

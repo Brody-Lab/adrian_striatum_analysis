@@ -1,4 +1,5 @@
 function Cells = load_Cells_file(recording_name,use_local)
+    warning('off','MATLAB:table:ModifiedAndSavedVarnames');
     if nargin==1
         use_local = true;
     end       
@@ -21,4 +22,5 @@ function Cells = load_Cells_file(recording_name,use_local)
     if isfield(Cells,'Cells')
         Cells=Cells.Cells;
     end
+    warning('on','MATLAB:table:ModifiedAndSavedVarnames');    
 end

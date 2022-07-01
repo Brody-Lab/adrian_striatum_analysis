@@ -27,7 +27,7 @@ function stats = get_pcs(Cells,varargin)
     for f=1:length(fields)
         stats.(fields{f}) = params.(fields{f});
     end   
-    stats.label = [Cells.rat,' - ',Cells.sess_date,' - ',Cells.probe_serial,' - ',num2str(npcs)',' PCs'];
+    stats.label = [char(Cells.rat),' - ',char(Cells.sess_date),' - ',char(Cells.probe_serial),' - ',num2str(npcs),' PCs'];
     stats.repo_path = fileparts(mfilename('fullpath'));
     [stats.git_branch,stats.commit] = return_git_status(stats.repo_path);
     stats.dim = npcs;    
