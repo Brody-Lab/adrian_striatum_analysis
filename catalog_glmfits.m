@@ -101,17 +101,24 @@ end
 function glmfit_log = make_catalog_from_params(glmfit_params,saved_cells)
 
     P = get_parameters();
+    [~,default_params] = fit_glm_to_Cells([],'return_only_params',true);    
 
     %% make params table
     count=0;
     fields=P.glmfit_catalog_params;
-    for t=1:numel(glmfit_params) % scalar indexing across all params
+    for t=numel(glmfit_params):-1:1 % scalar indexing across all params
         if ~isempty(glmfit_params(t).params)
             count=count+1;
             for f=1:length(fields)
                 this_field=fields{f};
                 % special cases
                 switch this_field
+                    case 'responsive_cells'
+                        T(count).responsive_cells = glmfit_params(t).params.cellno(glmfit_params(t).params.responsive_enough);                        
+                    case 'saved_cells'
+                        T(count).saved_cells = saved_cells{t};                   
+                    case 'n_missing_cells'
+                        T(count).n_missing_cells = numel(setdiff(T(count).responsive_cells,saved_cells{t}));
                     case 'recording_name'
                         T(count).(this_field) = regexprep(glmfit_params(t).params.save_path,'.*fits/(.*)/glmfit.*','$1');   
                     case 'run'
@@ -121,13 +128,10 @@ function glmfit_log = make_catalog_from_params(glmfit_params,saved_cells)
                     otherwise
                         if isfield(glmfit_params(t).params,this_field)                
                             T(count).(this_field) = glmfit_params(t).params.(this_field); 
-                            if ischar(T(count).(this_field))
-                                T(count).(this_field) = string(T(count).(this_field));
-                            end
                         elseif this_field=="sess_date"
                            [~, T(count).(this_field)] = extract_info_from_npx_path(glmfit_params(t).params.save_path);
-                        elseif this_field=="use_trial_history"
-                            T(count).(this_field) = false;
+                        elseif isfield(default_params,this_field)
+                            T(count).(this_field) = default_params.(this_field);
                         end
                 end
                 if isfield(T(count),this_field) && ischar(T(count).(this_field))
@@ -137,8 +141,6 @@ function glmfit_log = make_catalog_from_params(glmfit_params,saved_cells)
             T(count).dm.dspec.expt = rmfield(T(count).dm.dspec.expt,'trial');            
             % check that all cells have been saved and throw warnings
             % otherwise
-            T(count).responsive_cells = glmfit_params(t).params.cellno(glmfit_params(t).params.responsive_enough);
-            T(count).saved_cells = saved_cells{t};
             params_cells = glmfit_params(t).params.cellno;                    
             unknown_cells = setdiff(saved_cells{t},params_cells);
             if ~isempty(unknown_cells)
@@ -148,7 +150,6 @@ function glmfit_log = make_catalog_from_params(glmfit_params,saved_cells)
             if ~isempty(unresponsive_cells_fit)
                 warning('%g saved cells that are not responsive enough!',length(unresponsive_cells_fit));
             end
-            T(count).n_missing_cells = numel(setdiff(T(count).responsive_cells,saved_cells{t}));
             if T(count).n_missing_cells
                 warning('%g missing cells for recording name %s run %s!',T(count).n_missing_cells,T(count).recording_name,T(count).run);
             end            

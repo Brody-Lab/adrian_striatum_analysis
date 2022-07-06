@@ -1,15 +1,19 @@
 function [glmfit_log,most_recent_run] = select_glmfit_runs(varargin)
-    
+
     % assumes glmfit catalog has been validated and you always want the most recent given a set of fit params
 
     P = get_parameters();
+    p=inputParser;
+    p.KeepUnmatched=true;
+    p.addOptional('glmfit_log',[]);
+    p.parse(varargin{:});
+    %% select rows based on selection of catalog fields    
+    if ismember('glmfit_log',p.UsingDefaults)
+        glmfit_log = select_rows(load_glmfit_catalog(),varargin{:});        
+    else
+        glmfit_log = select_rows(varargin{:});                
+    end
 
-    %% read the glmfit catalog (needs to be rebuilt if you added new fits)
-    load(P.glmfit_catalog_path);
-    
-    %% select rows based on selection of catalog fields
-    glmfit_log = select_rows(glmfit_log,varargin{:});
-    
     %% select most recent run
     sorted_runs = sort(glmfit_log.run);
     most_recent_run = sorted_runs(end);
