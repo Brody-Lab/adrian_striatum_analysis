@@ -1,3 +1,7 @@
+%% generated PETH plots for GRS talk
+
+
+P=get_parameters();
 clear psths_norm
 for i=1:numel(P.ap_groups)
     is_in_group = cells_table.AP>=P.ap_groups{i}(1) & cells_table.AP<P.ap_groups{i}(2);
@@ -43,10 +47,9 @@ for i=1:4
         g(k)=errorbar(kPETH.timeS.clicks_on(20:10:end),nanmean(this_psth(k,:,:),3),err(k,:),'LineWidth',2);colororder(P.gamma_color_groups);hold on;
         g(k).CapSize=0;
     end
-    gammas={'strong preferred','weak preferred','weak null','strong null'};
     if i==1
         for k=1:4
-            text(0.02,2.6-0.3*k,gammas{k},'color',P.gamma_color_groups(k,:),'FontSize',16);
+            text(0.02,2.6-0.3*k,P.gamma_labels{k},'color',P.gamma_color_groups(k,:),'FontSize',16);
         end
     end
     set(gca,'xlim',[0 0.8],P.axes_properties{:});

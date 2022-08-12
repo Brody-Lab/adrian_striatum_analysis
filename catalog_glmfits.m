@@ -5,7 +5,8 @@ function glmfit_log = catalog_glmfits(varargin)
     p.addParameter('remove_empty_runs',true,@(x)validateattributes(x,{'logical'},{'scalar'}));
     p.addParameter('delete_spikes',false,@(x)validateattributes(x,{'logical'},{'scalar'}));    
     p.addParameter('trim_params',false,@(x)validateattributes(x,{'logical'},{'scalar'}));        
-    p.addParameter('remove_incomplete_runs',true,@(x)validateattributes(x,{'logical'},{'scalar'}));    
+    p.addParameter('remove_incomplete_runs',true,@(x)validateattributes(x,{'logical'},{'scalar'}));  
+    p.addParameter('max_days_old',Inf);
     p.parse(varargin{:});
     params=p.Results;
     P = get_parameters();
@@ -21,7 +22,7 @@ function glmfit_log = catalog_glmfits(varargin)
     
     %% save catalog
     fprintf('Saving catalog to %s\n',P.glmfit_catalog_path);tic;
-    save(P.glmfit_catalog_path,'glmfit_log');
+    tic;save(P.glmfit_catalog_path,'glmfit_log','-v7');toc
     fprintf(' ... took %s.\n',timestr(toc));
     
 end
@@ -51,6 +52,11 @@ function [glmfit_params,saved_cells] = find_glmfit_params_internal(path,params)
     % get glmfit runs for this recording. (just based on folder existence. run may have failed.)             
     run_list = get_run_list(path.fit_path); 
     % loop over glm fit runs for this recording
+    if params.max_days_old<Inf
+        days_old = days(datetime(datestr(now)) - cellfun(@run_to_datetime,run_list));
+        fprintf('Excluding %g runs more than %g days old.\n',sum(days_old>params.max_days_old),params.max_days_old);
+        run_list = run_list(days_old<=params.max_days_old);
+    end
     for k=length(run_list):-1:1
         stats_dir = fullfile(run_list{k},'stats');
         if params.delete_spikes
@@ -218,4 +224,9 @@ function params = trim_params(params)
     try
         params = rmfield(params,'zscore');
     end
+end
+
+function d = run_to_datetime(run)
+    d = regexprep(char(run),'.*glmfit_([0-9][0-9][0-9][0-9]_[0-9][0-9]_[0-9][0-9])_.*','$1');
+    d = datetime(d,'InputFormat','yyyy_MM_dd');
 end

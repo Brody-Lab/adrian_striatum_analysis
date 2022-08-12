@@ -42,6 +42,7 @@ function cluster_glmfits(fits_table,dspec,varargin)
         
     %% get weight matrix
     [bs,edim,tr] = get_data_matrix(fits_table.stats,dspec,params);
+    bs(isinf(bs))=NaN;
     
     %% remove bad elements (where group variable is NaN or unresponsive)
     [bs,params.group_by] = remove_bad_rows(bs,params);
@@ -119,7 +120,7 @@ function cluster_glmfits(fits_table,dspec,varargin)
     [bs,tr,edim] = select_covariates_to_plot(bs,tr,edim,params) ;  
     
     %% setting up the plotting
-    params.clim  = [-1 1] * params.clim_multiplier * std(bs(:)); % clim is set relative to the s.d. to be insensitive to outliers
+    params.clim  = [-1 1] * params.clim_multiplier * std(bs(:),'omitnan'); % clim is set relative to the s.d. to be insensitive to outliers
     time_range = cellfun(@range,tr);
     if params.reorder_cells
         params.linepos = find(diff(sort(params.group_by)));
@@ -236,6 +237,7 @@ function [cutoff,T] = find_cutoff(clusterfun,max_clust,guess,step)
     last_guess=guess;
     min_guess = eps;
     count=0;
+    max_count=100;
     while true
         T = clusterfun(guess);
         n_clust = numel(unique(T));
@@ -259,7 +261,12 @@ function [cutoff,T] = find_cutoff(clusterfun,max_clust,guess,step)
         end
         if guess<min_guess
             guess=eps;
-        end        
+        end   
+        if count>max_count
+            cutoff=guess;
+            fprintf('Could not find cutoff for %g clusters in %g iterations. Made %g instead.\n',max_clust,count,n_clust);            
+            return
+        end
     end
 end
 

@@ -1,12 +1,12 @@
 %% get psths for groups of gammas for all cells in database.
+%% generated data for PETH plots for GRS talk
+
 
 %cells_table = select_cells('is_in_dorsal_striatum',true);
 
 P=get_parameters;
 
 recording_names = unique(cells_table.recording_name);
-
-gamma_ranges = [-5 -2 0 2 5];
 
 kPETH = get_PETH_params('std_s',0.1,'std_s_clicks',0.1);    
 
@@ -38,9 +38,9 @@ for i=1:numel(recording_names)
     %[pref_left_stim,stim_pval] = get_pref_stim(Cells,cellnos,'onlyCorrect',false);    
     
     clear psth psths
-    for k=1:4
-        trial_idx = find(Cells.Trials.gamma>gamma_ranges(k) & Cells.Trials.gamma<gamma_ranges(k+1) & ~exclude_trials);        
-        psth(:,k) = get_psth(Cells,cellnos,'trial_idx',trial_idx,'kPETH',kPETH,'states',{'clicks_on'});
+    for k=1:(length(P.gamma_ranges)-1)
+        trial_idx = find(Cells.Trials.gamma>P.gamma_ranges(k) & Cells.Trials.gamma<P.gamma_ranges(k+1) & ~exclude_trials);        
+        psth(:,k) = get_psth_from_Cells(Cells,cellnos,'trial_idx',trial_idx,'kPETH',kPETH,'states',{'clicks_on'});
         nan_inds = kPETH.timeS.clicks_on> stim_dur(trial_idx);        
         for c=1:numel(cellnos)
             psth(c,k).clicks_on(nan_inds)=NaN;
