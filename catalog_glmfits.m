@@ -107,7 +107,7 @@ end
 function glmfit_log = make_catalog_from_params(glmfit_params,saved_cells)
 
     P = get_parameters();
-    [~,default_params] = fit_glm_to_Cells([],'return_only_params',true);    
+    default_params = glmfit_parse_params();    
 
     %% make params table
     count=0;
@@ -126,7 +126,7 @@ function glmfit_log = make_catalog_from_params(glmfit_params,saved_cells)
                     case 'n_missing_cells'
                         T(count).n_missing_cells = numel(setdiff(T(count).responsive_cells,saved_cells{t}));
                     case 'recording_name'
-                        T(count).(this_field) = regexprep(glmfit_params(t).params.save_path,'.*fits/(.*)/glmfit.*','$1');   
+                        T(count).(this_field) = regexprep(glmfit_params(t).params.save_path,'.*fits(.)(.*)(.)glmfit.*','$2');   
                     case 'run'
                         [~,T(count).(this_field)] = fileparts(glmfit_params(t).params.save_path);                            
                     case 'link'
