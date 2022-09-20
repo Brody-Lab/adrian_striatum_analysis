@@ -136,6 +136,8 @@ function glmfit_log = make_catalog_from_params(glmfit_params,saved_cells)
                             T(count).(this_field) = glmfit_params(t).params.(this_field); 
                         elseif this_field=="sess_date"
                            [~, T(count).(this_field)] = extract_info_from_npx_path(glmfit_params(t).params.save_path);
+                        elseif this_field=="lambda_correct_zscore" && glmfit_params(t).params.git_commit=="9e53fd2cb4adf6852328e70cb7a072092c1da944"
+                            T(count).lambda_correct_zscore=true;
                         elseif isfield(default_params,this_field)
                             T(count).(this_field) = default_params.(this_field);
                         end
