@@ -52,10 +52,21 @@ function cluster_glmfits(fits_table,dspec,varargin)
     %% get columns to use for clustering (if you want clustering to be performed on only certain covariates)
     clust_idx = find(ismember(params.covariates,params.covariates_to_cluster));
     e  = [0 edim];
-    clust_cols=[];
+    count=0;
     for i=clust_idx(:)'
-        clust_cols = union(clust_cols,(e(i)+1):e(i+1));
+        count=count+1;
+        clust_cols{count} = [(e(i)+1):e(i+1)]';
     end
+    match_covariate_cols=true;
+    if match_covariate_cols
+        count=0;
+        min_n=min(cellfun(@numel,clust_cols));
+        for i=clust_idx(:)'
+            count=count+1;            
+            clust_cols{count} = randsample(clust_cols{count},min_n,false);
+        end
+    end
+    clust_cols=cat(1,clust_cols{:});
     
     %% optionally find optimal number of clusters
     if params.find_optimal_n_clust   
@@ -288,6 +299,7 @@ AR2 = mean(AR2);
 end
 
 function [nclust,ARI,ARI_rand,nclusts] = find_optimal_n_clust(X)
+    P=get_parameters;
     mn = mean(X);
     n = size(X,1);
     X_rand=mvnrnd(mn(:),cov(X),n); % generate a simulated dataset of the same size with the same first and second moments (i.e. mvnormal distribution)
@@ -311,7 +323,7 @@ function [nclust,ARI,ARI_rand,nclusts] = find_optimal_n_clust(X)
     
     % plot
     figure('color',[1 1 1],'units','normalized','position',[0.17 0.64 0.19 0.26]);
-    plot(vals,ARI-ARI_rand,'k','LineWidth',1.5);
+    plot(nclusts,ARI-ARI_rand,'k','LineWidth',1.5);
     yl=get(gca,'ylim');
     set(gca,'box','off',P.axes_properties{:},'FontSize',16,...
         'XTick',20:20:100,'xlim',[0 100],'ylim',[0 yl(2)]);
