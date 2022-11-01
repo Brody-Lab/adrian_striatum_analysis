@@ -1,6 +1,10 @@
 %% get psths for groups of gammas for all cells in database.
 %% generated data for PETH plots for GRS talk
 
+% to do: varargin ref_event, add programmatic control of whether separating
+% by gamma. make a separate function for adding side preference to
+% cells_table. eventually this should be added to cells table. as should
+% explainable variance.
 
 %cells_table = select_cells('is_in_dorsal_striatum',true);
 
@@ -14,34 +18,17 @@ for i=1:numel(recording_names)
     Cells = load_Cells_file(recording_names{i});
     these_rows = cells_table.recording_name == recording_names{i};
     cellnos = cells_table.cellno(these_rows);
-    
-    
-    exclude_trials = Cells.Trials.violated;
-    exclude_trials = exclude_trials | Cells.Trials.laser.isOn;
-    if isfield(Cells.Trials,'stim_dur_s_theoretical')
-        stim_dur = Cells.Trials.stim_dur_s_theoretical;
-    else
-        stim_dur = Cells.Trials.stim_dur_s;
-    end    
-    if any(isnan(stim_dur))
-        warning('Found %g accumulation trials with stimdur of NaN. Removing them. (Probably violations or uninitiated trials).',sum(isnan(stim_dur)));
-    end
-    exclude_trials = exclude_trials | isnan(stim_dur);    
-    %exclude_trials = exclude_trials | Cells.Trials.is_hit~=1;
-    
-    if isfield(Cells.Trials,'stim_dur_s_actual')
-        stim_dur=Cells.Trials.stim_dur_s_actual;
-    else
-        stim_dur=Cells.Trials.stim_dur_s;
-    end
+    exclude_trials = validate_trials(Cells.Trials,'mode','agb_glm');
     [pref_left,pval] = get_pref_choice(Cells,cellnos);    
     %[pref_left_stim,stim_pval] = get_pref_stim(Cells,cellnos,'onlyCorrect',false);    
     
-    clear psth psths
     for k=1:(length(P.gamma_ranges)-1)
         trial_idx = find(Cells.Trials.gamma>P.gamma_ranges(k) & Cells.Trials.gamma<P.gamma_ranges(k+1) & ~exclude_trials);        
-        psth(:,k) = get_psth_from_Cells(Cells,cellnos,'trial_idx',trial_idx,'kPETH',kPETH,'states',{'clicks_on'});
-        nan_inds = kPETH.timeS.clicks_on> stim_dur(trial_idx);        
+        psth(:,k) = get_psth_from_Cells(Cells,cellnos,'trial_idx',trial_idx,'kPETH',kPETH,'states',{params.ref_event});
+        nan_inds = kPETH.timeS.clicks_on> Cells.Trials.stim_dur_s(trial_idx);     
+        if any_nan_inds
+            error('why would this ever happen if i am validating trials properly?');
+        end
         for c=1:numel(cellnos)
             psth(c,k).clicks_on(nan_inds)=NaN;
             psth(c,k).clicks_on = nanmean(psth(c,k).clicks_on);                        
@@ -58,11 +45,5 @@ for i=1:numel(recording_names)
             end
         end
     end
-end
-
-
-for i=1:numel(P.ap_groups)
-    is_in_group = cells_table.AP>=P.ap_groups{i}(1) & cells_table.AP<P.ap_groups{i}(2);
-    cells_table.ap_group(is_in_group) = i;
 end
 

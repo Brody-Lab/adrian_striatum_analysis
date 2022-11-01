@@ -1,5 +1,3 @@
-%% uses hacky script to add sessions to table that aren't sorted yet.
-
 %% then overviews psychometrics by rat and makes a histogram of AP position by session.
 
 
