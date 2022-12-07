@@ -32,6 +32,11 @@ function [stability,presence,mean_rate] = calculate_unit_stability(Cells,params)
     end
     mean_rate = mean(matrix) ./ kspikewindow_range;
     presence = mean(matrix>0);
+    
+    % enforce column major order
+    mean_rate=mean_rate(:);
+    presence=presence(:);
+    stability=stability(:);
 end
 
 function ismem = ref_events_member(ref_event,Cells)

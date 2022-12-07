@@ -9,11 +9,20 @@ function stats = get_pcs(Cells,varargin)
     
     % Adrian Bondy, 2021 -- based partly on code by Wynne Stagnaro    
     
+    
+    p=inputParser;
+    p.KeepUnmatched=true;
+    p.addParameter('units',[]);         
+    p.parse(varargin{:});
+    params=p.Results;
+    
     %% select units
-    units = select_units(Cells,varargin{:});
+    if ismember('units',p.UsingDefaults)
+        params.units = select_units(Cells,varargin{:});
+    end
     
     %% make data matrix on which to run PCA
-    [cells_mat,params] = MakeDataMatrix(Cells,varargin{:},'units',units);
+    [cells_mat,params] = MakeDataMatrix(Cells,varargin{:},'units',params.units);
     
     %% perform PCA
     stats = run_PCA(cells_mat,varargin{:});
@@ -36,6 +45,8 @@ function stats = get_pcs(Cells,varargin)
     for f=1:length(fields)
         try
             stats.(fields{f}) = Cells.(fields{f});
+        catch
+            stats.(fields{f})=[];
         end
     end       
 end

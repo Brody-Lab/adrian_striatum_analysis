@@ -16,7 +16,7 @@ function stats = run_PCA(tot_cell_mat,varargin) %dim,norm_factor)
     p.KeepUnmatched=true;
     p.addRequired('tot_cell_mat',@(x)validateattributes(x,{'numeric'},{'nonempty'}));
     p.addParameter('norm_factor',5,@(x)validateattributes(x,{'numeric'},{'nonnegative'}));
-    p.addParameter('npcs',Inf,@(x)validateattributes(x,{'numeric'},{'nonnegative'}));    
+    p.addParameter('npcs',Inf,@(x)validateattributes(x,{'numeric'},{'positive'}));    
     p.parse(tot_cell_mat,varargin{:});
     params = p.Results; 
 
@@ -31,6 +31,10 @@ function stats = run_PCA(tot_cell_mat,varargin) %dim,norm_factor)
     end
     
     %save coeff, weightings, and var explained
-    [stats.coeff, stats.score,stats.latent, stats.tsquared, stats.explained] = pca(norm_cell_mat,'NumComponents',params.npcs);
+    if isinf(params.npcs) % if npcs not specified, do not pass default value of Inf
+        [stats.coeff, stats.score,stats.latent, stats.tsquared, stats.explained] = pca(norm_cell_mat);
+    else
+        [stats.coeff, stats.score,stats.latent, stats.tsquared, stats.explained] = pca(norm_cell_mat,'NumComponents',params.npcs);        
+    end
     
 end

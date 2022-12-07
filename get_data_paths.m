@@ -19,7 +19,7 @@ function paths=get_data_paths(varargin)
     if ~isempty(params.recording_name)
         [rat,date,suffix] = parse_recording_name(recordings_table.recording_name);        
         [this_rat,this_date,this_suffix] = parse_recording_name(params.recording_name);
-        if isempty(this_suffix)
+        if this_suffix==""
             idx=rat==this_rat&date==this_date;
         else
             idx=rat==this_rat&date==this_date&suffix==this_suffix;

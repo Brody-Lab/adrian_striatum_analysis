@@ -17,7 +17,9 @@ function units_select = select_units(Cells,varargin)
     p.addParameter('thresh_stability',5,@(x)validateattributes(x,{'numeric'},{'scalar','nonnegative'})); 
     p.addParameter('thresh_presence',0.5,@(x)validateattributes(x,{'numeric'},{'scalar','nonnegative'}));
     p.addParameter('thresh_meanrate',0.1,@(x)validateattributes(x,{'numeric'},{'nonnegative','scalar'}));    
-    p.addParameter('region',0:100,@(x)validateattributes(x,{'numeric','char','cell'},{'nonempty'})); 
+    p.addParameter('region',0:100,@(x)validateattributes(x,{'numeric','char','cell'},{'nonempty'}));
+    ncells=numel(Cells.raw_spike_time_s);
+    p.addParameter('exclude_cells',false(ncells,1),@(x)validateattributes(x,{'logical'},{'vector'}));     
     p.parse(Cells,varargin{:});
     params = p.Results;
     
@@ -25,20 +27,29 @@ function units_select = select_units(Cells,varargin)
     [stability,presence,mean_rate] = calculate_unit_stability(params.Cells);
     
     % select cells with higher stability, presence_ratio and meanrate than threshold
-    if ismember('region',p.UsingDefaults)
-        units_select = stability < params.thresh_stability & ...
-                       presence > params.thresh_presence & ...
-                       mean_rate > params.thresh_meanrate;        
-    else
-        units_select = is_in_region(Cells,params.region) & ...
-                       stability < params.thresh_stability & ...
-                       presence > params.thresh_presence & ...
-                       mean_rate > params.thresh_meanrate;
+    stable = stability < params.thresh_stability;
+    present = presence > params.thresh_presence;
+    good_rate = mean_rate > params.thresh_meanrate;
+    
+    units_select = stable & present & good_rate & ~params.exclude_cells(:);   
+    
+    fprintf('-----\nUser excluded %g of %g (%d%%) cells.\n-----\n',sum(params.exclude_cells),ncells,round(mean(params.exclude_cells)*100));
+    
+    fprintf(['%g of %g (%d%%) cells passed stability threshold (%g).\n',...
+        '%g of %g (%d%%) cells passed presence threshold (trial fraction = %g).\n',...
+        '%g of %g (%d%%) cells passed rate threshold (%g sp/s).\n------\n',...
+        '%g of %g cells (%d%%) selected.'],...
+        sum(stable),ncells,round(100*mean(stable)),params.thresh_stability,sum(present),ncells,round(100*mean(present)),params.thresh_presence,...
+        sum(good_rate),ncells,round(100*mean(good_rate)),params.thresh_meanrate,sum(units_select),ncells,round(100*mean(units_select)));
+               
+    if ~ismember('region',p.UsingDefaults)
+        units_select = is_in_region(Cells,params.region) & units_select;
     end
-
+    
 end
 
 function in_region = is_in_region(Cells,regions)
+    Cells.regions=Cells.regions(:);
     if isnumeric(regions)
         in_region = ismember(Cells.regions,regions);
         return
