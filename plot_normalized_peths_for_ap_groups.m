@@ -1,71 +1,67 @@
 %% generated PETH plots for GRS talk
-
+%% edited/improved 11/2022 before SfN
 
 P=get_parameters();
-clear psths_norm
-for i=1:numel(P.ap_groups)
-    is_in_group = cells_table.AP>=P.ap_groups{i}(1) & cells_table.AP<P.ap_groups{i}(2);
-    cells_table.ap_group(is_in_group) = i;
-    
-    psths{i} = cat(3,cells_table.psth_clicks_on{cells_table.ap_group==i});
-    pref = cells_table.pref_left_MI(cells_table.ap_group==i);
-    pref_pval = cells_table.pref_left_MI_pval(cells_table.ap_group==i);    
-    
-    no_pref = isnan(pref) | isnan(pref_pval) | pref_pval>0.05;
-    
-    clear bad rate flips
-    for k=1:size(psths{i},3)
-        this_one = psths{i}(:,1:100,k);
-        rate(k) = nanmean(this_one(:));
-        if rate(k)<0.05
-            bad(k)=true;
-        else
-            bad(k)=false;
-        end
-        psths_norm{i}(:,:,k) = psths{i}(:,:,k) ./ rate(k);
+ref_event = 'first_click';
+mask_states = {'' 'cpoke_req_end'};
+column_name = 'clicks_on_peth';
+a=tic;
+[cells_table,kPETH] = add_peth_to_cells_table(load_cells_table(),'ref_event',ref_event,...
+    'separate_by','signal_strength','mask_states',mask_states,'column_name',column_name,'mask_state_offset',[0 0]);
+fprintf('total loop took %s',timestr(toc(a)));
+baseline_idx = kPETH.timeS.(ref_event)<0;
+zrpt_idx = kPETH.timeS.(ref_event)==0;
+accum_idx = kPETH.timeS.(ref_event)>0 & kPETH.timeS.(ref_event)<0.5;
 
+
+% loop over cells to find baseline rate by which to normalize
+ncells = height(cells_table);
+baseline = zeros(ncells,1);
+accum_rate = zeros(ncells,1);
+psths = cell(ncells,1);
+for i=1:ncells
+    tmp = cells_table.(column_name){i}(:,accum_idx);
+    accum_rate(i) = nanmean(tmp(:));    
+    tmp = cells_table.(column_name){i}(:,baseline_idx);
+    baseline(i) = nanmean(tmp(:));    
+    psths{i} = cells_table.(column_name){i} ./ baseline(i); % divide by baseline
+    psths{i} = psths{i}(:,20:10:end) - psths{i}(:,zrpt_idx) +1 ; % normalize so that values are on average 1 at time 0
+    if cells_table.choice_MI(i)>0
+        psths{i} = flip(psths{i}); % flip left-preferring so that psths can be interpreted as pref/null
     end
-    
-    psths_norm{i} = psths_norm{i}(:,:,~bad' & ~no_pref );
-    pref= pref(~bad' & ~no_pref);
-    psths_norm{i}(:,:,pref>0) = flip(psths_norm{i}(:,:,pref>0));
-    
 end
 
-
-
-figure('units','normalized','position',[0.07 0 0.19 1.1],'color',[1 1 1]);
-for i=1:4
-    h(i) = subplot(4,1,i);set(h(i),'units','normalized');
-    idx = kPETH.timeS.clicks_on==0;
-    this_psth = bsxfun(@minus,psths_norm{i},psths_norm{i}(:,idx,:));
-    %this_psth = psths_norm{i}-1;
-    this_psth = this_psth(:,20:10:end,:);
-    err = nanstd(this_psth,[],3) ./ sqrt(size(this_psth,3));
-    %line([-1 1],[0 0],'color',[0 0 0 ]+0.5,'linewidth',2);hold on;
-    for k=1:4
-        g(k)=errorbar(kPETH.timeS.clicks_on(20:10:end),nanmean(this_psth(k,:,:),3),err(k,:),'LineWidth',2);colororder(P.gamma_color_groups);hold on;
+figure('units','normalized','color',[1 1 1]);
+for i=1:numel(P.ap_groups)
+    is_in_group = cells_table.ap_group==i & cells_table.is_in_dorsal_striatum;
+    sig_pref_idx = is_in_group & ~isnan(cells_table.choice_MI) & cells_table.choice_MI_pval<0.05 & baseline>0.05 ; % find indices for significantly choice-preferring neurons
+    sum(sig_pref_idx)
+    psth_data = cat(3,psths{sig_pref_idx});
+    h(i) = subplot(1,4,i);set(h(i),'units','normalized');
+    for k=1:(numel(P.gamma_ranges)-1)
+        err = bootstrp(1000,@nanmean,squeeze(psth_data(k,:,:))');        
+        g(k)=errorbar(kPETH.timeS.(ref_event)(20:10:end),nanmean(psth_data(k,:,:),3),std(err) ,'LineWidth',2);
+        colororder(P.gamma_color_groups);hold on;
         g(k).CapSize=0;
-    end
+    end    
     if i==1
         for k=1:4
-            text(0.02,2.6-0.3*k,P.gamma_labels{k},'color',P.gamma_color_groups(k,:),'FontSize',16);
+            text(0.02,3.5-0.2*k,P.gamma_labels{k},'color',P.gamma_color_groups(k,:),'FontSize',14);
         end
     end
     set(gca,'xlim',[0 0.8],P.axes_properties{:});
-    yl{i}=get(gca,'ylim');
-    set(gca,'ylim',[-0.5 min(max(yl{i}(2),0.5),2.5)],...
-        'ytick',[0.5 1 1.5 2 2.5 3 3.5]-1,'xtick',[0:0.2:1],'XGrid','on','YGrid','on','yticklabel',[0.5 1 1.5 2 2.5 3 3.5],'xticklabel',[0 0.2 0.4 0.6 0.8]);
-    if i==4
+    set(gca,'ylim',[0.8 3.5],...
+        'ytick',0:5,'xtick',[0:0.2:1],'XGrid','off',...
+        'YGrid','off','xticklabel',[0 0.2 0.4 0.6 0.8]);
         l=xlabel('Time after first click (s)');
-        l.Position = [0.65 -0.9 -1];
-    else
-        set(gca,'xticklabel',[]);
-    end
-    if i==4
+
+    if i==1
         ylabel({'Normalized','Firing Rate'});
-    end
+    end    
 end
+
+
+
 
 for i=1:4
     subplot(4,1,i)    ;drawnow;

@@ -89,6 +89,7 @@ P.covariate_names = {'Previous Left Correct','Previous Right Correct','Previous 
 %P.covariate_group_names = {'Trial History','Initiate Fixation','Clicks','Choice','Hit','Miss'};
 P.gamma_color_groups = flip(copper(4));
 P.gamma_ranges = [-5 -2 0 2 5];
+P.signal_strength_percentiles = [0 25 50 75 100];
 P.gamma_labels={'strong preferred','weak preferred','weak null','strong null'};
 
                

@@ -377,7 +377,7 @@ function plot_this_covariate(params,tr,bs,pos,covariate_to_plot,covariate_name)
     for k=1:numel(params.linepos)
         line(ax.XLim,ones(1,2)*params.linepos(k),'Color','k','LineWidth',1.5 );
     end   
-    set(ax,'FontSize',16,'clim',params.clim,'ylim',[0.5 params.ncells],P.axes_properties{:});box off;
+    set(ax,'clim',params.clim,'ylim',[0.5 params.ncells],P.axes_properties{:},'FontSize',16);box off;
     ax.YAxis.Visible='off';      
     title(strsplit(covariate_name,' '),'FontSize',20);
 end
