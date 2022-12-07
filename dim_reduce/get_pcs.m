@@ -1,4 +1,4 @@
-function stats = get_pcs(Cells,varargin)
+function params = get_pcs(Cells,varargin)
     % function that does PCA on a neural population in a Cells file, aligned to
     % specific trial events. If you select "make_psth", the output field "psth" has the same format as a PETH
     % structure. options include criteria for including units, reference event,
@@ -23,30 +23,32 @@ function stats = get_pcs(Cells,varargin)
     
     %% make data matrix on which to run PCA
     [cells_mat,params] = MakeDataMatrix(Cells,varargin{:},'units',params.units);
-    
-    %% perform PCA
-    stats = run_PCA(cells_mat,varargin{:});
-    npcs = size(stats.score,2);
-    % reshape times and scores
-    stats.score = reshape(stats.score,numel(params.time_s),numel(params.trial_idx),npcs);
     params.times = reshape(params.times,numel(params.time_s),numel(params.trial_idx));    
     
+    %% perform PCA
+    [params.pca_output,pca_params] = run_PCA(cells_mat,varargin{:});
+    % reshape times and scores
+    for i=1:numel(params.pca_output)
+        params.pca_output(i).score = reshape(params.pca_output(i).score,numel(params.time_s),numel(params.trial_idx),pca_params.npcs);
+    end
+    
+    %% merge params fields
+    fields = fieldnames(pca_params);
+    for i=1:length(fields)
+        params.(fields{i}) = pca_params.(fields{i});
+    end
+
     %% assemble output structure
-    fields=fieldnames(params);
-    for f=1:length(fields)
-        stats.(fields{f}) = params.(fields{f});
-    end   
-    stats.label = [char(Cells.rat),' - ',char(Cells.sess_date),' - ',char(Cells.probe_serial),' - ',num2str(npcs),' PCs'];
-    stats.repo_path = fileparts(mfilename('fullpath'));
-    [stats.git_branch,stats.commit] = return_git_status(stats.repo_path);
-    stats.dim = npcs;    
+    params.label = [char(Cells.rat),' - ',char(Cells.sess_date),' - ',char(Cells.probe_serial),' - ',num2str(params.npcs),' PCs'];
+    params.repo_path = fileparts(mfilename('fullpath'));
+    [params.git_branch,params.commit] = return_git_status(params.repo_path);
     % copy some fields from the cells file for data integrity
     fields={'rec','Trials','sessid','last_modified','rat','sess_date','kSpikeWindowS','penetration','regions','probe_serial'};
     for f=1:length(fields)
         try
-            stats.(fields{f}) = Cells.(fields{f});
+            params.(fields{f}) = Cells.(fields{f});
         catch
-            stats.(fields{f})=[];
+            params.(fields{f})=[];
         end
     end       
 end

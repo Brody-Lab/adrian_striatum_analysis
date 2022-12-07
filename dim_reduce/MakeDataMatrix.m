@@ -37,13 +37,15 @@ function [cells_mat,params] = MakeDataMatrix(Cells,varargin)
     p.addParameter('resolution_s',0.001,@(x)validateattributes(x,{'numeric'},{'nonnegative'}));
     p.addParameter('time_window_s',[0 1.5],@(x)validateattributes(x,{'numeric'},{'nonnegative'}));    
     p.addParameter('sparse',false,@(x)validateattributes(x,{'logical'},{'scalar'}));
+    p.addParameter('gpu',false,@(x)validateattributes(x,{'logical'},{'scalar'}));
+    p.addParameter('precision','double',@(x)validateattributes(x,{'char','string'},{'nonempty'}));
     p.addParameter('average',false,@(x)validateattributes(x,{'logical'},{'scalar'}));
     p.addParameter('description','',@(x)validateattributes(x,{'char','string'},{'nonempty'}));    
     p.parse(varargin{:});
     params = p.Results;
 
     validatestring(params.ref_event,fieldnames(Cells.spike_time_s),'MakeDataMatrix','ref_event');
-
+    validatestring(params.precision,{'single','double'},'MakeDataMatrix','precision');    
     params.trial_idx = find(params.trial_idx(:)' & ~isnan(Cells.Trials.stateTimes.(params.ref_event))');
     
     params.units=params.units(:)';
@@ -94,6 +96,11 @@ function [cells_mat,params] = MakeDataMatrix(Cells,varargin)
     if params.sparse
         cells_mat = sparse(cells_mat);
     end
+    cells_mat = cast(cells_mat,params.precision);
+    %% convert to sparse array if desired
+    if params.gpu
+        cells_mat = gpuArray(cells_mat);
+    end    
     
 end
    
