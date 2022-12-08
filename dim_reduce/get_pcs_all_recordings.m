@@ -48,16 +48,16 @@ end
 cum_var_explained = cumsum(var_explained);
 
 
- mean(cum_var_explained(3,ap_group(idx)==1))
-  mean(cum_var_explained(3,ap_group(idx)==2))
-   mean(cum_var_explained(3,ap_group(idx)==3))
-    mean(cum_var_explained(3,ap_group(idx)==4))
+ mean(cum_var_explained(2,ap_group(idx)==1))
+  mean(cum_var_explained(2,ap_group(idx)==2))
+   mean(cum_var_explained(2,ap_group(idx)==3))
+    mean(cum_var_explained(2,ap_group(idx)==4))
     
 dims=[stats.ncells];    
 figure;
-scatter(dims(ap_group==4 & dims>=min_dims),cum_var_explained(3,ap_group(idx)==4)); hold on
-scatter(dims(ap_group==3 & dims>=min_dims),cum_var_explained(3,ap_group(idx)==3))
-scatter(dims(ap_group==2 & dims>=min_dims),cum_var_explained(3,ap_group(idx)==2))
-scatter(dims(ap_group==1 & dims>=min_dims),cum_var_explained(3,ap_group(idx)==1))
+scatter(dims(ap_group==4 & dims>=min_dims),cum_var_explained(2,ap_group(idx)==4)); hold on
+scatter(dims(ap_group==3 & dims>=min_dims),cum_var_explained(2,ap_group(idx)==3))
+scatter(dims(ap_group==2 & dims>=min_dims),cum_var_explained(2,ap_group(idx)==2))
+scatter(dims(ap_group==1 & dims>=min_dims),cum_var_explained(2,ap_group(idx)==1))
 xlabel('Number of Neurons')
 ylabel({'% Variance Explained','by Top 5 PCs'})
