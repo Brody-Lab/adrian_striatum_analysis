@@ -23,7 +23,7 @@ gpfa_19_cpoke_out = realign_latents(gpfa_19,'cpoke_out',[-1 1]);
 
 % permute back to trials x latents x time and save as npy
 writeNPY(permute(gpfa_18_first_click.score,[2 3 1]),"C:\Users\abondy\Downloads\fulllatentdata_18_first_click.npy")
-writeNPY(permute(gpfa_18_first_click.score,[2 3 1]),"C:\Users\abondy\Downloads\fulllatentdata_19_first_click.npy")
+writeNPY(permute(gpfa_19_first_click.score,[2 3 1]),"C:\Users\abondy\Downloads\fulllatentdata_19_first_click.npy")
 
 writeNPY(permute(gpfa_18_cpoke_out.score,[2 3 1]),"C:\Users\abondy\Downloads\fulllatentdata_18_cpoke_out.npy")
 writeNPY(permute(gpfa_19_cpoke_out.score,[2 3 1]),"C:\Users\abondy\Downloads\fulllatentdata_19_cpoke_out.npy")
