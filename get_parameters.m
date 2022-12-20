@@ -8,7 +8,6 @@
 function P = get_parameters()
 %% paths
 P.repository_path = fileparts(mfilename('fullpath'));
-P.recordings_path = fullfile(P.repository_path,'recordings_log.csv');
 [~,P.hostname] = system('hostname');
 P.hostname=deblank(P.hostname);
 P.pc_data_path = fullfile('D:','adrian_striatum_analysis');
@@ -26,8 +25,10 @@ end
 if ~isfolder(P.data_path)
    error('Data path does not exist: %s',P.data_path); 
 end
+P.recordings_path = fullfile(P.data_path,'recordings_log.csv');
 P.cells_table_path = fullfile(P.data_path,'cells_table.mat');
 P.sessions_table_path = fullfile(P.data_path,'sessions_table.mat');
+P.histology_table_path = fullfile(P.data_path,'histology_table.mat');
 
 %% analysis
 P.ap_groups = {[1.5 Inf],[0 1.5],[-1.5 0],[-Inf -1.5]};
