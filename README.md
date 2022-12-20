@@ -25,8 +25,7 @@ There are two ways you can see what's in the dataset, without loading in individ
           &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`P.pc_data_path = fullfile('X:','abondy','adrian_striatum_analysis');` <br>
           &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;with<br>
           &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`P.pc_data_path = my_path;`<br><br>
-          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Although note that you will need to regenerate the `sessions_table` and `cells_table` if you change the location of the data, by running: `make_cells_table()` and `make_sessions_table()` in Matlab.
-
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 
 
   Within this top-level directory, the datafiles for each sessions, which contain the actual spike times and behavioral data, are located in `cells/[recording_name]/[recording_name]_Cells.mat`. 
