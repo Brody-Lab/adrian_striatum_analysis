@@ -22,7 +22,7 @@ There are two ways you can see what's in the dataset, without loading in individ
   The actual data resides in `\\bucket.pni.princeton.edu\brody\abondy\adrian_striatum_analysis`. To work locally for faster database access, copy this folder to some local directory `my_path` and then edit the file `get_parameters.m` such that the variable `pc_data_path` is set to `my_path`, i.e.:<br><br>
   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
           replace <br>
-          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`P.pc_data_path = fullfile('X:','abondy','adrian_striatum_analysis');` <br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`P.pc_data_path = fullfile('D:','adrian_striatum_analysis');` <br>
           &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;with<br>
           &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`P.pc_data_path = my_path;`<br><br>
           &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
