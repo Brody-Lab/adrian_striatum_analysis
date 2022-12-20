@@ -2,7 +2,7 @@
 ###### *This repository describes the databset of chronic rat Neuropixels recordings performed by Adrian Bondy in various striatal subregions and a Matlab interface for the dataset*
 
 ### What dataset are we talking about?
-The dataset consists of 81 Neuropixels recording sessions from probes implanted chronically in 12 rats performing the Poisson Clicks task. The recordings were performed to target 4 sites spanning the AP axis of dorsal striatum. Over 14,000 cells were recorded, of which around 10,000 were in the target striatal regions (i.e. the black regions in the picture below). Several rats were implanted with multiple probes, and recording sessions from the same date correspond to simultaneous recordings from those sets of probes. Times and trial numbers in such files are identical. For more information on the procedure for chronic implantation of Neuropixels probes in rats, see [Luo*, Bondy* et al. (2020). eLife](https://elifesciences.org/articles/59716)
+The dataset consists of 81 Neuropixels recording sessions from probes implanted chronically in 12 rats performing the Poisson Clicks task. The recordings were performed to target 4 sites spanning the AP axis of dorsal striatum. Over 14,000 cells were recorded, of which around 10,000 were in the target striatal regions (i.e. the black regions in the picture below). Several rats were implanted with multiple probes, and recording sessions from the same date correspond to simultaneous recordings from those sets of probes. Times and trial numbers in such files are identical. For more information on the procedure for chronic implantation of Neuropixels probes in rats, see [Luo*, Bondy* et al. (2020). eLife](https://elifesciences.org/articles/59716). Histology was performed for all animals to reconstruct location of DiI-dipped probes. This was done either with epifluoresence imaging of serial slices or lightsheet imaging of cleared brain volumes.
 
 
 <img src="images/anatomical_overview.png" alt="Anatomical Overview" width="600"/>
@@ -11,10 +11,11 @@ The dataset consists of 81 Neuropixels recording sessions from probes implanted 
 
 ### How do I see a list of what is in the dataset (i.e. cells, sessions, rats)?
 There are two ways you can see what's in the dataset, without loading in individual files:
-  1. In Matlab, run `sessions_table = load_sessions_table()` to load a table with rows corresponding to recording sessions in the database. Columns provide session-level information, such as the rat, recording date, recording location, behavioral performance, the path to the actual datafile, etc.
+  1. In Matlab, run `sessions_table = load_sessions_table()` to load a table providing session-level information, such as the rat, recording date, recording location, behavioral performance, the path to the actual datafile, etc.
   2. In Matlab, run `cells_table = load_cells_table()` to load a table with a row for each individual cell in the database, and columns describing features of those cells. Note that this table does not contain spike times but is useful for providing an overview of the properties of the cells in the database, for example the 3-D anatomical location of the entire database of recorded cells, the distribution of waveform properties across the dataset, or the contribution to the database of particular rats.
+  3. In Matlab, run `histology_table = load_histology_table()` to load a table with information about the histological data from each animal. This includes information about the type of histology performed and locations of the raw histological data.
 
-  *N.B.: The above functions really just load into Matlab CSV files located in the main data directory (i.e. `my_path` below), which you can view directly using your method of choice, i.e. Julia, Google Sheets, etc. They are called `sessions_table.csv` and `cells_table.csv` respectively.*
+  *N.B.: The above functions really just load into Matlab CSV files located in the main data directory (i.e. `my_path` below), which you can view directly using your method of choice, i.e. Julia, Google Sheets, etc. They are called `sessions_table.csv`, `cells_table.csv`, and `histology_table.csv` respectively.*
 
 ### Where is the data?
 
