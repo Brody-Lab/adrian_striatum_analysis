@@ -24,9 +24,10 @@ function params = get_pcs(Cells,varargin)
     %% make data matrix on which to run PCA
     [cells_mat,params] = MakeDataMatrix(Cells,varargin{:},'units',params.units);
     params.times = reshape(params.times,numel(params.time_s),numel(params.trial_idx));    
+    params.cells_mat=cells_mat;
     
     %% perform PCA
-    [params.pca_output,pca_params] = run_PCA(cells_mat,varargin{:});
+    [params.pca_output,pca_params] = run_PCA(params.cells_mat,varargin{:});
     % reshape times and scores
     for i=1:numel(params.pca_output)
         params.pca_output(i).score = reshape(params.pca_output(i).score,numel(params.time_s),numel(params.trial_idx),pca_params.npcs);

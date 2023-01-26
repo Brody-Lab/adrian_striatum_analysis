@@ -12,7 +12,7 @@ function [cells_table,kPETH] = add_peth_to_cells_table(cells_table,varargin)
     p=inputParser;
     p.KeepUnmatched=true;
     p.addParameter('ref_event','first_click',@(x)validateattributes(x,{'char'},{'nonempty'}));    
-    p.addParameter('separate_by','',@(x)validateattributes(x,{'char'},{}));
+    p.addParameter('separate_by','gamma',@(x)validateattributes(x,{'char'},{}));
     p.addParameter('column_name','',@(x)validateattributes(x,{'char'},{}));
     p.addParameter('kPETH',get_PETH_params('std_s',0.1,'std_s_clicks',0.1));
     % you can pass mask_states directly to get_psth_from_Cells
