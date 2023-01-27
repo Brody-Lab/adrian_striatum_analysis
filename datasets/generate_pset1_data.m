@@ -19,6 +19,12 @@ fields=fieldnames(params);
 mask = {'ref_event','resolution_s','time_window_s',...
     'trial_idx','units','times','cells_mat','sessid','rat','sess_date'}; % fields to keep
 params = rmfield(params,fields(~ismember(fields,mask)));
+params.spikes = reshape(params.cells_mat,[size(params.times) size(params.cells_mat,2)]);
+params = rmfield(params,'cells_mat');
+params.spikes=permute(params.spikes,[2 1 3]); % now spikes is ntrials X ntimebins X ncells
+params.n_left_clicks = cellfun(@numel,Cells.Trials.leftBups(~exclude_trials));
+params.n_right_clicks = cellfun(@numel,Cells.Trials.rightBups(~exclude_trials));
+params.went_right = Cells.Trials.pokedR(~exclude_trials);
 save(save_path,'-struct','params');
 
 
