@@ -19,9 +19,10 @@ clicks_on = clicks_on(~exclude_trials);
 params = get_pcs(Cells,'resolution_s',5e-3,'trial_idx',~exclude_trials,...
     'exclude_cells',~Cells.is_in_dorsal_striatum);
 params.clicks_on=round(0.5+clicks_on/params.resolution_s);
+params.gamma = Cells.Trials.gamma(~exclude_trials);
 fields=fieldnames(params);
 mask = {'ref_event','resolution_s','time_window_s',...
-    'trial_idx','units','time_s','cells_mat','sessid','rat','sess_date','times','clicks_on'}; % fields to keep
+    'trial_idx','units','time_s','cells_mat','sessid','rat','sess_date','times','clicks_on','gamma'}; % fields to keep
 params = rmfield(params,fields(~ismember(fields,mask)));
 params.spikes = reshape(params.cells_mat,[size(params.times) size(params.cells_mat,2)]);
 params = rmfield(params,{'cells_mat','times'});
