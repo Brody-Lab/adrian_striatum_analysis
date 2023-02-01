@@ -33,7 +33,7 @@ params.n_left_clicks = cellfun(@numel,Cells.Trials.leftBups(~exclude_trials));
 params.n_right_clicks = cellfun(@numel,Cells.Trials.rightBups(~exclude_trials));
 params.went_right = Cells.Trials.pokedR(~exclude_trials);
 
-filter = mygausswin(0.05/params.resolution_s,3,true); % 50 ms sd causal gaussian smoothing
+filter = mygausswin(0.025/params.resolution_s,3,false); % 25 ms sd acausal gaussian smoothing
 filter = reshape(filter,[1 numel(filter) 1]);
 params.spikes=convn(params.spikes,filter,'same') ./ convn(ones(size(params.spikes)),filter,'same');
 params.spikes=params.spikes/params.resolution_s;
