@@ -27,6 +27,7 @@ params = rmfield(params,fields(~ismember(fields,mask)));
 params.spikes = reshape(params.cells_mat,[size(params.times) size(params.cells_mat,2)]);
 params = rmfield(params,{'cells_mat','times'});
 params.sess_date=char(params.sess_date);
+params.rat=char(params.rat);
 params.spikes=permute(params.spikes,[2 1 3]); % now spikes is ntrials X ntimebins X ncells
 params.n_left_clicks = cellfun(@numel,Cells.Trials.leftBups(~exclude_trials));
 params.n_right_clicks = cellfun(@numel,Cells.Trials.rightBups(~exclude_trials));
