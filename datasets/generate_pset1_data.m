@@ -16,7 +16,7 @@ Cells = add_first_click_state(Cells);
 exclude_trials = validate_trials(Cells.Trials,'mode','agb_glm');
 clicks_on = Cells.Trials.stateTimes.first_click - Cells.Trials.stateTimes.cpoke_in;
 clicks_on = clicks_on(~exclude_trials);
-params = get_pcs(Cells,'resolution_s',2e-2,'trial_idx',~exclude_trials,...
+params = get_pcs(Cells,'resolution_s',5e-3,'trial_idx',~exclude_trials,...
     'exclude_cells',~Cells.is_in_dorsal_striatum);
 params.clicks_on=round(0.5+clicks_on/params.resolution_s);
 params.gamma = Cells.Trials.gamma(~exclude_trials);
