@@ -16,7 +16,7 @@ recording_name = "T219_2019_12_20";
 %exclude_trials = validate_trials(Cells.Trials,'mode','agb_glm');
 clicks_on = Cells.Trials.stateTimes.first_click - Cells.Trials.stateTimes.cpoke_in;
 clicks_on = clicks_on(~exclude_trials);
-params = get_pcs(Cells,'resolution_s',1e-2,'trial_idx',~exclude_trials,...
+params = get_pcs(Cells,'resolution_s',5e-3,'trial_idx',~exclude_trials,...
     'exclude_cells',~Cells.is_in_dorsal_striatum);
 params.clicks_on=round(0.5+clicks_on/params.resolution_s);
 params.gamma = Cells.Trials.gamma(~exclude_trials);
@@ -33,7 +33,7 @@ params.n_left_clicks = cellfun(@numel,Cells.Trials.leftBups(~exclude_trials));
 params.n_right_clicks = cellfun(@numel,Cells.Trials.rightBups(~exclude_trials));
 params.went_right = Cells.Trials.pokedR(~exclude_trials);
 
-filter = mygausswin(0.05/params.resolution_s,3,true); % 50 ms sd causal gaussian smoothing
+filter = mygausswin(0.075/params.resolution_s,4,true); % 50 ms sd causal gaussian smoothing
 filter = reshape(filter,[1 numel(filter) 1]);
 params.spikes=convn(params.spikes,filter,'same') ./ convn(ones(size(params.spikes)),filter,'same');
 params.spikes=params.spikes/params.resolution_s;
