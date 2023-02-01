@@ -10,7 +10,7 @@
 % AGB 1/26/2023
 
 save_path = "pset1_data";
-recording_name = "A249_2020_09_07";
+recording_name = "T219_2019_12_20";
 Cells = load_Cells_file(recording_name);
 Cells = add_first_click_state(Cells);
 exclude_trials = validate_trials(Cells.Trials,'mode','agb_glm');
