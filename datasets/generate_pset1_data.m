@@ -11,9 +11,9 @@
 
 save_path = "pset1_data";
 recording_name = "T219_2019_12_20";
-Cells = load_Cells_file(recording_name);
-Cells = add_first_click_state(Cells);
-exclude_trials = validate_trials(Cells.Trials,'mode','agb_glm');
+%Cells = load_Cells_file(recording_name);
+%Cells = add_first_click_state(Cells);
+%exclude_trials = validate_trials(Cells.Trials,'mode','agb_glm');
 clicks_on = Cells.Trials.stateTimes.first_click - Cells.Trials.stateTimes.cpoke_in;
 clicks_on = clicks_on(~exclude_trials);
 params = get_pcs(Cells,'resolution_s',5e-3,'trial_idx',~exclude_trials,...
@@ -34,3 +34,22 @@ params.n_right_clicks = cellfun(@numel,Cells.Trials.rightBups(~exclude_trials));
 params.went_right = Cells.Trials.pokedR(~exclude_trials);
 save(save_path,'-struct','params');
 
+filter = mygausswin(0.025/params.resolution_s,3,true); % 25 ms sd causal gaussian smoothing
+filter = reshape(filter,[1 numel(filter) 1]);
+params.spikes=convn(params.spikes,filter,'same') ./ convn(ones(size(params.spikes)),filter,'same');
+params.spikes=params.spikes/params.resolution_s;
+
+
+function w = mygausswin(sd,alpha,causal)
+    L = 2*sd*alpha + 1;
+    if mod(ceil(L),2)==1 % if ceil(L) is odd, use that. otherwise add one.
+        L=ceil(L);
+    else
+        L = ceil(L)+1;
+    end
+    alpha = (L-1)/(2*sd);
+    w = gausswin(L,alpha);
+    if causal
+        w(1:((ceil(L/2))-1))=0;
+    end
+end
