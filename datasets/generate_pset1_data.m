@@ -21,7 +21,7 @@ params = get_pcs(Cells,'resolution_s',1e-2,'trial_idx',~exclude_trials,...
 params.clicks_on=round(0.5+clicks_on/params.resolution_s);
 params.gamma = Cells.Trials.gamma(~exclude_trials);
 fields=fieldnames(params);
-params.rat_name=char(params.rat);
+params.rat=char(params.rat);
 mask = {'ref_event','resolution_s','time_window_s',...
     'trial_idx','units','time_s','cells_mat','sessid','rat','sess_date','times','clicks_on','gamma'}; % fields to keep
 params = rmfield(params,fields(~ismember(fields,mask)));
