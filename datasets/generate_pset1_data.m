@@ -17,8 +17,9 @@ recording_name = "T219_2019_12_20";
 stim_off = Cells.Trials.stateTimes.cpoke_req_end - Cells.Trials.stateTimes.first_click;
 stim_off = stim_off(~exclude_trials);
 params = get_pcs(Cells,'resolution_s',5e-3,'trial_idx',~exclude_trials,...
-    'exclude_cells',~Cells.is_in_dorsal_striatum,'ref_event','first_click','time_window_s',[0 1]);
+    'exclude_cells',~Cells.is_in_dorsal_striatum,'ref_event','first_click','time_window_s',[-0.5 1]);
 params.stim_off=round(0.5+stim_off/params.resolution_s);
+stim_on = find(params.time_s>0,1);
 params.gamma = Cells.Trials.gamma(~exclude_trials);
 fields=fieldnames(params);
 params.rat=char(params.rat);
@@ -41,6 +42,8 @@ params.spikes=params.spikes/params.resolution_s;
 for i=1:size(params.spikes,1)
     params.spikes(i,params.stim_off(i):end,:)=NaN;
 end
+params.spikes = params.spikes(:,stim_on:end,:);
+params.time_s = params.time_s(stim_on:end);
 
 save(save_path,'-struct','params');
 

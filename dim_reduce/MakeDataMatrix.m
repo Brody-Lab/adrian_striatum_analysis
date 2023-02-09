@@ -35,7 +35,7 @@ function [cells_mat,params] = MakeDataMatrix(Cells,varargin)
     p.addParameter('units',true(ncells,1),@(x)validateattributes(x,{'logical'},{'vector','numel',ncells}));
     p.addParameter('trial_idx',~Cells.Trials.violated,@(x)validateattributes(x,{'logical'},{'vector'}));  
     p.addParameter('resolution_s',0.001,@(x)validateattributes(x,{'numeric'},{'nonnegative'}));
-    p.addParameter('time_window_s',[0 1.5],@(x)validateattributes(x,{'numeric'},{'nonnegative'}));    
+    p.addParameter('time_window_s',[0 1.5],@(x)validateattributes(x,{'numeric'},{''}));    
     p.addParameter('sparse',false,@(x)validateattributes(x,{'logical'},{'scalar'}));
     p.addParameter('gpu',false,@(x)validateattributes(x,{'logical'},{'scalar'}));
     p.addParameter('precision','double',@(x)validateattributes(x,{'char','string'},{'nonempty'}));
