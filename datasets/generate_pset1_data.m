@@ -47,6 +47,7 @@ for i=1:size(params.spikes,1)
 end
 params.spikes = params.spikes(:,stim_on:end,:);
 params.time_s = params.time_s(stim_on:end);
+params.stim_off = params.stim_off + stim_on;
 
 save(save_path,'-struct','params');
 
