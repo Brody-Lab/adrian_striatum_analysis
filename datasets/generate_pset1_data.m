@@ -42,12 +42,11 @@ filter = mygausswin(params.smooth_std_s/params.resolution_s,4,params.causal_filt
 filter = reshape(filter,[1 numel(filter) 1]);
 params.spikes=convn(params.spikes,filter,'same') ./ convn(ones(size(params.spikes)),filter,'same');
 params.spikes=params.spikes/params.resolution_s;
+params.spikes = params.spikes(:,stim_on:end,:);
+params.time_s = params.time_s(stim_on:end);
 for i=1:size(params.spikes,1)
     params.spikes(i,params.stim_off(i):end,:)=NaN;
 end
-params.spikes = params.spikes(:,stim_on:end,:);
-params.time_s = params.time_s(stim_on:end);
-params.stim_off = params.stim_off + stim_on;
 
 save(save_path,'-struct','params');
 
