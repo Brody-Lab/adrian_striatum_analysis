@@ -5,6 +5,7 @@ function [stability,presence,mean_rate] = calculate_unit_stability(Cells,params)
         params.chunk_size (1,1) {isnumeric,mustBePositive} = 100; % number of trials to average together to locally estimate firing rate
         params.n_repeats (1,1) {isnumeric,mustBePositive} = 1000; % number of times to sample a chunk to obtain a firing rate distribution
     end  
+    rng(1);
     ncells = length(Cells.spike_time_s.(params.ref_event));
     for k=ncells:-1:1
         matrix(:,k) = cellfun(@numel,Cells.spike_time_s.(params.ref_event){k}); % make a matrix of number of spikes per trial for each cell [ntrials x ncells]
