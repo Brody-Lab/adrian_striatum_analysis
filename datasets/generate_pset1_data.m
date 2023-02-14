@@ -25,7 +25,7 @@ params.is_correct = Cells.Trials.is_hit(~exclude_trials);
 fields=fieldnames(params);
 params.rat=char(params.rat);
 mask = {'ref_event','resolution_s','time_window_s',...
-    'trial_idx','units','time_s','cells_mat','sessid','rat','sess_date','times','stim_off','gamma'}; % fields to keep
+    'trial_idx','units','time_s','cells_mat','sessid','rat','sess_date','times','stim_off','gamma','is_correct'}; % fields to keep
 params = rmfield(params,fields(~ismember(fields,mask)));
 params.spikes = reshape(params.cells_mat,[size(params.times) size(params.cells_mat,2)]);
 params = rmfield(params,{'cells_mat','times'});
