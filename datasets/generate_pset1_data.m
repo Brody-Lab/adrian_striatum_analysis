@@ -11,15 +11,17 @@
 
 save_path = "pset1_data";
 recording_name = "T219_2019_12_20";
-%Cells = load_Cells_file(recording_name);
-%Cells = add_first_click_state(Cells);
-%exclude_trials = validate_trials(Cells.Trials,'mode','agb_glm');
+Cells = load_Cells_file(recording_name);
+Cells = add_first_click_state(Cells);
 stim_off = Cells.Trials.stateTimes.cpoke_req_end - Cells.Trials.stateTimes.first_click;
+exclude_trials = validate_trials(Cells.Trials,'mode','agb_glm');
+exclude_trials=exclude_trials | stim_off<0.25; % remove trials with less than 0.25 seconds between first click and end of stimulus
 stim_off = stim_off(~exclude_trials);
- params = get_pcs(Cells,'resolution_s',2e-2,'trial_idx',~exclude_trials,...
+ params = get_pcs(Cells,'resolution_s',1.5e-2,'trial_idx',~exclude_trials,...
      'exclude_cells',~Cells.is_in_dorsal_striatum,'ref_event','first_click','time_window_s',[0 1]);
 params.stim_off=round(0.5+stim_off/params.resolution_s);
 params.gamma = Cells.Trials.gamma(~exclude_trials);
+params.is_correct = Cells.Trials.is_hit(~exclude_trials);
 fields=fieldnames(params);
 params.rat=char(params.rat);
 mask = {'ref_event','resolution_s','time_window_s',...
