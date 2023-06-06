@@ -1,4 +1,4 @@
-function Trials = add_click_states_to_thomas_files(Trials)
+function Trials = add_click_states(Trials)
     % n.b. in thomas' files clicks_on is the start of the sonud wave, not
     % the time of the first actual click like in my files. 
     nt = numel(Trials.is_hit);
