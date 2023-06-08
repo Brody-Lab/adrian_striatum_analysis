@@ -259,6 +259,10 @@ end
 
 glmfit = glmnet(x, y, family, options);
 glmfit.df
+std(y)
+std(x(:))
+options
+family
 
 is_offset = glmfit.offset;
 options.lambda = glmfit.lambda;
