@@ -41,6 +41,7 @@ function glmfit_all_sessions(varargin)
                 params.tau_phi,params.choice_time_back_s,params.distribution,params.include_mono_clicks,params.use_trial_history,...
                 params.nClickBins,params.separate_clicks_by,params.separate_clicks_by_outcome);
             save_param_command=[matlab_command(1:end-2),',''fit'',false);exit;'];
+            fprintf('Running fit_glm_to_Cells to save params before batch fitting.\n');
             eval(save_param_command);
             params_path=fullfile(output_dir,'glmfit_params.mat');
             if exist(params_path,'file')
