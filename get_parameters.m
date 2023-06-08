@@ -42,7 +42,7 @@ P.histology_table_path = fullfile(P.data_path,'histology_table.mat');
 P.ap_groups = {[1.5 Inf],[0 1.5],[-1.5 0],[-Inf -1.5]};
 
 %% glm fitting
-P.glmfit_catalog_path = fullfile(P.datsa_path,'glmfit_log.mat');
+P.glmfit_catalog_path = fullfile(P.data_path,'glmfit_log.mat');
 % if all these parameters are the same for a cell's fit, the fits should be
 % identical, unless a code change produced changes in the fitting algorithm
 P.glmfit_catalog_keys = {'recording_name','phi','tau_phi','fit_adaptation','bin_size_s','include_mono_clicks','dm_scaling_mode','use_trial_history',...
