@@ -290,11 +290,6 @@ end
 cpredmat = cell(nfolds,1);
 
 if (parallel == true)
-    offpar = 0;
-    if isempty(gcp('nocreate'))
-        offpar = 1;
-        parpool;
-    end
     
     parfor i = 1: nfolds
         which = foldid==i;
@@ -308,9 +303,6 @@ if (parallel == true)
         cpredmat{i} = glmnet(xr, yr, family, opts);
     end
     
-    if (offpar)
-        delete(gcp('nocreate'));
-    end    
 else   
     for i = 1: nfolds        
         which = foldid==i;
