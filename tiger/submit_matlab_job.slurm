@@ -2,13 +2,11 @@
 #SBATCH --array=0
 #SBATCH -o slurm_outfiles/%A_%a.out
 #SBATCH -e slurm_outfiles/%A_%a.err;
-#SBATCH -t 300                   # 5 hrs by default
+#SBATCH -t 30                    # 30 min by default
 #SBATCH --nodes=1                # node count
 #SBATCH --ntasks-per-node=1      # number of tasks per node
-#SBATCH --cpus-per-task=7        # cpu-cores per task (>1 if multi-threaded tasks)
-#SBATCH --gres=gpu:1             # number of gpus per node
-#SBATCH --partition=gpu          # send to gpu partition
-#SBATCH --mem-per-cpu=8G         # important for long sessions or small time binning
+#SBATCH --cpus-per-task=1        # cpu-cores per task (>1 if multi-threaded tasks)
+#SBATCH --mem-per-cpu=5G         # important for long sessions or small time binning
 #SBATCH --mail-type=FAIL,TIME_LIMIT,ARRAY_TASKS         # email only upon error or time limit
 #SBATCH --mail-user=abondy@princeton.edu
 

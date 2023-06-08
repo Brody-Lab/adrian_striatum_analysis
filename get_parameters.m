@@ -13,12 +13,20 @@ P.hostname=deblank(P.hostname);
 P.pc_data_path = fullfile('D:','adrian_striatum_analysis');
 P.jukebox_data_path = fullfile('X:','abondy','adrian_striatum_analysis');
 P.tiger_data_path = '/scratch/gpfs/abondy/adrian_striatum_analysis';
-if strncmp(P.hostname,'tiger',5) || strncmp(P.hostname,'della',5)
-    P.on_tiger=true;
+P.della_data_path = '/scratch/gpfs/abondy/adrian_striatum_analysis';
+P.spock_data_path = '/mnt/cup/labs/brody/abondy/adrian_striatum_analysis';
+P.on_cluster=true;
+if strncmp(P.hostname,'tiger',5)
     P.data_path = P.tiger_data_path;
-    P.fit_path = P.tiger_data_path;    
+    P.fit_path = P.tiger_data_path;      
+elseif strncmp(P.hostname,'della',5)
+    P.data_path = P.della_data_path;
+    P.fit_path = P.della_data_path;  
+elseif strncmp(P.hostname,'spock',5)
+    P.data_path = P.spock_data_path;
+    P.fit_path = P.spock_data_path;       
 else
-    P.on_tiger=false;
+    P.on_cluster=false;
     P.data_path = P.pc_data_path;   
     P.fit_path = P.pc_data_path;
 end
@@ -34,7 +42,7 @@ P.histology_table_path = fullfile(P.data_path,'histology_table.mat');
 P.ap_groups = {[1.5 Inf],[0 1.5],[-1.5 0],[-Inf -1.5]};
 
 %% glm fitting
-P.glmfit_catalog_path = fullfile(P.data_path,'glmfit_log.mat');
+P.glmfit_catalog_path = fullfile(P.datsa_path,'glmfit_log.mat');
 % if all these parameters are the same for a cell's fit, the fits should be
 % identical, unless a code change produced changes in the fitting algorithm
 P.glmfit_catalog_keys = {'recording_name','phi','tau_phi','fit_adaptation','bin_size_s','include_mono_clicks','dm_scaling_mode','use_trial_history',...
