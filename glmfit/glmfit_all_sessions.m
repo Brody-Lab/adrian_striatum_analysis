@@ -55,7 +55,7 @@ function glmfit_all_sessions(varargin)
             array_string=sprintf('%g,',glmfit_params.params.cellno(glmfit_params.params.responsive_enough));
             matlab_command = ['"',matlab_command(1:end-2),',''cellno'',id,''save_params'',false);','exit;"'];
             sbatch_command = sprintf('sbatch -e %s -o %s -t %g -J "%s" --array=%s --mem-per-cpu=5G -p %s submit_matlab_job.slurm %s',...
-                error_file,out_file,round(p.Results.time_per_job*60),job_name,array_string(1:end-1),params.partition,matlab_command);
+                error_file,out_file,round(p.Results.time_per_job*60),job_name,array_string(1:end-1),p.Results.partition,matlab_command);
         else
             error_file = fullfile(output_dir,'job%A.stderr');
             out_file = fullfile(output_dir,'job%A.stdout');             
@@ -67,7 +67,7 @@ function glmfit_all_sessions(varargin)
                 params.choice_time_back_s,params.distribution,params.include_mono_clicks,params.use_trial_history,params.nClickBins,...
                 params.separate_clicks_by,params.separate_clicks_by_outcome);       
             sbatch_command = sprintf('sbatch -e %s -o %s -t %g -J "%s" --mail-type=FAIL,TIME_LIMIT -p %s submit_matlab_job.slurm %s',...
-                error_file,out_file,round(p.Results.time_per_job*60),job_name,params.partition,matlab_command);
+                error_file,out_file,round(p.Results.time_per_job*60),job_name,p.Results.partition,matlab_command);
         end
         if P.on_cluster
             fprintf('Sending following system command to initiate job:\n   %s\n',sbatch_command);
