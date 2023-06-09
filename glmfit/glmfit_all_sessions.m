@@ -7,8 +7,9 @@ function glmfit_all_sessions(varargin)
     p=inputParser;
     p.KeepUnmatched=true;
     p.addParameter('job_array',false,@(x)validateattributes(x,{'logical'},{'scalar'})); % use a job array to parallelize over cells (useful if you are fitting adaptation params which takes a long time)
-    p.addParameter('time_per_job',0.5,@(x)validateattributes(x,{'numeric'},{'scalar','positive'})); % max time per job IN HOURS     
+    p.addParameter('time_per_job',3,@(x)validateattributes(x,{'numeric'},{'scalar','positive'})); % max time per job IN HOURS     
     p.addParameter('partition','all',@(x)validateattributes(x,{'char','string'},{'nonempty'}));
+    p.addParameter('requeue',false,@(x)validateattributes(x,{'logical'},{'scalar'})); 
     p.parse(varargin{:});    
     
     %glm fitting params
@@ -54,8 +55,13 @@ function glmfit_all_sessions(varargin)
             out_file = fullfile(output_dir,'job%A_cell%a.stdout');            
             array_string=sprintf('%g,',glmfit_params.params.cellno(glmfit_params.params.responsive_enough));
             matlab_command = ['"',matlab_command(1:end-2),',''cellno'',id,''save_params'',false);','exit;"'];
-            sbatch_command = sprintf('sbatch -e %s -o %s -t %g -J "%s" --array=%s --mem-per-cpu=5G -p %s submit_matlab_job.slurm %s',...
-                error_file,out_file,round(p.Results.time_per_job*60),job_name,array_string(1:end-1),p.Results.partition,matlab_command);
+            if p.Results.requeue
+                sbatch_command = sprintf('sbatch -e %s -o %s -t %g -J "%s" --array=%s --mem-per-cpu=5G -p %s --requeue submit_matlab_job.slurm %s',...
+                    error_file,out_file,round(p.Results.time_per_job*60),job_name,array_string(1:end-1),p.Results.partition,matlab_command);
+            else
+                sbatch_command = sprintf('sbatch -e %s -o %s -t %g -J "%s" --array=%s --mem-per-cpu=5G -p %s submit_matlab_job.slurm %s',...
+                    error_file,out_file,round(p.Results.time_per_job*60),job_name,array_string(1:end-1),p.Results.partition,matlab_command);                
+            end
         else
             error_file = fullfile(output_dir,'job%A.stderr');
             out_file = fullfile(output_dir,'job%A.stdout');             
@@ -66,8 +72,13 @@ function glmfit_all_sessions(varargin)
                 paths(i).cells_file,output_dir,params.bin_size_s,params.kfold,params.phi,params.tau_phi,...
                 params.choice_time_back_s,params.distribution,params.include_mono_clicks,params.use_trial_history,params.nClickBins,...
                 params.separate_clicks_by,params.separate_clicks_by_outcome);       
-            sbatch_command = sprintf('sbatch -e %s -o %s -t %g -J "%s" --mail-type=FAIL,TIME_LIMIT -p %s submit_matlab_job.slurm %s',...
-                error_file,out_file,round(p.Results.time_per_job*60),job_name,p.Results.partition,matlab_command);
+            if p.Results.requeue
+                sbatch_command = sprintf('sbatch -e %s -o %s -t %g -J "%s" --mail-type=FAIL,TIME_LIMIT -p %s --requeue submit_matlab_job.slurm %s',...
+                    error_file,out_file,round(p.Results.time_per_job*60),job_name,p.Results.partition,matlab_command);
+            else
+                sbatch_command = sprintf('sbatch -e %s -o %s -t %g -J "%s" --mail-type=FAIL,TIME_LIMIT -p %s submit_matlab_job.slurm %s',...
+                    error_file,out_file,round(p.Results.time_per_job*60),job_name,p.Results.partition,matlab_command);                
+            end
         end
         if P.on_cluster
             fprintf('Sending following system command to initiate job:\n   %s\n',sbatch_command);

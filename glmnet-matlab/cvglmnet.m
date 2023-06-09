@@ -285,7 +285,7 @@ end
 foldid = reshape(foldid, numel(foldid), 1);
 
 if (nfolds < 3)
-    error('nfolds must be bigger than 3; nfolds=10 recommended');
+    warning('nfolds should be bigger than 3; nfolds=10 recommended');
 end
 
 cpredmat = cell(nfolds,1);
