@@ -371,7 +371,7 @@ if isempty(lambda_min)
     if nobs < nvars
         lambda_min = 0.01;   
     else
-        lambda_min = 1e-4;
+        lambda_min = 1e-5;
     end
 end
 
