@@ -12,7 +12,6 @@ else
     is_offset = true;
 end
 
-parm
 if (is_sparse)
     task = 50;
     [lmu,a0,ca,ia,nin,dev,alm,nlp,jerr,dev0,ot] = glmnetMex(task,parm,x,y,jd,vp,ne,nx,nlam,flmin,ulam,thresh,isd,weights,cl,intr,maxit,offset,irs,pcs);
@@ -30,7 +29,6 @@ if (jerr ~= 0)
     end
 end
 
-nin
 ninmax = max(nin);
 lam = alm;
 if (ulam == 0.0)
@@ -39,8 +37,6 @@ end
 
 dd=[nvars, lmu];
 if ninmax > 0
-    ca
-    ninmax
     ca = ca(1:ninmax,:);
     df = sum(abs(ca) > 0, 1);
     ja = ia(1:ninmax);

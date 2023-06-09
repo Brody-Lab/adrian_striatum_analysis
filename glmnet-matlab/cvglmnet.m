@@ -257,10 +257,8 @@ if (isempty(options.weights))
     options.weights = ones(N,1);
 end
 
-        rank(x),cond(x)
 
 glmfit = glmnet(x, y, family, options);
-glmfit.df
 
 is_offset = glmfit.offset;
 options.lambda = glmfit.lambda;
