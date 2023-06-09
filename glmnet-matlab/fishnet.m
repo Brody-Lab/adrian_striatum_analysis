@@ -12,6 +12,7 @@ else
     is_offset = true;
 end
 
+parm
 if (is_sparse)
     task = 50;
     [lmu,a0,ca,ia,nin,dev,alm,nlp,jerr,dev0,ot] = glmnetMex(task,parm,x,y,jd,vp,ne,nx,nlam,flmin,ulam,thresh,isd,weights,cl,intr,maxit,offset,irs,pcs);
