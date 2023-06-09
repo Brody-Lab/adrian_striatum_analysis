@@ -85,7 +85,7 @@ function ivals = glmnetControl(pars)
     end
     
     if isfield(pars, 'factory') && (pars.factory == true)
-        ivals.fdev = 1E-5;
+        ivals.fdev = 1E-8;
         ivals.devmax = 0.999;
         ivals.eps = 1E-6;
         ivals.big = 9.9E35;
