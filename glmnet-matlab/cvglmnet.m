@@ -257,6 +257,8 @@ if (isempty(options.weights))
     options.weights = ones(N,1);
 end
 
+        x(end,:)
+
 glmfit = glmnet(x, y, family, options);
 glmfit.df
 
