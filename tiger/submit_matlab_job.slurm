@@ -11,7 +11,7 @@
 #SBATCH --mail-user=abondy@princeton.edu
 
 pwd; hostname; date
-env | grep SLURM | sort
+env | sort
 
 # these default settings are for tiger
 
