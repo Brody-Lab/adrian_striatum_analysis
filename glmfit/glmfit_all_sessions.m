@@ -20,7 +20,11 @@ function glmfit_all_sessions(varargin)
     if P.on_cluster
         % if on cluster, run computationally expensive jobs first
         S = load_sessions_table();
-        [~,order] = sort(S.n_clusters.*S.n_trials,'descend');
+        if p.Results.job_array
+            [~,order] = sort(S.n_trials,'descend');            
+        else
+            [~,order] = sort(S.n_clusters.*S.n_trials,'descend');
+        end
         paths = paths(order);        
     end
     if ~all([paths.all_exist])
