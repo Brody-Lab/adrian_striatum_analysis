@@ -20,7 +20,7 @@ function glmfit_all_sessions(varargin)
     params = params.Results;
     
     try
-        datetime(p.Results.jobid,'InputFormat','yyyy_MM_dd_hh_mm_ss');
+        datetime(p.Results.jobid,'InputFormat','yyyy_MM_dd_HH_mm_ss');
     catch
         error('job id %s could not be parsed as a date string.',p.Results.jobid);
     end
