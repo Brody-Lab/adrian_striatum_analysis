@@ -7,7 +7,7 @@ function glmfit_all_sessions(varargin)
     p=inputParser;
     p.KeepUnmatched=true;
     p.addParameter('job_array',false,@(x)validateattributes(x,{'logical'},{'scalar'})); % use a job array to parallelize over cells (useful if you are fitting adaptation params which takes a long time)
-    p.addParameter('time_per_job',3,@(x)validateattributes(x,{'numeric'},{'scalar','positive'})); % max time per job IN HOURS     
+    p.addParameter('time_per_job',4,@(x)validateattributes(x,{'numeric'},{'scalar','positive'})); % max time per job IN HOURS     
     p.addParameter('partition','all',@(x)validateattributes(x,{'char','string'},{'nonempty'}));
     p.addParameter('requeue',false,@(x)validateattributes(x,{'logical'},{'scalar'})); 
     p.addParameter('alpha',1,@(x)validateattributes(x,{'numeric'},{'scalar','nonnegative'})); % elastic net parameter (0=ridge, 1=lasso) 
