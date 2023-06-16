@@ -17,7 +17,6 @@ function glmfit_all_sessions(varargin)
     
     %glm fitting params
     params = glmfit_parse_params(varargin{:});
-    params = params.Results;
     
     try
         datetime(p.Results.jobid,'InputFormat','yyyy_MM_dd_HH_mm_ss');
