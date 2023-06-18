@@ -2,6 +2,7 @@ function glmfit_all_sessions(varargin)
     % fits all sessions by assigning a cluster job to each session
     %% parse and validate inputs
     P=get_parameters;
+    paths = get_data_paths('warn_existence',true,varargin{:});
     
     % params exclusive to this function
     p=inputParser;
@@ -14,6 +15,7 @@ function glmfit_all_sessions(varargin)
     p.addParameter('glmnet_thresh',1e-6,@(x)validateattributes(x,{'numeric'},{'scalar','nonnegative'}));    
     p.addParameter('sbatch_retry_frequency_mins',5,@(x)validateattributes(x,{'numeric'},{'scalar','positive'})); % retry sbatch submission after this many minutes
     p.addParameter('jobid',datestr(now,'YYYY_mm_DD_HH_MM_SS'),@(x)validateattributes(x,{'char','string'},{'nonempty'}));
+    p.addParameter('paths',1:numel(paths),@(x)validateattributes(x,{'numeric'},{'integer','increasing','nonempty','positive','<=',numel(paths)}));
     p.parse(varargin{:});    
     
     %glm fitting params
@@ -25,7 +27,6 @@ function glmfit_all_sessions(varargin)
         error('job id %s could not be parsed as a date string.',p.Results.jobid);
     end
     
-    paths = get_data_paths('warn_existence',true,varargin{:});
     if P.on_cluster
         % if on cluster, run computationally expensive jobs first
         S = load_sessions_table();
@@ -39,7 +40,7 @@ function glmfit_all_sessions(varargin)
     if ~all([paths.all_exist])
         error('Cannot continue because database is not fully accessible.');
     end
-    for i=1:length(paths)
+    for i=p.Results.paths(:)'
         fprintf('\n---------Submitting job %g of %g-----------\n',i,length(paths));
         job_name = strcat(paths(i).recording_name,'_glmfit_',p.Results.jobid);
         fprintf('Job name will be %s.\n',job_name);
