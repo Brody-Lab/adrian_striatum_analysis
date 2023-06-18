@@ -12,6 +12,7 @@ function glmfit_all_sessions(varargin)
     p.addParameter('requeue',false,@(x)validateattributes(x,{'logical'},{'scalar'})); 
     p.addParameter('alpha',1,@(x)validateattributes(x,{'numeric'},{'scalar','nonnegative'})); % elastic net parameter (0=ridge, 1=lasso) 
     p.addParameter('glmnet_thresh',1e-6,@(x)validateattributes(x,{'numeric'},{'scalar','nonnegative'}));    
+    p.addParameter('sbatch_retry_frequency_mins',5,@(x)validateattributes(x,{'numeric'},{'scalar','positive'})); % retry sbatch submission after this many minutes
     p.addParameter('jobid',datestr(now,'YYYY_mm_DD_HH_MM_SS'),@(x)validateattributes(x,{'char','string'},{'nonempty'}));
     p.parse(varargin{:});    
     
@@ -100,7 +101,8 @@ function glmfit_all_sessions(varargin)
             while true
                 output = system(sbatch_command);    
                 if output
-                    fprintf('Command failed. Trying again.\n');
+                    fprintf('sbatch command failed. Trying again in %d minutes.\n',round(p.Results.sbatch_retry_frequency_mins));
+                    pause(p.Results.sbatch_retry_frequency_mins*60);
                 else
                     break
                 end

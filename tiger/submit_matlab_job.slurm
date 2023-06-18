@@ -13,8 +13,6 @@
 pwd; hostname; date
 env | sort
 
-# these default settings are for tiger
-
 matlab_command=$1
 
 if [ $SLURM_ARRAY_TASK_COUNT -eq 1 ]; then
