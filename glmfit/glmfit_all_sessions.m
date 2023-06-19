@@ -15,7 +15,7 @@ function glmfit_all_sessions(varargin)
     p.addParameter('glmnet_thresh',1e-6,@(x)validateattributes(x,{'numeric'},{'scalar','nonnegative'}));    
     p.addParameter('sbatch_retry_frequency_mins',5,@(x)validateattributes(x,{'numeric'},{'scalar','positive'})); % retry sbatch submission after this many minutes
     p.addParameter('jobid',datestr(now,'YYYY_mm_DD_HH_MM_SS'),@(x)validateattributes(x,{'char','string'},{'nonempty'}));
-    p.addParameter('paths',1:numel(paths),@(x)validateattributes(x,{'numeric'},{'integer','increasing','nonempty','positive','<=',numel(paths)}));
+    p.addParameter('paths',1:numel(paths),@(x)validateattributes(x,{'numeric'},{'integer','increasing','nonempty','positive','<=',numel(paths)})); %indices of sessions to run (as they would run after sorting step)
     p.parse(varargin{:});    
     
     %glm fitting params
