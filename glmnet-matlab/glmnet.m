@@ -451,7 +451,7 @@ switch family
     case 'mgaussian'
         fit = mrelnet(x,is_sparse,irs,pcs,y,weights,offset,parm,nobs,nvars,...
             jd,vp,cl,ne,nx,nlam,flmin,ulam,thresh,isd,jsd,intr,maxit,family);
-    case 'poisson'
+    case 'poisson'        
         fit = fishnet(x,is_sparse,irs,pcs,y,weights,offset,parm,nobs,nvars,...
             jd,vp,cl,ne,nx,nlam,flmin,ulam,thresh,isd,intr,maxit,family);     
 end

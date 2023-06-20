@@ -13,12 +13,20 @@ P.hostname=deblank(P.hostname);
 P.pc_data_path = fullfile('D:','adrian_striatum_analysis');
 P.jukebox_data_path = fullfile('X:','abondy','adrian_striatum_analysis');
 P.tiger_data_path = '/scratch/gpfs/abondy/adrian_striatum_analysis';
-if strncmp(P.hostname,'tiger',5) || strncmp(P.hostname,'della',5)
-    P.on_tiger=true;
+P.della_data_path = '/scratch/gpfs/abondy/adrian_striatum_analysis';
+P.spock_data_path = '/mnt/cup/labs/brody/abondy/adrian_striatum_analysis';
+P.on_cluster=true;
+if strncmp(P.hostname,'tiger',5)
     P.data_path = P.tiger_data_path;
-    P.fit_path = P.tiger_data_path;    
+    P.fit_path = P.tiger_data_path;      
+elseif strncmp(P.hostname,'della',5)
+    P.data_path = P.della_data_path;
+    P.fit_path = P.della_data_path;  
+elseif strncmp(P.hostname,'spock',5)
+    P.data_path = P.spock_data_path;
+    P.fit_path = P.spock_data_path;       
 else
-    P.on_tiger=false;
+    P.on_cluster=false;
     P.data_path = P.pc_data_path;   
     P.fit_path = P.pc_data_path;
 end
@@ -37,11 +45,13 @@ P.ap_groups = {[1.5 Inf],[0 1.5],[-1.5 0],[-Inf -1.5]};
 P.glmfit_catalog_path = fullfile(P.data_path,'glmfit_log.mat');
 % if all these parameters are the same for a cell's fit, the fits should be
 % identical, unless a code change produced changes in the fitting algorithm
-P.glmfit_catalog_keys = {'recording_name','phi','tau_phi','fit_adaptation','bin_size_s','include_mono_clicks','dm_scaling_mode','use_trial_history',...
+P.glmfit_catalog_keys = {'recording_name','phi','tau_phi','fit_adaptation','bin_size_s','include_mono_clicks','dm_scaling_mode','use_trial_history','isi_cutoff',...
     'choice_time_back_s','kfold','distribution','link','within_stream','lambda','git_branch','git_commit','include_stereo_click','maxIter','nClickBins','separate_clicks_by',...
-    'confine_clicks_to_stim_period','confine_coupling_to_stim_period','coupling_cells','stim_period_boundary','stim_period_mode','separate_clicks_by_outcome','lambda_correct_zscore'}; 
+    'confine_clicks_to_stim_period','confine_coupling_to_stim_period','coupling_cells','stim_period_boundary','stim_period_mode','separate_clicks_by_outcome','lambda_correct_zscore',...
+    'responsiveness_boundary','responsiveness_boundary_offset','ref_event','separate_cpoke_out_by_choice','separate_cpoke_in_by_choice','boundary_mode','clicks_boundary','click_boundary_offset',...
+    'coupling_boundary','coupling_boundary_offset','alpha','foldseed'}; 
 P.glmfit_catalog_params = [P.glmfit_catalog_keys 'rat','sess_date','sessid','run','hostname','save_time','runtime_sec','saved_cells','responsive_cells',...
-    'n_missing_cells','minSpkParamRatio','minResponsiveFrac','dm'];
+    'n_missing_cells','minSpkParamRatio','minResponsiveFrac','dm','glmnet_thresh','max_glmnet_attempts','glmnetOptions'];
 
 %% tagging
 P.tagging_metrics={'reliability','dp','tp','signrank','auc','mi'};

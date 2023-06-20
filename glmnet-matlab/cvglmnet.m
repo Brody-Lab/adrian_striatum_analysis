@@ -1,4 +1,4 @@
-function CVerr = cvglmnet(x,y,family,options,type,nfolds,foldid,parallel,keep,grouped)
+function CVerr = cvglmnet(x,y,family,options,type,nfolds,foldid,parallel,keep,grouped,require_success)
 
 %--------------------------------------------------------------------------
 % cvglmnet.m: cross-validation for glmnet
@@ -236,6 +236,9 @@ end
 if nargin < 10 || isempty(grouped)
     grouped = true;
 end
+if nargin < 11 || isempty(require_success)
+    require_success=false;
+end
 
 options = glmnetSet(options);
 
@@ -256,6 +259,7 @@ end
 if (isempty(options.weights))
     options.weights = ones(N,1);
 end
+
 
 glmfit = glmnet(x, y, family, options);
 
@@ -284,7 +288,7 @@ end
 foldid = reshape(foldid, numel(foldid), 1);
 
 if (nfolds < 3)
-    error('nfolds must be bigger than 3; nfolds=10 recommended');
+    warning('nfolds should be bigger than 3; nfolds=10 recommended');
 end
 
 cpredmat = cell(nfolds,1);
@@ -314,6 +318,16 @@ else
         end
         xr = x(~which,:); yr = y(~which,:);
         cpredmat{i} = glmnet(xr, yr, family, opts);
+        if numel(cpredmat{i}.a0)~=numel(opts.lambda)
+            if require_success
+                warning('One CV fold failed to converge for entire lambda sequence. Returning without running remaining folds.');            
+                CVerr=[];
+                return
+            else
+                warning('One CV fold failed to converge for entire lambda sequence.');           
+            end
+        end
+            
     end
 end
 
