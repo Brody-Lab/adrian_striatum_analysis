@@ -2,6 +2,7 @@ function cells_table = select_cells(varargin)
     
     %% parse and validate inputs
     p=inputParser;
+    p.KeepUnmatched=true;
     p.addParameter('DV',[-Inf Inf],@(x)validateattributes(x,{'numeric'},{'increasing','numel',2}));
     p.addParameter('AP',[-Inf Inf],@(x)validateattributes(x,{'numeric'},{'increasing','numel',2}));
     p.addParameter('ML',[0 Inf],@(x)validateattributes(x,{'numeric'},{'increasing','numel',2,'>=',0}));
