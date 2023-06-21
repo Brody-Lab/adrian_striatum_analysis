@@ -8,14 +8,13 @@ function glmfit_all_sessions(varargin)
     p=inputParser;
     p.KeepUnmatched=true;
     p.addParameter('job_array',false,@(x)validateattributes(x,{'logical'},{'scalar'})); % use a job array to parallelize over cells (useful if you are fitting adaptation params which takes a long time)
-    p.addParameter('time_per_job',4,@(x)validateattributes(x,{'numeric'},{'scalar','positive'})); % max time per job IN HOURS     
+    p.addParameter('time_per_job',5,@(x)validateattributes(x,{'numeric'},{'scalar','positive'})); % max time per job IN HOURS     
     p.addParameter('partition','all',@(x)validateattributes(x,{'char','string'},{'nonempty'}));
-    p.addParameter('requeue',false,@(x)validateattributes(x,{'logical'},{'scalar'})); 
-    p.addParameter('alpha',1,@(x)validateattributes(x,{'numeric'},{'scalar','nonnegative'})); % elastic net parameter (0=ridge, 1=lasso) 
-    p.addParameter('glmnet_thresh',1e-6,@(x)validateattributes(x,{'numeric'},{'scalar','nonnegative'}));    
     p.addParameter('sbatch_retry_frequency_mins',5,@(x)validateattributes(x,{'numeric'},{'scalar','positive'})); % retry sbatch submission after this many minutes
     p.addParameter('jobid',datestr(now,'YYYY_mm_DD_HH_MM_SS'),@(x)validateattributes(x,{'char','string'},{'nonempty'}));
     p.addParameter('paths',1:numel(paths),@(x)validateattributes(x,{'numeric'},{'integer','increasing','nonempty','positive','<=',numel(paths)})); %indices of sessions to run (as they would run after sorting step)
+    p.addParameter('ncpus',1,@(x)validateattributes(x,{'numeric'},{'scalar','positive'}));    
+    p.addParameter('ngpus',0,@(x)validateattributes(x,{'numeric'},{'scalar','positive'}));          
     p.parse(varargin{:});    
     
     %glm fitting params
@@ -55,10 +54,10 @@ function glmfit_all_sessions(varargin)
             matlab_command = sprintf(['fit_glm_to_Cells(''%s'',''save_path'',''%s'',''save'',true,''bin_size_s'',%0.10g,',...
                 '''kfold'',%g,''phi'',%0.10g,''tau_phi'',%0.10g,''choice_time_back_s'',%0.10g,''alpha'',%0.10g,''glmnet_thresh'',%0.10g,',...
                 '''distribution'',''%s'',''include_mono_clicks'',logical(%g),''use_trial_history'',logical(%g),''nClickBins'',%g,',...
-                '''separate_clicks_by'',''%s'',''separate_clicks_by_outcome'',logical(%g));'],...
+                '''separate_clicks_by'',''%s'',''separate_clicks_by_outcome'',logical(%g),''fit_method'',''%s'');'],...
                 paths(i).cells_file,output_dir,params.bin_size_s,params.kfold,params.phi,params.tau_phi,params.choice_time_back_s,...
                 params.alpha,params.glmnet_thresh,params.distribution,params.include_mono_clicks,params.use_trial_history,...
-                params.nClickBins,params.separate_clicks_by,params.separate_clicks_by_outcome);
+                params.nClickBins,params.separate_clicks_by,params.separate_clicks_by_outcome,params.fit_method);
             save_param_command=[matlab_command(1:end-2),',''fit'',false);'];
             fprintf('Running fit_glm_to_Cells to save params before batch fitting.\n');
             eval(save_param_command);
@@ -72,30 +71,20 @@ function glmfit_all_sessions(varargin)
             out_file = fullfile(output_dir,'job%A_cell%a.stdout');            
             array_string=sprintf('%g,',glmfit_params.params.cellno(glmfit_params.params.responsive_enough));
             matlab_command = ['"',matlab_command(1:end-2),',''cellno'',id,''save_params'',false);','exit;"'];
-            if p.Results.requeue
-                sbatch_command = sprintf('sbatch -e %s -o %s -t %g -J "%s" --array=%s --mem-per-cpu=5G -p %s --requeue submit_matlab_job.slurm %s',...
-                    error_file,out_file,round(p.Results.time_per_job*60),job_name,array_string(1:end-1),p.Results.partition,matlab_command);
-            else
-                sbatch_command = sprintf('sbatch -e %s -o %s -t %g -J "%s" --array=%s --mem-per-cpu=5G -p %s submit_matlab_job.slurm %s',...
-                    error_file,out_file,round(p.Results.time_per_job*60),job_name,array_string(1:end-1),p.Results.partition,matlab_command);                
-            end
+            sbatch_command = sprintf('sbatch -e %s -o %s -t %g -J "%s" --array=%s -p %s --cpus-per-task=%d --gres=gpu:%d submit_matlab_job.slurm %s',...
+                error_file,out_file,round(p.Results.time_per_job*60),job_name,array_string(1:end-1),p.Results.partition,p.Results.ncpus,p.results.ngpus,matlab_command);                
         else
             error_file = fullfile(output_dir,'job%A.stderr');
             out_file = fullfile(output_dir,'job%A.stdout');             
             matlab_command = sprintf(['"fit_glm_to_Cells(''%s'',''save_path'',''%s'',''save'',true,''bin_size_s'',%g,',...
                 '''kfold'',%g,''phi'',%0.10g,''tau_phi'',%0.10g,''choice_time_back_s'',%0.10g,''alpha'',%0.10g,''glmnet_thresh'',%0.10g,'...
                 '''distribution'',''%s'',''include_mono_clicks'',logical(%g),''use_trial_history'',logical(%g),''nClickBins'',%g,',...
-                '''separate_clicks_by'',''%s'',''separate_clicks_by_outcome'',logical(%g));exit;"'],...
+                '''separate_clicks_by'',''%s'',''separate_clicks_by_outcome'',logical(%g),''fit_method'',''%s'');exit;"'],...
                 paths(i).cells_file,output_dir,params.bin_size_s,params.kfold,params.phi,params.tau_phi,params.choice_time_back_s,params.alpha,...
                 params.glmnet_thresh,params.distribution,params.include_mono_clicks,params.use_trial_history,params.nClickBins,...
-                params.separate_clicks_by,params.separate_clicks_by_outcome);       
-            if p.Results.requeue
-                sbatch_command = sprintf('sbatch -e %s -o %s -t %g -J "%s" --mail-type=FAIL,TIME_LIMIT -p %s --requeue submit_matlab_job.slurm %s',...
-                    error_file,out_file,round(p.Results.time_per_job*60),job_name,p.Results.partition,matlab_command);
-            else
-                sbatch_command = sprintf('sbatch -e %s -o %s -t %g -J "%s" --mail-type=FAIL,TIME_LIMIT -p %s submit_matlab_job.slurm %s',...
-                    error_file,out_file,round(p.Results.time_per_job*60),job_name,p.Results.partition,matlab_command);                
-            end
+                params.separate_clicks_by,params.separate_clicks_by_outcome,params.fit_method);       
+            sbatch_command = sprintf('sbatch -e %s -o %s -t %g -J "%s" --mail-type=FAIL,TIME_LIMIT -p %s --cpus-per-task=%d --gres=gpu:%d submit_matlab_job.slurm %s',...
+                error_file,out_file,round(p.Results.time_per_job*60),job_name,p.Results.partition,p.Results.ncpus,p.Results.ngpus,matlab_command);                
         end
         if P.on_cluster
             fprintf('Sending following system command to initiate job:\n   %s\n',sbatch_command);
