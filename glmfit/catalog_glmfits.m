@@ -55,7 +55,7 @@ function [glmfit_params,saved_cells] = find_glmfit_params(params)
     
     %% loop over recordings and fit runs, loading the params file and checking that files have been made for all cells
     % loop over recordings   
-    for i=1:length(paths)
+    parfor i=1:length(paths)
         [glmfit_params{i},saved_cells{i}] = find_glmfit_params_internal(paths(i),params);
     end
     glmfit_params = [glmfit_params{:}];
