@@ -9,12 +9,12 @@ function glmfit_all_sessions(varargin)
     p.KeepUnmatched=true;
     p.addParameter('job_array',false,@(x)validateattributes(x,{'logical'},{'scalar'})); % use a job array to parallelize over cells (useful if you are fitting adaptation params which takes a long time)
     p.addParameter('time_per_job',5,@(x)validateattributes(x,{'numeric'},{'scalar','positive'})); % max time per job IN HOURS     
-    p.addParameter('partition','all',@(x)validateattributes(x,{'char','string'},{'nonempty'}));
+    p.addParameter('partition','',@(x)validateattributes(x,{'char','string'},{}));
     p.addParameter('sbatch_retry_frequency_mins',5,@(x)validateattributes(x,{'numeric'},{'scalar','positive'})); % retry sbatch submission after this many minutes
     p.addParameter('jobid',datestr(now,'YYYY_mm_DD_HH_MM_SS'),@(x)validateattributes(x,{'char','string'},{'nonempty'}));
     p.addParameter('paths',1:numel(paths),@(x)validateattributes(x,{'numeric'},{'integer','increasing','nonempty','positive','<=',numel(paths)})); %indices of sessions to run (as they would run after sorting step)
-    p.addParameter('ncpus',1,@(x)validateattributes(x,{'numeric'},{'scalar','positive'}));    
-    p.addParameter('ngpus',0,@(x)validateattributes(x,{'numeric'},{'scalar','positive'}));          
+    p.addParameter('ncpus',1,@(x)validateattributes(x,{'numeric'},{'scalar','positive','integer'}));    
+    p.addParameter('ngpus',0,@(x)validateattributes(x,{'numeric'},{'scalar','nonnegative','integer'}));          
     p.parse(varargin{:});    
     
     %glm fitting params
@@ -87,6 +87,8 @@ function glmfit_all_sessions(varargin)
                 error_file,out_file,round(p.Results.time_per_job*60),job_name,p.Results.partition,p.Results.ncpus,p.Results.ngpus,matlab_command);                
         end
         if P.on_cluster
+            sbatch_command = strrep(sbatch_command,'--gres=gpu:0 ','');            
+            sbatch_command = strrep(sbatch_command,'-p  ','');                        
             fprintf('Sending following system command to initiate job:\n   %s\n',sbatch_command);
             while true
                 output = system(sbatch_command);    
