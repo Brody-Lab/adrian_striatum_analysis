@@ -72,7 +72,7 @@ function glmfit_all_sessions(varargin)
             array_string=sprintf('%g,',glmfit_params.params.cellno(glmfit_params.params.responsive_enough));
             matlab_command = ['"',matlab_command(1:end-2),',''cellno'',id,''save_params'',false);','exit;"'];
             sbatch_command = sprintf('sbatch -e %s -o %s -t %g -J "%s" --array=%s -p %s --cpus-per-task=%d --gres=gpu:%d submit_matlab_job.slurm %s',...
-                error_file,out_file,round(p.Results.time_per_job*60),job_name,array_string(1:end-1),p.Results.partition,p.Results.ncpus,p.results.ngpus,matlab_command);                
+                error_file,out_file,round(p.Results.time_per_job*60),job_name,array_string(1:end-1),p.Results.partition,p.Results.ncpus,p.Results.ngpus,matlab_command);                
         else
             error_file = fullfile(output_dir,'job%A.stderr');
             out_file = fullfile(output_dir,'job%A.stdout');             
