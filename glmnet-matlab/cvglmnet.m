@@ -336,7 +336,7 @@ else
                 bad_lambda=[];          
             end
         end
-        if n_success<opts.nlambda
+        if ~isempty(bad_lambda)
             if require_success
                 warning('   %dth CV fold failed to converge even after removing %d lambdas. Returning without running remaining folds.',i,options.nlambda-opts.nlambda);            
                 CVerr=[];
