@@ -1,4 +1,4 @@
-function CVerr = cvglmnet(x,y,family,options,type,nfolds,foldid,parallel,keep,grouped,require_success)
+function CVerr = cvglmnet(x,y,family,options,type,nfolds,foldid,parallel,keep,grouped,require_success,glmfit)
 
 %--------------------------------------------------------------------------
 % cvglmnet.m: cross-validation for glmnet
@@ -260,8 +260,9 @@ if (isempty(options.weights))
     options.weights = ones(N,1);
 end
 
-
-glmfit = glmnet(x, y, family, options);
+if nargin<12
+    glmfit = glmnet(x, y, family, options);
+end
 
 is_offset = glmfit.offset;
 options.lambda = glmfit.lambda;
@@ -293,43 +294,59 @@ end
 
 cpredmat = cell(nfolds,1);
 
+opts = options;
+opts.lambda = options.lambda;
+
 if (parallel == true)
     
-    parfor i = 1: nfolds
-        which = foldid==i;
-        opts = options;
-        opts.weights = opts.weights(~which,:);
-        opts.lambda = options.lambda;
-        if (is_offset)
-            opts.offset = opts.offset(~which,:);
-        end
-        xr = x(~which,:); yr = y(~which,:);
-        cpredmat{i} = glmnet(xr, yr, family, opts);
-    end
+%     parfor i = 1: nfolds
+%         which = foldid==i;
+%         opts.weights = opts.weights(~which,:);
+%         if (is_offset)
+%             opts.offset = opts.offset(~which,:);
+%         end
+%         xr = x(~which,:); yr = y(~which,:);
+%         cpredmat{i} = glmnet(xr, yr, family, opts);
+%     end
     
 else   
-    for i = 1: nfolds        
+    for i = 1: nfolds   
+        fold_tic=tic;
         which = foldid==i;
-        opts = options;
-        opts.weights = opts.weights(~which,:);
-        opts.lambda = options.lambda;
+        opts.weights = options.weights(~which,:);
         if (is_offset)
-            opts.offset = opts.offset(~which,:);
+            opts.offset = options.offset(~which,:);
         end
         xr = x(~which,:); yr = y(~which,:);
         cpredmat{i} = glmnet(xr, yr, family, opts);
-        if numel(cpredmat{i}.a0)~=numel(opts.lambda)
+        n_success = numel(cpredmat{i}.lambda);        
+        while n_success<opts.nlambda && opts.nlambda>=20
+            fprintf('   Removing %dth lambda value for cv fold %d. %d lambdas remaining. \n',n_success+1,i,opts.nlambda-1);
+            opts.nlambda = opts.nlambda-1;
+            opts.lambda(n_success+1)=[];
+            fold_tic=tic;            
+            cpredmat{i} = glmnet(xr, yr, family, opts);
+            n_success = numel(cpredmat{i}.lambda);
+        end
+        if n_success<opts.nlambda
             if require_success
-                warning('One CV fold failed to converge for entire lambda sequence. Returning without running remaining folds.');            
+                warning('   %dth CV fold failed to converge even after removing %d lambdas. Returning without running remaining folds.',i,options.nlambda-opts.nlambda);            
                 CVerr=[];
                 return
             else
-                warning('One CV fold failed to converge for entire lambda sequence.');           
+                warning('   %dth CV fold failed to converge even after removing %d lambdas. Running next fold anyway.',i,options.nlambda-opts.nlambda);            
             end
+        else
+            fprintf('   %dth CV fold converged in %s after %d passes.\n',i,timestr(toc(fold_tic)),cpredmat{i}.npasses);                                    
         end
-            
     end
 end
+
+cpredmat = match_lambdas( {cpredmat{:} glmfit}');
+glmfit=cpredmat{end};
+cpredmat = cpredmat(1:end-1);
+options.lambda=opts.lambda;
+options.nlambda = opts.nlambda;
 
 switch cpredmat{1}.class
     case 'elnet'
