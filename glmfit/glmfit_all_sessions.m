@@ -71,7 +71,7 @@ function glmfit_all_sessions(varargin)
             error_file = fullfile(output_dir,'job%A_cell%a.stderr');
             out_file = fullfile(output_dir,'job%A_cell%a.stdout');            
             array_string=sprintf('%g,',glmfit_params.params.cellno(glmfit_params.params.responsive_enough));
-            matlab_command = ['"',matlab_command(1:end-2),',''cellno'',id,''save_params'',false);','exit;"'];                
+            matlab_command = ['"',matlab_command(2:end-3),',''cellno'',id,''save_params'',false);','exit;"'];                
         else
             error_file = fullfile(output_dir,'job%A.stderr');
             out_file = fullfile(output_dir,'job%A.stdout'); 
