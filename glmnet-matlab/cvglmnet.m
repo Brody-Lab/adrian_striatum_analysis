@@ -320,7 +320,14 @@ else
         xr = x(~which,:); yr = y(~which,:);
         cpredmat{i} = glmnet(xr, yr, family, opts);
         n_success = numel(cpredmat{i}.lambda);        
-        cpredmat{i}
+        if cpredmat{i}.jerr<0
+            cpredmat{i}
+            cpredmat{i}.dev
+            cpredmat{i}.lambda
+            cpredmat{i}.df
+            cpredmat{i}.a0
+        end
+            
         while n_success<opts.nlambda && opts.nlambda>=20
             fprintf('   Removing %dth lambda value for cv fold %d. %d lambdas remaining. \n',n_success+1,i,opts.nlambda-1);
             opts.nlambda = opts.nlambda-1;
