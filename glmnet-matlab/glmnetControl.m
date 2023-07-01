@@ -108,7 +108,6 @@ function ivals = glmnetControl(pars)
                 ivals.(field) = pars.(field);
             end
         end
-        disp( ivals );
         task = 0;
         glmnetMex(task, ivals.fdev, ivals.devmax, ivals.eps, ivals.big, ivals.mnlam, ...
         ivals.pmin, ivals.exmx, ivals.prec, ivals.mxit);
