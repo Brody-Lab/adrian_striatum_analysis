@@ -10,10 +10,10 @@ function [fits_table,log] = select_cells_and_fits(glmfit_log,varargin)
     % That's a big bottleneck.... Keep it in your workspace for later.
 
     P = get_parameters();
-    log = select_glmfit_runs(glmfit_log,varargin{:});
+    log = select_glmfit_runs(glmfit_log,varargin{:}); % log is for only a single run
     cells_table = select_cells('is_in_dorsal_striatum',true,varargin{:});
-    [fits,is_responsive] = get_glm_fits(cells_table.recording_name,cells_table.cellno,log);
-    fits_table = [cells_table(is_responsive,:) fits];
+    [fits,is_saved] = get_glm_fits(cells_table.recording_name,cells_table.cellno,log);
+    fits_table = [cells_table(is_saved,:) fits];
     [~,idx] = sort(fits_table.AP);
     fits_table = fits_table(idx,:);
 end

@@ -130,7 +130,6 @@ function glmfit_log = make_catalog_from_params(glmfit_params,saved_cells)
     for t=numel(glmfit_params):-1:1 % scalar indexing across all params
         if ~isempty(glmfit_params(t).params)
             count=count+1;
-            T(count).fit_method = "glmnet";            
             for f=1:length(fields)
                 this_field=fields{f};
                 % special cases
@@ -157,9 +156,11 @@ function glmfit_log = make_catalog_from_params(glmfit_params,saved_cells)
                            [~, T(count).(this_field)] = extract_info_from_npx_path(glmfit_params(t).params.save_path);
                         elseif this_field=="lambda_correct_zscore" && glmfit_params(t).params.git_commit=="9e53fd2cb4adf6852328e70cb7a072092c1da944"
                             T(count).lambda_correct_zscore=true;
-                        elseif this_field=="alpha"
+                        elseif this_field=="alpha" 
                             T(count).alpha=0;
-                            T(count).fit_method="neuroglmfit";                            
+                            if ~isfield(glmfit_params(t).params,'fit_method')  
+                                T(count).fit_method="neuroglmfit";                            
+                            end
                         elseif this_field=="foldseed" || this_field=="max_glmnet_attempts" || this_field=="lambda" || this_field=="glmnet_thresh" || this_field=="maxIter"
                             T(count).(this_field)=NaN;
                         elseif isfield(default_params,this_field)
@@ -174,7 +175,9 @@ function glmfit_log = make_catalog_from_params(glmfit_params,saved_cells)
             end
             if T(count).git_branch=="neuro_glmnet"
                 T(count).fit_method = "glmnet";
-            end
+            elseif T(count).alpha==1 && ~isfield(glmfit_params(t).params,'fit_method')  
+                T(count).fit_method = "glmnet";
+            end            
             T(count).dm.dspec.expt = rmfield(T(count).dm.dspec.expt,'trial');            
             % check that all cells have been saved and throw warnings
             % otherwise
@@ -209,7 +212,7 @@ function glmfit_log = validate_glmfit_log(glmfit_log,params)
     % just removed from the log.
     [run_idx,unique_runs] = findgroups(glmfit_log.run);
     n_runs = numel(unique_runs); 
-    remove = false(height(glmfit_log),1);
+    remove = false(n_runs,1);
     for i=1:n_runs
         this_idx = run_idx==i;
         %% check that all sessions are represented
@@ -237,7 +240,7 @@ function glmfit_log = validate_glmfit_log(glmfit_log,params)
             end
         end
     end
-    glmfit_log = glmfit_log(~remove,:);
+    glmfit_log = glmfit_log(~ismember(glmfit_log.run,unique_runs(remove)),:);
 end
 
 function params = trim_params(params)

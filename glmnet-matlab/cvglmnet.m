@@ -324,7 +324,7 @@ else
         else
             bad_lambda=[];          
         end
-        while ~isempty(bad_lambda) && opts.nlambda>20
+        while ~isempty(bad_lambda) && (options.nlambda-opts.nlambda)<1 % doing this more than once doesn't seem to help
             fprintf('   Removing %dth lambda value for cv fold %d. %d lambdas remaining. \n',bad_lambda,i,opts.nlambda-1);
             opts.nlambda = opts.nlambda-1;
             opts.lambda(bad_lambda)=[];
