@@ -160,7 +160,9 @@ function options = glmnetSet(opts)
   options.gtype            =           [];        
   options.ltype            =     'Newton';
   options.standardize_resp =        false;
-  options.mtype =             'ungrouped'; 
+  options.mtype            =  'ungrouped'; 
+  options.relaxed          =        false;
+  options.include_sequence =           [];
   
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % End default options.
@@ -181,7 +183,7 @@ function options = glmnetSet(opts)
 % Grab valid fields from user's opts
   for i = 1:length(vfields)
     field = vfields{i};
-    if isfield( opts, field );
+    if isfield( opts, field )
       options.(field) = opts.(field);
     end
   end

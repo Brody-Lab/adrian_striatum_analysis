@@ -45,7 +45,7 @@ P.ap_groups = {[1.5 Inf],[0 1.5],[-1.5 0],[-Inf -1.5]};
 P.glmfit_catalog_path = fullfile(P.data_path,'glmfit_log.mat');
 % if all these parameters are the same for a cell's fit, the fits should be
 % identical, unless a code change produced changes in the fitting algorithm
-P.glmfit_catalog_keys = {'rat','recording_name','sess_date','sessid','bin_size_s','fit_method','alpha','lambda','kfold','distribution','link','choice_time_back_s',...
+P.glmfit_catalog_keys = {'rat','recording_name','sess_date','sessid','bin_size_s','fit_method','relaxed','alpha','lambda','kfold','distribution','link','choice_time_back_s',...
     'git_branch','git_commit','include_stereo_click','phi','tau_phi','fit_adaptation','within_stream',...
     'include_mono_clicks','dm_scaling_mode','use_trial_history','isi_cutoff','maxIter','nClickBins','separate_clicks_by',...
     'confine_clicks_to_stim_period','confine_coupling_to_stim_period','coupling_cells','stim_period_boundary','stim_period_mode','separate_clicks_by_outcome','lambda_correct_zscore',...
@@ -103,5 +103,8 @@ P.gamma_color_groups = flip(copper(4));
 P.gamma_ranges = [-5 -2 0 2 5];
 P.signal_strength_percentiles = [0 25 50 75 100];
 P.gamma_labels={'strong preferred','weak preferred','weak null','strong null'};
+
+P.example_cell_recording_names = ["T219_2019_12_09"  "A243_2019_10_29" "T219_2019_12_05" "A249_2020_09_11" "A256_2020_09_23" "A249_2020_09_25"  ];
+P.example_cellno = [12 111 71 188 351 168];
 
                

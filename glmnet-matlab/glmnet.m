@@ -436,27 +436,71 @@ end
 if issparse(y)
     y = full(y);
 end
-  
-switch family
 
-    case 'gaussian'
-        fit = elnet(x,is_sparse,irs,pcs,y,weights,offset,gtype,parm,lempty,...
-            nvars,jd,vp,cl,ne,nx,nlam,flmin,ulam,thresh,isd,intr,maxit,family);
-    case {'binomial', 'multinomial'}
-        fit = lognet(x,is_sparse,irs,pcs,y,weights,offset,parm,nobs,nvars,...
-            jd,vp,cl,ne,nx,nlam,flmin,ulam,thresh,isd,intr,maxit,kopt,family);
-    case 'cox'
-        fit = coxnet(x,is_sparse,irs,pcs,y,weights,offset,parm,nobs,nvars,...
-            jd,vp,cl,ne,nx,nlam,flmin,ulam,thresh,isd,maxit,family);
-    case 'mgaussian'
-        fit = mrelnet(x,is_sparse,irs,pcs,y,weights,offset,parm,nobs,nvars,...
-            jd,vp,cl,ne,nx,nlam,flmin,ulam,thresh,isd,jsd,intr,maxit,family);
-    case 'poisson'        
-        fit = fishnet(x,is_sparse,irs,pcs,y,weights,offset,parm,nobs,nvars,...
-            jd,vp,cl,ne,nx,nlam,flmin,ulam,thresh,isd,intr,maxit,family);     
+if isfield(options,'include_sequence') && ~isempty(options.include_sequence)
+    include_sequence_supplied=true;
+    if ~options.relaxed
+        include_sequence_supplied=false;        
+        warning('user-supplied include_sequence will be ignored since relaxed is FALSE.');
+    end
+else
+    include_sequence_supplied=false;
+end
+  
+if ~include_sequence_supplied
+    switch family
+        case 'gaussian'
+            fit = elnet(x,is_sparse,irs,pcs,y,weights,offset,gtype,parm,lempty,...
+                nvars,jd,vp,cl,ne,nx,nlam,flmin,ulam,thresh,isd,intr,maxit,family);
+        case {'binomial', 'multinomial'}
+            fit = lognet(x,is_sparse,irs,pcs,y,weights,offset,parm,nobs,nvars,...
+                jd,vp,cl,ne,nx,nlam,flmin,ulam,thresh,isd,intr,maxit,kopt,family);
+        case 'cox'
+            fit = coxnet(x,is_sparse,irs,pcs,y,weights,offset,parm,nobs,nvars,...
+                jd,vp,cl,ne,nx,nlam,flmin,ulam,thresh,isd,maxit,family);
+        case 'mgaussian'
+            fit = mrelnet(x,is_sparse,irs,pcs,y,weights,offset,parm,nobs,nvars,...
+                jd,vp,cl,ne,nx,nlam,flmin,ulam,thresh,isd,jsd,intr,maxit,family);
+        case 'poisson'        
+            fit = fishnet(x,is_sparse,irs,pcs,y,weights,offset,parm,nobs,nvars,...
+                jd,vp,cl,ne,nx,nlam,flmin,ulam,thresh,isd,intr,maxit,family);     
+    end
+    options.include_sequence = fit.beta~=0;
+else
+    fit.jerr=0;
+    switch family
+        case 'gaussian'
+            fit.class='elnet';
+        case {'binomial', 'multinomial'}
+            fit.class='lognet';
+        case 'cox'
+            fit.class='coxnet';
+        case 'mgaussian'
+            fit.class='mrelnet';
+        case 'poisson'   
+            fit.class='fishnet';
+    end
+    fit.offset=offset;
+    if isempty(fit.offset)
+        fit.offset=0;
+    end
+    fit.lambda=[];
 end
 
 fit.call = {out_x, out_y, out_family, out_options};
+
+if options.relaxed 
+    relaxed_fit = do_relaxed_fit(x,y,options.include_sequence,family,options);
+    relaxed_fit.call = fit.call;
+    relaxed_fit.jerr=fit.jerr;
+    relaxed_fit.class = fit.class;
+    relaxed_fit.offset = fit.offset;
+    relaxed_fit.lambda=fit.lambda;
+    fit = relaxed_fit;
+    fit.relaxed=true;
+else
+    fit.relaxed=false;
+end
 
 if (exit_rec == 1)
     optset.fdev = fdev;

@@ -1,4 +1,4 @@
-function CVerr = cvglmnet(x,y,family,options,type,nfolds,foldid,parallel,keep,grouped,require_success,glmfit)
+function CVerr = cvglmnet(x,y,family,options,type,nfolds,foldid,parallel,keep,grouped,require_success)
 
 %--------------------------------------------------------------------------
 % cvglmnet.m: cross-validation for glmnet
@@ -259,13 +259,54 @@ end
 if (isempty(options.weights))
     options.weights = ones(N,1);
 end
+opts=options;
 
-if nargin<12
-    glmfit = glmnet(x, y, family, options);
+this_tic=tic;
+glmfit = glmnet(x, y, family, opts);
+
+
+if glmfit.jerr<0
+    bad_lambda = -glmfit.jerr;                               
+else
+    bad_lambda=[];          
 end
+while ~isempty(bad_lambda) && (options.nlambda-opts.nlambda)<1 && bad_lambda>2 % doing this more than once doesn't seem to help
+    opts.nlambda = opts.nlambda-1;            
+    fprintf('   Removing %dth lambda value for uncrossvalidated fit. %d lambdas remaining. \n',bad_lambda,opts.nlambda);
+    opts.lambda(bad_lambda)=[];
+    glmfit = glmnet(x, y, family, opts);
+    if glmfit.jerr<0
+        bad_lambda = -glmfit.jerr;                               
+    else
+        bad_lambda=[];          
+    end
+end
+
+
+if ~isempty(bad_lambda) 
+    if require_success
+        if bad_lambda>2
+            warning('   un-cross-validated fit failed to converge even after removing %d lambdas. Returning without running remaining folds.',options.nlambda-opts.nlambda);            
+        end
+        CVerr.glmnet_fit=glmfit;
+        return
+    else
+        warning('   un-cross-validated fit failed to converge. Running CV anyway.');            
+    end
+else
+    if glmfit.relaxed
+        fprintf('   un-cross-validated fit converged in %s.\n',timestr(toc(this_tic)));                                    
+    else
+        fprintf('   un-cross-validated fit converged in %s after %d passes.\n',timestr(toc(this_tic)),glmfit.npasses);                                            
+    end
+end
+
 
 is_offset = glmfit.offset;
 options.lambda = glmfit.lambda;
+if options.relaxed
+    options.include_sequence = glmfit.beta~=0;
+end
 
 nz = glmnetPredict(glmfit,[],[],'nonzero');
 if (strcmp(glmfit.class,'multnet'))
@@ -295,7 +336,6 @@ end
 cpredmat = cell(nfolds,1);
 
 opts = options;
-opts.lambda = options.lambda;
 
 if (parallel == true)
     
@@ -319,6 +359,9 @@ else
         end
         xr = x(~which,:); yr = y(~which,:);
         cpredmat{i} = glmnet(xr, yr, family, opts);
+        if opts.relaxed
+            cpredmat{i}.lambda=opts.lambda;
+        end
         if cpredmat{i}.jerr<0
             bad_lambda = -cpredmat{i}.jerr;                               
         else
@@ -345,12 +388,20 @@ else
                 warning('   %dth CV fold failed to converge even after removing %d lambdas. Running next fold anyway.',i,options.nlambda-opts.nlambda);            
             end
         else
-            fprintf('   %dth CV fold converged in %s after %d passes.\n',i,timestr(toc(fold_tic)),cpredmat{i}.npasses);                                    
+            if options.relaxed
+                fprintf('   %dth CV fold converged in %s.\n',i,timestr(toc(fold_tic)));                                                    
+            else
+                fprintf('   %dth CV fold converged in %s after %d passes.\n',i,timestr(toc(fold_tic)),cpredmat{i}.npasses);                                    
+            end
         end
     end
 end
 
-cpredmat = match_lambdas( {cpredmat{:} glmfit}');
+if ~options.relaxed
+    cpredmat = match_lambdas( {cpredmat{:} glmfit}');
+else
+    cpredmat = {cpredmat{:} glmfit}';    
+end
 glmfit=cpredmat{end};
 cpredmat = cpredmat(1:end-1);
 options.lambda=opts.lambda;
