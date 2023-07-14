@@ -52,7 +52,8 @@ function [fits_table,kPETH] = add_peth_to_fits_table(fits_table,varargin)
                 spikes(c).Yhat = p.link.Inverse([p.X p.dm{c}.X]*stats{i}(c).beta(2:end) + stats{i}(c).beta(1));                
             end
         end    
-        [peth_observed{i},peth_predicted{i},peth_observed_se{i},peth_predicted_se{i},boot_sim_observed{i},boot_sim_predicted{i}] = get_psth_from_glmfit(p.dm_base.dspec.expt,spikes,params.ref_event,'kPETH',params.kPETH,'separate_by',params.separate_by);    
+        peth_mean_rate{i} = p.totalSpikes ./ size(p.X,1) ./ p.bin_size_s;
+        [peth_observed{i},peth_predicted{i},peth_observed_se{i},peth_predicted_se{i},boot_sim_observed{i},~] = get_psth_from_glmfit(p.dm_base.dspec.expt,spikes,params.ref_event,'kPETH',params.kPETH,'separate_by',params.separate_by);    
         for c=1:numel(cellnos{i})
             r2{i}(c) = rsquare(peth_observed{i}{c}(:),peth_predicted{i}{c}(:));
             r{i}(c) = corr(peth_observed{i}{c}(:),peth_predicted{i}{c}(:));
@@ -65,10 +66,11 @@ function [fits_table,kPETH] = add_peth_to_fits_table(fits_table,varargin)
         fits_table.(params.column_name{2})(these_rows{i}) = peth_predicted{i};       
         fits_table.(params.column_name{3})(these_rows{i}) = peth_observed_se{i};
         fits_table.(params.column_name{4})(these_rows{i}) = peth_predicted_se{i};            
-       
         
         fits_table.([params.column_name_root,'_r2'])(these_rows{i}) = r2{i};
         fits_table.([params.column_name_root,'_r'])(these_rows{i}) = r{i};    
+        fits_table.([params.column_name_root,'_boot_sim_observed'])(these_rows{i}) = boot_sim_observed{i};     
+        fits_table.([params.column_name_root,'_mean_rate'])(these_rows{i}) = peth_mean_rate{i};
     end
 
 end
