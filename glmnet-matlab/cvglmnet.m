@@ -265,29 +265,9 @@ this_tic=tic;
 glmfit = glmnet(x, y, family, opts);
 
 
-if glmfit.jerr<0
-    bad_lambda = -glmfit.jerr;                               
-else
-    bad_lambda=[];          
-end
-while ~isempty(bad_lambda) && (options.nlambda-opts.nlambda)<1 && bad_lambda>2 % doing this more than once doesn't seem to help
-    opts.nlambda = opts.nlambda-1;            
-    fprintf('   Removing %dth lambda value for uncrossvalidated fit. %d lambdas remaining. \n',bad_lambda,opts.nlambda);
-    opts.lambda(bad_lambda)=[];
-    glmfit = glmnet(x, y, family, opts);
-    if glmfit.jerr<0
-        bad_lambda = -glmfit.jerr;                               
-    else
-        bad_lambda=[];          
-    end
-end
-
-
-if ~isempty(bad_lambda) 
+if glmfit.jerr~=0
     if require_success
-        if bad_lambda>2
-            warning('   un-cross-validated fit failed to converge even after removing %d lambdas. Returning without running remaining folds.',options.nlambda-opts.nlambda);            
-        end
+        warning('   un-cross-validated fit failed to converge. Stopping.');            
         CVerr.glmnet_fit=glmfit;
         return
     else

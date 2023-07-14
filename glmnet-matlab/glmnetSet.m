@@ -163,6 +163,7 @@ function options = glmnetSet(opts)
   options.mtype            =  'ungrouped'; 
   options.relaxed          =        false;
   options.include_sequence =           [];
+  options.MaxIter          =           [];  
   
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % End default options.
