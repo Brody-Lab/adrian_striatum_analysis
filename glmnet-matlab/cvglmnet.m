@@ -261,8 +261,12 @@ if (isempty(options.weights))
 end
 opts=options;
 
+if options.relaxed
+    fprintf('   Determining parameter sets for relaxed fitting.\n');
+end
+
 this_tic=tic;
-glmfit = glmnet(x, y, family, opts);
+glmfit = glmnet(x, y, family, setfield(opts,'relaxed',false));
 
 
 if glmfit.jerr~=0
@@ -274,18 +278,14 @@ if glmfit.jerr~=0
         warning('   un-cross-validated fit failed to converge. Running CV anyway.');            
     end
 else
-    if glmfit.relaxed
-        fprintf('   un-cross-validated fit converged in %s.\n',timestr(toc(this_tic)));                                    
-    else
-        fprintf('   un-cross-validated fit converged in %s after %d passes.\n',timestr(toc(this_tic)),glmfit.npasses);                                            
-    end
+    fprintf('   un-cross-validated fit converged in %s after %d passes.\n',timestr(toc(this_tic)),glmfit.npasses);                                            
 end
 
 
 is_offset = glmfit.offset;
 options.lambda = glmfit.lambda;
 if options.relaxed
-    options.include_sequence = glmfit.beta~=0;
+    options.include_sequence = glmfit.beta; % warm start
 end
 
 nz = glmnetPredict(glmfit,[],[],'nonzero');
@@ -313,6 +313,7 @@ if (nfolds < 3)
     warning('nfolds should be bigger than 3; nfolds=10 recommended');
 end
 
+cpredmat_cell = cell(nfolds,1);
 cpredmat = cell(nfolds,1);
 
 opts = options;
@@ -330,46 +331,92 @@ if (parallel == true)
 %     end
     
 else   
-    for i = 1: nfolds   
-        fold_tic=tic;
-        which = foldid==i;
-        opts.weights = options.weights(~which,:);
-        if (is_offset)
-            opts.offset = options.offset(~which,:);
+    if options.relaxed
+        for l=1:numel(opts.lambda)
+            lambda_tic=tic;      
+            if l>1 && all((opts.include_sequence(:,l)==0) == (opts.include_sequence(:,l-1)==0))
+                gfit(l) = gfit(l-1);
+                for i=1:nfolds
+                    cpredmat_cell{i}(l) = cpredmat_cell{i}(l-1);
+                end
+                metrics(l)=metrics(l-1);
+                continue
+            end
+            fprintf('   Cross-validating relaxed fit using %d parameters ...',sum(opts.include_sequence(:,l)~=0));
+            gfit(l) = do_relaxed_fit(x,y,options.include_sequence(:,l),family,options,'quiet',true);            
+            for i = 1: nfolds   
+                which = foldid==i;
+                opts.weights = options.weights(~which,:);
+                if (is_offset)
+                    opts.offset = options.offset(~which,:);
+                end
+                cpredmat_cell{i}(l) = do_relaxed_fit(x(~which,:),y(~which,:),gfit(l).beta,family,opts,'skip_metrics',true,'quiet',true);   
+                yhat(which,:) = glmval([cpredmat_cell{i}(l).a0;cpredmat_cell{i}(l).beta],x(which,:),'log');
+            end
+            metrics(l)=glm_prediction_metrics(y,yhat,'family',family);
+            if l>3 && metrics(l).deviance>metrics(l-1).deviance && metrics(l-1).deviance>metrics(l-2).deviance && metrics(l-2).deviance>metrics(l-3).deviance
+                fprintf('took %s.\n',timestr(round(toc(lambda_tic))));                  
+                fprintf('   Stopping after best model size has been achieved.\n');
+                break
+            end
+            fprintf('took %s.\n',timestr(round(toc(lambda_tic))));  
         end
-        xr = x(~which,:); yr = y(~which,:);
-        cpredmat{i} = glmnet(xr, yr, family, opts);
-        if opts.relaxed
-            cpredmat{i}.lambda=opts.lambda;
+        for i=1:nfolds
+            cpredmat{i} = glmfit;
+            cpredmat{i}.a0 = cat(1,cpredmat_cell{i}.a0);
+            cpredmat{i}.beta = cat(2,cpredmat_cell{i}.beta);
+            cpredmat{i}.dev=[];
+            cpredmat{i}.null_dev=[];        
+            cpredmat{i}.dim(2) = l;
+            cpredmat{i}.lambda = cpredmat{i}.lambda(1:l);
+            cpredmat{i}.df = cpredmat{i}.df(1:l);
         end
-        if cpredmat{i}.jerr<0
-            bad_lambda = -cpredmat{i}.jerr;                               
-        else
-            bad_lambda=[];          
-        end
-        while ~isempty(bad_lambda) && (options.nlambda-opts.nlambda)<1 % doing this more than once doesn't seem to help
-            fprintf('   Removing %dth lambda value for cv fold %d. %d lambdas remaining. \n',bad_lambda,i,opts.nlambda-1);
-            opts.nlambda = opts.nlambda-1;
-            opts.lambda(bad_lambda)=[];
-            fold_tic=tic;            
+        glmfit.beta = cat(2,gfit.beta);
+        glmfit.a0 = cat(1,gfit.a0);
+        glmfit.dev = cat(1,gfit.dev);
+        glmfit.null_dev = cat(1,gfit.null_dev);   
+        glmfit.df = glmfit.df(1:l);
+        glmfit.dim(2)=l;
+        glmfit.lambda = glmfit.lambda(1:l);
+        nz=nz(1:l);
+        opts.lambda = glmfit.lambda;
+           
+        
+    else
+        for i = 1: nfolds   
+            fold_tic=tic;
+            which = foldid==i;
+            opts.weights = options.weights(~which,:);
+            if (is_offset)
+                opts.offset = options.offset(~which,:);
+            end
+            xr = x(~which,:); yr = y(~which,:);
             cpredmat{i} = glmnet(xr, yr, family, opts);
             if cpredmat{i}.jerr<0
                 bad_lambda = -cpredmat{i}.jerr;                               
             else
                 bad_lambda=[];          
             end
-        end
-        if ~isempty(bad_lambda)
-            if require_success
-                warning('   %dth CV fold failed to converge even after removing %d lambdas. Returning without running remaining folds.',i,options.nlambda-opts.nlambda);            
-                CVerr=[];
-                return
-            else
-                warning('   %dth CV fold failed to converge even after removing %d lambdas. Running next fold anyway.',i,options.nlambda-opts.nlambda);            
+            while ~isempty(bad_lambda) && (options.nlambda-opts.nlambda)<1 % doing this more than once doesn't seem to help
+                fprintf('   Removing %dth lambda value for cv fold %d. %d lambdas remaining. \n',bad_lambda,i,opts.nlambda-1);
+                opts.nlambda = opts.nlambda-1;
+                opts.lambda(bad_lambda)=[];
+                fold_tic=tic;            
+                cpredmat{i} = glmnet(xr, yr, family, opts);
+                if cpredmat{i}.jerr<0
+                    bad_lambda = -cpredmat{i}.jerr;                               
+                else
+                    bad_lambda=[];          
+                end
             end
-        else
-            if options.relaxed
-                fprintf('   %dth CV fold converged in %s.\n',i,timestr(toc(fold_tic)));                                                    
+            if ~isempty(bad_lambda)
+                if require_success
+                    warning('   %dth CV fold failed to converge even after removing %d lambdas. Returning without running remaining folds.',i,options.nlambda-opts.nlambda);            
+                    CVerr=[];
+                    return
+                else
+                    warning('   %dth CV fold failed to converge even after removing %d lambdas. Running next fold anyway.',i,options.nlambda-opts.nlambda);            
+                end
             else
                 fprintf('   %dth CV fold converged in %s after %d passes.\n',i,timestr(toc(fold_tic)),cpredmat{i}.npasses);                                    
             end

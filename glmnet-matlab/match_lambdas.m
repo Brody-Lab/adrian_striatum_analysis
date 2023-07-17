@@ -8,11 +8,13 @@ end
 for i=1:numel(fits)
     id = ismember(fits{i}.lambda,lambda_intersect);
     fits{i}.a0 = fits{i}.a0(id);
-    fits{i}.dev = fits{i}.dev(id);
     fits{i}.df = fits{i}.df(id);
     fits{i}.lambda = fits{i}.lambda(id);
     fits{i}.beta = fits{i}.beta(:,id);
     fits{i}.dim(2) = numel(lambda_intersect);
+    try
+        fits{i}.dev = fits{i}.dev(id);
+    end        
 end
 
 end

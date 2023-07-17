@@ -465,7 +465,7 @@ if ~include_sequence_supplied
             fit = fishnet(x,is_sparse,irs,pcs,y,weights,offset,parm,nobs,nvars,...
                 jd,vp,cl,ne,nx,nlam,flmin,ulam,thresh,isd,intr,maxit,family);     
     end
-    options.include_sequence = fit.beta~=0;
+    options.include_sequence=fit.beta;
 else
     fit.jerr=0;
     switch family
