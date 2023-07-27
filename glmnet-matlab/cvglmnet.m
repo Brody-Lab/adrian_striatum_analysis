@@ -350,7 +350,7 @@ else
                 if (is_offset)
                     opts.offset = options.offset(~which,:);
                 end
-                cpredmat_cell{i}(l) = do_relaxed_fit(x(~which,:),y(~which,:),gfit(l).beta,family,opts,'skip_metrics',true,'quiet',true);   
+                cpredmat_cell{i}(l) = do_relaxed_fit(x(~which,:),y(~which,:),gfit(l).beta,family,opts,'skip_metrics',true,'quiet',true);
                 yhat(which,:) = glmval([cpredmat_cell{i}(l).a0;cpredmat_cell{i}(l).beta],x(which,:),'log');
             end
             metrics(l)=glm_prediction_metrics(y,yhat,'family',family);

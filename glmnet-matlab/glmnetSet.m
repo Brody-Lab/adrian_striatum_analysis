@@ -162,6 +162,7 @@ function options = glmnetSet(opts)
   options.standardize_resp =        false;
   options.mtype            =  'ungrouped'; 
   options.relaxed          =        false;
+  options.relaxed_lambda   =            0;  
   options.include_sequence =           [];
   options.MaxIter          =           [];  
   
