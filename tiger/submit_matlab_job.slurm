@@ -6,7 +6,7 @@
 #SBATCH --nodes=1                # node count
 #SBATCH --ntasks-per-node=1      # number of tasks per node
 #SBATCH --cpus-per-task=1        # cpu-cores per task (>1 if multi-threaded tasks)
-#SBATCH --mem-per-cpu=5G         # important for long sessions or small time binning
+#SBATCH --mem-per-cpu=7G         # important for long sessions or small time binning
 #SBATCH --mail-type=FAIL,TIME_LIMIT,ARRAY_TASKS,REQUEUE         # email 
 #SBATCH --mail-user=abondy@princeton.edu
 
