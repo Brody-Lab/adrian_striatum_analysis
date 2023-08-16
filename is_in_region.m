@@ -1,11 +1,11 @@
 function region_flag = is_in_region(Cells,cellno,regions) 
     if isempty(cellno)
-        cellno=1:sum(Cells.ncells);
+        cellno=1:sum(Cells.n_clusters);
     end
     ncells = numel(cellno);
     region_flag = false(size(cellno));
-    if numel(Cells.ncells)>1
-        pen_idx = get_pen_idx(cellno,Cells.ncells);
+    if numel(Cells.n_clusters)>1
+        pen_idx = get_pen_idx(cellno,Cells.n_clusters);
     else
         pen_idx=ones(ncells,1);
     end

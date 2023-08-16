@@ -33,7 +33,7 @@ end
 if ~isfolder(P.data_path)
    error('Data path does not exist: %s',P.data_path); 
 end
-P.recordings_path = fullfile(P.data_path,'recordings_log.csv');
+P.recordings_path = fullfile(P.repository_path,'recordings_log.csv');
 P.cells_table_path = fullfile(P.data_path,'cells_table.mat');
 P.sessions_table_path = fullfile(P.data_path,'sessions_table.mat');
 P.histology_table_path = fullfile(P.data_path,'histology_table.mat');
