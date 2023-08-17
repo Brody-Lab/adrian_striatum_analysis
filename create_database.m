@@ -28,7 +28,7 @@ function [sessions_table,cells_table] = create_database(varargin)
         else
             
             % load cells file
-            Cells = load_Cells_file(recording_name(i),params.use_local);
+            Cells = load_Cells_file(recording_name(i),'local',params.use_local);
             
             if ~params.use_local || params.reformat
                 % add extra fields to Cells, correct for database consistency and saves it locally
@@ -134,13 +134,7 @@ function Cells = format_Cells_file(Cells,recordings_table,save_path)
         Cells = rmfield(Cells,'PETH');
     end
     
-    for i=1:numel(P.ap_groups)
-        mean_ap_striatal = mean(Cells.AP(Cells.is_in_dorsal_striatum));
-        if mean_ap_striatal>P.ap_groups{i}(1) && mean_ap_striatal<P.ap_groups{i}(2)
-            Cells.ap_group=i;
-            break
-        end
-    end
+
     
     % add stateTimes for clicks if not there in Thomas' sessions
     if Cells.rat=="T219" && ~isfield(Cells.Trials.stateTimes,'left_clicks')
@@ -218,11 +212,21 @@ function Cells = format_Cells_file(Cells,recordings_table,save_path)
         end
     end    
     
-    %% add field specifying where a cell is in dorsal striatum
+    %% add field specifying whether a cell is in dorsal striatum
     Cells.is_in_dorsal_striatum = get_dorsal_striatal_cells(Cells);
+    for i=1:numel(P.ap_groups)
+        mean_ap_striatal = mean(Cells.AP(Cells.is_in_dorsal_striatum));
+        if mean_ap_striatal>P.ap_groups{i}(1) && mean_ap_striatal<P.ap_groups{i}(2)
+            Cells.ap_group=i;
+            break
+        end
+    end    
     
     %% save cells files 
     fprintf('saving local cells file  ...');tic;      
+    if ~isfolder(fileparts(save_path))
+        mkdir(fileparts(save_path));
+    end
     lastwarn('');
     try
         save(save_path, '-struct','Cells','-v7','-nocompression'); % these settings create a file that is smaller and MUCH faster to save and load than with the default settings

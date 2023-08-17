@@ -27,7 +27,8 @@ function [fits_table,kPETH] = add_peth_to_fits_table(fits_table,varargin)
     recording_names = unique(fits_table.recording_name);
     run = unique(fits_table.run);
     if ~isscalar(run)
-        error('Currently we assume a single run for the whole fits table for convenience although this is not a necessary assumption here.');
+        warning('More than one run in the fits table. If spikes are generated in different ways across these runs, peth generation will be affected, i.e. time window of trial or bin_size_s');
+        run=run(1);
     end
     P=get_parameters();
     fit_path=P.fit_path;
