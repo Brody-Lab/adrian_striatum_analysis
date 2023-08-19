@@ -60,7 +60,7 @@ function glmfit_all_sessions(varargin)
             params.nClickBins,params.separate_clicks_by,params.separate_clicks_by_outcome,params.fit_method,params.parallel,params.useGPU,...
             params.relaxed,params.lambda);        
         if p.Results.job_array && P.on_cluster
-            save_param_command=[matlab_command(2:end-3),',''fit'',false);'];
+            save_param_command=[matlab_command(2:end-3),',''fit'',false);clear all;'];
             fprintf('Running fit_glm_to_Cells to save params before batch fitting.\n');
             eval(save_param_command);
             params_path=fullfile(output_dir,'glmfit_params.mat');
