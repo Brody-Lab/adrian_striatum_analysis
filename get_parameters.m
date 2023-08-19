@@ -22,7 +22,7 @@ if strncmp(P.hostname,'tiger',5)
 elseif strncmp(P.hostname,'della',5)
     P.data_path = P.della_data_path;
     P.fit_path = P.della_data_path;  
-elseif strncmp(P.hostname,'spock',5)
+elseif strncmp(P.hostname,'spock',5) || strncmp(P.hostname,'scotty',5)
     P.data_path = P.spock_data_path;
     P.fit_path = P.spock_data_path;       
 else
