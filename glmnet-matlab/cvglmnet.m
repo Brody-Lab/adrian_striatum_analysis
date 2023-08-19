@@ -259,14 +259,13 @@ end
 if (isempty(options.weights))
     options.weights = ones(N,1);
 end
-opts=options;
 
 if options.relaxed
     fprintf('   Determining parameter sets for relaxed fitting.\n');
 end
 
 this_tic=tic;
-glmfit = glmnet(x, y, family, setfield(opts,'relaxed',false));
+glmfit = glmnet(x, y, family, setfield(options,'relaxed',false));
 
 
 if glmfit.jerr~=0
@@ -284,9 +283,6 @@ end
 
 is_offset = glmfit.offset;
 options.lambda = glmfit.lambda;
-if options.relaxed
-    options.include_sequence = glmfit.beta; % warm start
-end
 
 nz = glmnetPredict(glmfit,[],[],'nonzero');
 if (strcmp(glmfit.class,'multnet'))
@@ -299,6 +295,16 @@ elseif strcmp(glmfit.class, 'mrelnet')
     nz = transpose(sum(nz{1}, 1));
 else
     nz = transpose(sum(nz,1));
+end
+
+if options.relaxed
+    options.include_sequence = glmfit.beta; % warm start
+    if glmfit.df(end)<glmfit.dim(1)
+        options.include_sequence = [options.include_sequence  ones(glmfit.dim(1),1)];
+        options.lambda = [options.lambda;0];    
+        nz = [nz;glmfit.dim(1)];
+        options.nlambda = options.nlambda+1;
+    end
 end
 
 if isempty(foldid)
@@ -368,18 +374,21 @@ else
             cpredmat{i}.dev=[];
             cpredmat{i}.null_dev=[];        
             cpredmat{i}.dim(2) = l;
-            cpredmat{i}.lambda = cpredmat{i}.lambda(1:l);
-            cpredmat{i}.df = cpredmat{i}.df(1:l);
+            cpredmat{i}.lambda = opts.lambda(1:l);
+            cpredmat{i}.df = cat(1,cpredmat_cell{i}.df);
+            cpredmat{i}.relaxed=true;
         end
         glmfit.beta = cat(2,gfit.beta);
         glmfit.a0 = cat(1,gfit.a0);
         glmfit.dev = cat(1,gfit.dev);
-        glmfit.null_dev = cat(1,gfit.null_dev);   
-        glmfit.df = glmfit.df(1:l);
+        glmfit.null_dev = cat(1,gfit.null_dev); 
+        glmfit.covb = cat(3,gfit.covb);
+        glmfit.glmfitstats = cat(1,gfit.glmfitstats);
+        glmfit.df = cat(1,gfit.df);
         glmfit.dim(2)=l;
-        glmfit.lambda = glmfit.lambda(1:l);
+        glmfit.lambda = opts.lambda(1:l);
         nz=nz(1:l);
-        opts.lambda = glmfit.lambda;
+        opts.lambda = opts.lambda(1:l);
            
         
     else

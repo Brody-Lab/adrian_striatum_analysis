@@ -12,9 +12,8 @@ for i=1:numel(fits)
     fits{i}.lambda = fits{i}.lambda(id);
     fits{i}.beta = fits{i}.beta(:,id);
     fits{i}.dim(2) = numel(lambda_intersect);
-    try
-        fits{i}.dev = fits{i}.dev(id);
-    end        
+    fits{i}.dev = fits{i}.dev(id);
+    fits{i}.null_dev = fits{i}.null_dev(id);
 end
 
 end
