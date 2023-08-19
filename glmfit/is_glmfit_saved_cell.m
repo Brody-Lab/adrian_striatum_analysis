@@ -7,7 +7,9 @@ function is_saved = is_glmfit_saved_cell(recording_name,cellno,log)
     n_recordings = numel(unique_recordings);
     is_saved = false(numel(recording_name),1);   
     for i=1:n_recordings       
-        saved_cells = log.saved_cells{log.recording_name == unique_recordings(i)};
-        is_saved(ismember(cellno,saved_cells) & recording_idx==i) = true;
+        if any(log.recording_name == unique_recordings(i))
+            saved_cells = log.saved_cells{log.recording_name == unique_recordings(i)};
+            is_saved(ismember(cellno,saved_cells) & recording_idx==i) = true;
+        end
     end
 end
