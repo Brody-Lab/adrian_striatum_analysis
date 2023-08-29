@@ -218,7 +218,7 @@ function glmfit_log = validate_glmfit_log(glmfit_log,params)
         %% check that all sessions are represented
         recordings_table = get_striatum_glm_recordings_table();    
         missing_sessions = ~ismember(recordings_table.recording_name,glmfit_log.recording_name(this_idx));
-        if any(missing_sessions)
+        if sum(missing_sessions)>16 % allow fits on old set of 80 sessions to stay in catalog
             warning('%g recordings are missing from the glmfit log for run %s.',sum(missing_sessions),unique_runs(i));
             if params.remove_missing_mode~="none"
                 remove(i)=true;
