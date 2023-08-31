@@ -101,7 +101,8 @@ P.covariate_names = {'Previous Left Correct','Previous Right Correct','Previous 
 %P.covariate_group_names = {'Trial History','Initiate Fixation','Clicks','Choice','Hit','Miss'};
 P.gamma_color_groups = flip(copper(4));
 P.gamma_ranges = [-5 -2 0 2 5];
-P.signal_strength_percentiles = [0 25 50 75 100];
+P.lambdas = logspace(-1,2,4);
+P.signal_strength_percentiles = 0:25:100;
 P.gamma_labels={'strong preferred','weak preferred','weak null','strong null'};
 
 P.example_cell_recording_names = ["T219_2019_12_09"  "A243_2019_10_29" "T219_2019_12_05" "A249_2020_09_11" "A256_2020_09_23" "A249_2020_09_25"  ];
