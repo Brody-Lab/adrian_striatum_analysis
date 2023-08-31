@@ -86,7 +86,7 @@ function glmfit_all_sessions(varargin)
             fprintf('Sending following system command to initiate job:\n   %s\n',sbatch_command);
             while true
                 output=0;
-                %output = system(sbatch_command);    
+                output = system(sbatch_command);    
                 if output
                     fprintf('sbatch command failed. Trying again in %d minutes.\n',round(p.Results.sbatch_retry_frequency_mins));
                     pause(p.Results.sbatch_retry_frequency_mins*60);
