@@ -13,7 +13,6 @@ for i=1:numel(fits)
     fits{i}.beta = fits{i}.beta(:,id);
     fits{i}.dim(2) = numel(lambda_intersect);
     fits{i}.dev = fits{i}.dev(id);
-    fits{i}.null_dev = fits{i}.null_dev(id);
 end
 
 end

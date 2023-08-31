@@ -372,7 +372,7 @@ else
             cpredmat{i}.a0 = cat(1,cpredmat_cell{i}.a0);
             cpredmat{i}.beta = cat(2,cpredmat_cell{i}.beta);
             cpredmat{i}.dev=[];
-            cpredmat{i}.null_dev=[];        
+            cpredmat{i}.nulldev=[];        
             cpredmat{i}.dim(2) = l;
             cpredmat{i}.lambda = opts.lambda(1:l);
             cpredmat{i}.df = cat(1,cpredmat_cell{i}.df);
@@ -381,7 +381,7 @@ else
         glmfit.beta = cat(2,gfit.beta);
         glmfit.a0 = cat(1,gfit.a0);
         glmfit.dev = cat(1,gfit.dev);
-        glmfit.null_dev = cat(1,gfit.null_dev); 
+        glmfit.nulldev = gfit(1).nulldev; 
         glmfit.covb = cat(3,gfit.covb);
         glmfit.glmfitstats = cat(1,gfit.glmfitstats);
         glmfit.df = cat(1,gfit.df);
