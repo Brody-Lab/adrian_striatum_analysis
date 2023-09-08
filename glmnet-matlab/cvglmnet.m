@@ -421,7 +421,12 @@ else
             if ~isempty(bad_lambda)
                 if require_success
                     warning('   %dth CV fold failed to converge even after removing %d lambdas. Returning without running remaining folds.',i,options.nlambda-opts.nlambda);            
-                    CVerr=[];
+                    options.lambda=opts.lambda;
+                    options.nlambda = opts.nlambda; 
+                    CVerr.lambda=options.lambda;
+                    CVerr.glmnet_fit = glmfit  ;         
+                    CVerr.class = 'cv.glmnet';
+                    CVerr.glmnet_cv_fits = cat(1,cpredmat{:});                    
                     return
                 else
                     warning('   %dth CV fold failed to converge even after removing %d lambdas. Running next fold anyway.',i,options.nlambda-opts.nlambda);            
