@@ -4,7 +4,7 @@ A249,\\cup.pni.princeton.edu\brody\abondy\Histology\A249,slice,,epifluorescence,
 A243,\\cup.pni.princeton.edu\brody\abondy\Histology\A243,slice,,epifluorescence,Nikon Ti,"brightfield, mCherry",3/13/2020,mCherry,brightfield,18194824132,2,
 A256,\\cup.pni.princeton.edu\brody\abondy\Histology\A256,slice,,epifluorescence,Nanozoomer,"brightfield, Fitc, Trtc, Dapi",2/28/2021,see note,brightfield,18194819321,1,probe accidentally not dipped in DiI so no Trtc fluorescence. However probe track is visible in other channels.
 A242,\\cup.pni.princeton.edu\brody\abondy\Histology\A242,slice,,epifluorescence,Nikon Ti,"brightfield, mCherry",9/10/2019,mCherry,brightfield,17131311621,4,
-A230,\\cup.pni.princeton.edu\brody\abondy\Histology\A230,slice,,epifluorescence,Nikon Ti,"brightfield, mCherry",9/10/2019,mCherry,brightfield,17131308571,3,"two probes visible in slices, only the anterior probe matters"
+A230,\\cup.pni.princeton.edu\brody\abondy\Histology\A230,slice,,epifluorescence,Nikon Ti,"brightfield, mCherry",9/10/2019,mCherry,brightfield,17131308571,3,"two probes visible in slices, only the anterior probe is relevant for the dataset"
 T219,\\cup.pni.princeton.edu\brody\tzluo\images_of_rat_brain\T219\EYFP labelling from CAMK2a-eNphR3.0-EYFP,slice,,epifluorescence,Nanozoomer,"brightfield, YFP",8/11/2020,YFP,brightfield,18194824092,1,note some slices are reversed left/right
 X046,\\cup.pni.princeton.edu\brody\dikshag\Histology\X046,slice,,epifluorescence,Nanozoomer,"brightfield, Dapi, Trtc",3/4/2021,Trtc,brightfield,18194823122,1,
 A294,\\latrobe.princeton.edu\pni-archive\brody\lightserv\abondy\A294\A294-001\imaging_request_1,volume,iDisco,lightsheet,?,"488, 561",8/16/2021,561,488,"19076606882, 18194819132","4, 1","don't use clipped, two probes"
