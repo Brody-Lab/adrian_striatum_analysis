@@ -51,7 +51,14 @@ function [glmfit_log,include] = select_rows(glmfit_log,varargin)
     include=true(height(glmfit_log),1);
     for f=1:length(fields)
         value = p.Unmatched.(fields{f});
-        include = include & glmfit_log.(fields{f})==value;
+        if iscell(value)
+            for i=height(glmfit_log):-1:1
+                eq(i,1) = all(cellfun(@isequal,glmfit_log.(fields{f})(i,:),value));
+            end
+            include = include & eq;         
+        else
+            include = include & glmfit_log.(fields{f})==value;
+        end
     end
     glmfit_log=glmfit_log(include,:);
 end
