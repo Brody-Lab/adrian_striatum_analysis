@@ -1,7 +1,7 @@
 ﻿rat_name,histology_location,histology_type,clearing method,imaging method,imaging_device,channels,acquisition_date,probe channel,alignment channel,probe_serial,ap_group,notes
 A241,\\cup.pni.princeton.edu\brody\abondy\Histology\A241,slice,,epifluorescence,Nikon Ti,"brightfield, mCherry",3/13/2020,mCherry,brightfield,"18194823302, 18194823631","3, 2",two probes
 A249,\\cup.pni.princeton.edu\brody\abondy\Histology\A249,slice,,epifluorescence,Nanozoomer,"brightfield, YFP, Trtc",1/15/2021,Trtc,brightfield,18194819132,1,
-A243,\\cup.pni.princeton.edu\brody\abondy\Histology\A243,slice,,epifluorescence,Nikon Ti,"brightfield, mCherry",3/13/2020,mCherry,brightfield,18194824132,2,
+A243,\\cup.pni.princeton.edu\brody\abondy\Histology\A243,slice,,epifluorescence,Nikon Ti,"brightfield, mCherry",3/13/2020,mCherry,brightfield,"18194824132, 18194823211","2, 3",
 A256,\\cup.pni.princeton.edu\brody\abondy\Histology\A256,slice,,epifluorescence,Nanozoomer,"brightfield, Fitc, Trtc, Dapi",2/28/2021,see note,brightfield,18194819321,1,probe accidentally not dipped in DiI so no Trtc fluorescence. However probe track is visible in other channels.
 A242,\\cup.pni.princeton.edu\brody\abondy\Histology\A242,slice,,epifluorescence,Nikon Ti,"brightfield, mCherry",9/10/2019,mCherry,brightfield,17131311621,4,
 A230,\\cup.pni.princeton.edu\brody\abondy\Histology\A230,slice,,epifluorescence,Nikon Ti,"brightfield, mCherry",9/10/2019,mCherry,brightfield,17131308571,3,"two probes visible in slices, only the anterior probe is relevant for the dataset"
