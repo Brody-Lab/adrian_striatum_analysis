@@ -30,10 +30,6 @@ function cell_info = make_cell_info(Cells,save_path)
             cell_info.(fields{f}) = repmat(missing_vals{f},n_cells,1);            
         end
     end
-    fields = setdiff(fields,{'regions'}); % so it doesn't automatically overwrite with the Cells.region which is a number
-    region_names = {Cells.penetration.regions.name};
-    cell_info.regions = cell(n_cells,1);
-    cell_info.regions(Cells.regions>0) = region_names(Cells.regions(Cells.regions>0));
     for f=1:length(fields)
         if isfield(Cells,fields{f})
             if isscalar(Cells.(fields{f}))

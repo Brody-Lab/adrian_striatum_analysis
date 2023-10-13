@@ -86,12 +86,19 @@ function Cells = format_Cells_file(Cells,recordings_table,save_path)
     for i=1:length(fields_to_copy)
         Cells.(new_name{i}) = recordings_table.(fields_to_copy{i});
     end
+    
+    try
+        Cells.probe_serial = Cells.ap_meta.imDatPrb_sn;
+    catch
+        Cells.probe_serial = Cells.rec.ap_meta.imDatPrb_sn;        
+    end    
 
     %% ensure all cells files are up to date, bug free and consistent in structure
     if ~isfield(Cells,'ap_meta') && isfield(Cells,'meta')
         Cells.ap_meta = Cells.meta.ap_meta;
     end    
-    Cells = import_penetration(Cells);    
+    Cells = uberphys.import_implant_table_to_Cells(Cells);    
+    Cells = import_implant_log(Cells,read_implant_log());        
     Cells.n_clusters = numel(Cells.spike_time_s.cpoke_in);                
     if ~isfield(Cells,'ks_good')
         % calculate refractory period violations a la Kilosort
@@ -99,11 +106,7 @@ function Cells = format_Cells_file(Cells,recordings_table,save_path)
             Cells.ks_good(k) = is_ks_good(Cells.raw_spike_time_s{k});
         end
     end    
-    try
-        Cells.probe_serial = Cells.ap_meta.imDatPrb_sn;
-    catch
-        Cells.probe_serial = Cells.rec.ap_meta.imDatPrb_sn;        
-    end
+
     time_to_clicks = Cells.Trials.stateTimes.clicks_on - Cells.Trials.stateTimes.cpoke_in;
     exclude_trials = Cells.Trials.violated | time_to_clicks<0.5 | Cells.Trials.laser.isOn;
     [Cells.autocorr,~,Cells.autocorr_fr_hz] = timescales.get_autocorr_from_Cells(Cells,'cpoke_in',[0 0.5],'exclude_trials',exclude_trials);                  
