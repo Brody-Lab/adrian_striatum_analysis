@@ -1,4 +1,4 @@
-function fit=fit_corr_mtx(corr_mtx,bin_size_ms,params)
+function fit=fit_corr_mtx(corr_mtx,bin_size_ms)
     arguments
         corr_mtx 
         bin_size_ms (1,1) {isnumeric,mustBePositive,mustBeFinite}

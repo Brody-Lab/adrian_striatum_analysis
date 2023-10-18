@@ -3,6 +3,7 @@ function fit = do_fit(xs,autocorr,params)
         xs
         autocorr
         params.skip_refrac (1,1) logical  = true;
+        params.init (1,3) = [0.1 0.1 1]; % good for autocorrelation timescale when data is in seconds
     end
     if params.skip_refrac
         [~,idx] = min(diff(autocorr));
@@ -12,8 +13,7 @@ function fit = do_fit(xs,autocorr,params)
     else
         idx=1;
     end
-    init = [0.1 0.1 0.1]; % A, tau (s), B
     f = @(b,xdata)b(1)*(exp(-xdata/b(2))+b(3));
-    b=lsqcurvefit(f,init,xs(idx:end),autocorr(idx:end));
+    b=lsqcurvefit(f,params.init,xs(idx:end),autocorr(idx:end));
     fit = struct('A',b(1),'tau',b(2),'B',b(3),'f',f,'b',b);
 end

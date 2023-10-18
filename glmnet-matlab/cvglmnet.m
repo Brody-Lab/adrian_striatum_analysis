@@ -369,7 +369,11 @@ else
         end
         for i=1:nfolds
             cpredmat{i} = glmfit;
-            cpredmat{i}.a0 = cat(1,cpredmat_cell{i}.a0);
+            if cpredmat{i}.class=="lognet"
+                cpredmat{i}.a0 = cat(2,cpredmat_cell{i}.a0);                
+            else
+                cpredmat{i}.a0 = cat(1,cpredmat_cell{i}.a0);                
+            end
             cpredmat{i}.beta = cat(2,cpredmat_cell{i}.beta);
             cpredmat{i}.dev=[];
             cpredmat{i}.nulldev=[];        
@@ -379,7 +383,11 @@ else
             cpredmat{i}.relaxed=true;
         end
         glmfit.beta = cat(2,gfit.beta);
-        glmfit.a0 = cat(1,gfit.a0);
+        if cpredmat{1}.class=="lognet"        
+            glmfit.a0 = cat(2,gfit.a0);
+        else
+            glmfit.a0 = cat(1,gfit.a0);            
+        end
         glmfit.dev = cat(1,gfit.dev);
         glmfit.nulldev = gfit(1).nulldev; 
         glmfit.covb = cat(3,gfit.covb);
