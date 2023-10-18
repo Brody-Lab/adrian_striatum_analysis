@@ -30,7 +30,7 @@ function [cells_mat,params] = MakeDataMatrix(Cells,varargin)
     %% parse and validate inputs
     p=inputParser;
     p.KeepUnmatched=true;
-    ncells = numel(Cells.spike_time_s.cpoke_in);
+    ncells = numel(Cells.raw_spike_time_s);
     p.addParameter('ref_event','cpoke_in',@(x)validateattributes(x,{'char','string'},{'nonempty'}));
     p.addParameter('units',true(ncells,1),@(x)validateattributes(x,{'logical'},{'vector','numel',ncells}));
     p.addParameter('trial_idx',~Cells.Trials.violated,@(x)validateattributes(x,{'logical'},{'vector'}));  
@@ -44,10 +44,19 @@ function [cells_mat,params] = MakeDataMatrix(Cells,varargin)
     p.parse(varargin{:});
     params = p.Results;
 
-    validatestring(params.ref_event,fieldnames(Cells.spike_time_s),'MakeDataMatrix','ref_event');
     validatestring(params.precision,{'single','double'},'MakeDataMatrix','precision');    
     params.trial_idx = find(params.trial_idx(:)' & ~isnan(Cells.Trials.stateTimes.(params.ref_event))');
     
+    if ~isfield(Cells,'spike_time_s') || ~isfield(Cells.spike_time_s,ref_event)
+        if isfield(Cells.Trials.stateTimes,params.ref_event) && isfield(Cells,'raw_spike_time_s')
+            for c=1:numel(Cells.raw_spike_time_s)
+                Cells.spike_time_s.(params.ref_event){c} = group_spike_times(Cells.raw_spike_time_s{c}, Cells.Trials.stateTimes.(params.ref_event), params.time_window_s + [-eps eps]);
+            end
+        else
+            error('There is no "%s" field in Cells.spike_time_s and there are fields missing that would be needed to reconstruct it.',ref_event); 
+        end
+    end
+            
     params.units=params.units(:)';
     time_edges_s = params.time_window_s(1):params.resolution_s:params.time_window_s(2);  
     params.time_s = (time_edges_s(1:end-1) + time_edges_s(2:end))/2;    
@@ -97,7 +106,7 @@ function [cells_mat,params] = MakeDataMatrix(Cells,varargin)
         cells_mat = sparse(cells_mat);
     end
     cells_mat = cast(cells_mat,params.precision);
-    %% convert to sparse array if desired
+    %% convert to gpu array if desired
     if params.gpu
         cells_mat = gpuArray(cells_mat);
     end    
