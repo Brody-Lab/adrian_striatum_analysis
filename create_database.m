@@ -7,7 +7,7 @@ function [sessions_table,cells_table] = create_database(varargin)
     p=inputParser;
     p.addParameter('update',false,@(x)validateattributes(x,{'logical'},{'scalar'})); % add only new sessions?
     p.addParameter('reformat',true);
-    p.addParameter('use_local',false);
+    p.addParameter('use_local',true); % use local when available
     p.addParameter('archive',false);
     p.parse(varargin{:});
     params = p.Results;
@@ -96,7 +96,10 @@ function Cells = format_Cells_file(Cells,recordings_table,save_path)
     %% ensure all cells files are up to date, bug free and consistent in structure
     if ~isfield(Cells,'ap_meta') && isfield(Cells,'meta')
         Cells.ap_meta = Cells.meta.ap_meta;
-    end    
+    end  
+    if isfield(Cells,'rec')
+        Cells.ap_meta = Cells.rec.ap_meta;
+    end
     Cells = uberphys.import_implant_table_to_Cells(Cells);    
     Cells = import_implant_log(Cells,read_implant_log());        
     Cells.n_clusters = numel(Cells.spike_time_s.cpoke_in);                
@@ -127,7 +130,7 @@ function Cells = format_Cells_file(Cells,recordings_table,save_path)
     Cells.sessid = Cells.sessid(1);
     Cells.hemisphere = string(Cells.penetration.hemisphere);                              
     Cells.sess_date = Cells.sess_date(1,:);      
-    Cells.days_implanted = days(datetime(Cells.sess_date) - datetime(Cells.penetration.date_implanted)); 
+    Cells.days_implanted = days(datetime(Cells.sess_date) - datetime(Cells.penetration.date)); 
     if ~isfield(Cells,'last_modified') && isfield(Cells,'meta')
         Cells.last_modified = Cells.meta.last_modified;
     end
@@ -154,10 +157,11 @@ function Cells = format_Cells_file(Cells,recordings_table,save_path)
     end  
     
     % add stability metrics
-    [Cells.stability,Cells.presence_ratio,Cells.mean_rate_hz] = calculate_unit_stability(Cells);
+    stability_ref_event='cpoke_in';
+    [Cells.stability,Cells.presence_ratio,Cells.mean_rate_hz] = calculate_unit_stability(Cells.raw_spike_time_s,Cells.Trials.stateTimes.(stability_ref_event),'event_window_s',kSpikeWindowS.(stability_ref_event));
     
     % recalculate mean waveforms
-    if isfield(Cells,'waveform')
+    if isfield(Cells,'waveform') && ~isfield(Cells,'quality_metrics')
         try
             Cells.waveform.mean_uv = Cells.waveform.mean_uV;
         end
@@ -201,19 +205,55 @@ function Cells = format_Cells_file(Cells,recordings_table,save_path)
             end
             Cells.waveform=[];
         end
-    else
+        old_field_names = {'unitIsoDist','unitLRatio','unitVppRaw','unitCount'};
+        new_field_names = {'isolation_distance','l_ratio','uVpp','num_spikes'};
+        for f=1:numel(old_field_names)
+            if isfield(Cells,old_field_names{f})
+                Cells.(new_field_names{f}) = Cells.(old_field_names{f});
+                Cells = rmfield(Cells,old_field_names{f});
+            end
+        end
+        quality_fields = [ "num_spikes","l_ratio", "isolation_distance","uVpp", "spikes_per_s",...
+            "ks_good", "frac_isi_violation", "peak_width_s", "peak_trough_width_s","like_axon",...
+            "spatial_spread_um", "stability","presence_ratio"];  
+        for q=1:numel(quality_fields)
+            if isfield(Cells,quality_fields(q))
+                Cells.quality_metrics.(quality_fields(q)) = Cells.(quality_fields(q));
+                Cells = rmfield(Cells,quality_fields(q));
+            end
+        end
+        for c=1:Cells.n_clusters
+            n_isi_sub_ms = sum(diff(sort(Cells.raw_spike_time_s{c})) < 0.001);
+            Cells.quality_metrics.frac_isi_violation(c,1) = n_isi_sub_ms/numel(Cells.raw_spike_time_s{c}) ;
+            Cells.quality_metrics.spikes_per_s(c,1) = numel(Cells.raw_spike_time_s{c}) ./ Cells.ap_meta.fileTimeSecs;
+        end        
+    elseif ~isfield(Cells,'quality_metrics')
         fprintf(' - warning: missing mean waveform data - ');
     end    
+    Cells.quality_metrics.mean_rate_hz = Cells.mean_rate_hz;
     
     
     %% keep a minimal set of spike_time_s fields
-    keepfields = {'cpoke_in','iti','cpoke_out','clicks_on'}; % iti needed for computing laser modulation during optotagging sessions
-    fields = fieldnames(Cells.spike_time_s);
-    for f=1:length(fields)
-        if ~ismember(fields{f},keepfields)
-            Cells.spike_time_s = rmfield(Cells.spike_time_s,fields{f});
+    keepfields = {'cpoke_in','iti','cpoke_out','clicks_on'}; % iti needed for computing laser modulation during optotagging sessions    
+    if isfield(Cells,'spike_time_s')
+        fields = fieldnames(Cells.spike_time_s);
+        for f=1:length(fields)
+            if ~ismember(fields{f},keepfields)
+                Cells.spike_time_s = rmfield(Cells.spike_time_s,fields{f});
+            end
+        end    
+    else
+        PB_set_constants;        
+        for f=1:numel(keepfields)
+            event_times = Cells.Trials.stateTimes.(keepfields{f});
+            spikes = Cells.raw_spike_time_s;
+            event = keepfields{f};
+            parfor c=1:Cells.num_clusters
+                tmp{c} = group_spike_times(spikes{c},event_times,kSpikeWindowS.(event));
+            end
+            Cells.spike_time_s.(keepfields{f}) = tmp;
         end
-    end    
+    end
     
     %% add field specifying whether a cell is in dorsal striatum
     Cells.is_in_dorsal_striatum = get_dorsal_striatal_cells(Cells);
@@ -230,15 +270,15 @@ function Cells = format_Cells_file(Cells,recordings_table,save_path)
     if ~isfolder(fileparts(save_path))
         mkdir(fileparts(save_path));
     end
-    lastwarn('');
+    lastwarn('');y
     try
-        save(save_path, '-struct','Cells','-v7','-nocompression'); % these settings create a file that is smaller and MUCH faster to save and load than with the default settings
+        %save(save_path, '-struct','Cells','-v7','-nocompression'); % these settings create a file that is smaller and MUCH faster to save and load than with the default settings
     catch
-        save(save_path, '-struct','Cells','-v7'); % these settings create a file that is smaller and MUCH faster to save and load than with the default settings
+        %save(save_path, '-struct','Cells','-v7'); % these settings create a file that is smaller and MUCH faster to save and load than with the default settings
     end
     if ~isempty(lastwarn) % warning indicates a variable wasn't saved so try another way
         fprintf('Warning encountered during v7 save. Trying v7.3\n');
-        save(save_path, '-struct','Cells','-v7.3');
+        %save(save_path, '-struct','Cells','-v7.3');
     end
     fprintf(' took %s.\n-----------------\n',timestr(toc));      
 end
