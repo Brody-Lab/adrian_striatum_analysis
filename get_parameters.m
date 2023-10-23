@@ -41,6 +41,7 @@ function P = get_parameters()
     P.sessions_table_path = fullfile(P.repository_path,'sessions_table.mat');
     P.histology_table_path = fullfile(P.repository_path,'histology_table.csv');
     P.implant_log_path = fullfile(P.repository_path,'implant_log.json');
+    P.unit_inclusion_criteria_table_path  = fullfile(P.repository_path,'unit_inclusion_criteria.csv');
 
 
     %% analysis

@@ -1,0 +1,14 @@
+parameter,description,min_value,max_value,type
+spatial_spread_um,"spatial decay constant of waveform energy, in um",0,150,numeric
+peak_width_s,"width of main waveform deflection at half height, in s, on main channel",0,0.001,numeric
+peak_trough_width_s,"distance from peak to trough in s, on main channel",0,0.001,numeric
+spikes_per_s,average firing rate across the entire recording session,0.01,Inf,numeric
+ks_good,"refractory period violation-based metric for SUA, a la kilosort",0,1,logical
+like_axon,has an upward-going peak deflection on main channel,0,0,logical
+num_spikes,total number of spikes assigned to the unit,50,Inf,numeric
+frac_isi_violation,fraction of ISIs less than 1ms,0,1,numeric
+uVpp,"peak-to-peak voltage of waveform on main channel, in microvolts",50,Inf,numeric
+isolation_distance,isolation distance (defined on main channel only),0,Inf,numeric
+l_ratio,L ratio (on main channel only),0,Inf,numeric
+stability,firing rate stability metric (values over ~5 indicate a significantly unstable firing rate over the course of the recording),0,Inf,numeric
+presence_ratio,fraction of trials that the unit fires at least one spike (trial is operationally defined as -1 to 4 seconds around cpoke_in),0,1,numeric
