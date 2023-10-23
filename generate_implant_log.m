@@ -408,7 +408,7 @@ function log = generate_implant_log()
     log(i).comments="";
     log(i).shank_orientation = [];
     
-     % A327, left ADS (based on histology from A325)
+     % A327, left ADS (based on A324)
     i=i+1;
     log(i).rat = "A327";
     log(i).serial = "19076606842";
@@ -422,16 +422,16 @@ function log = generate_implant_log()
     log(i).sagittal_angle_deg = 0;
     log(i).hemisphere = "left";
     log(i).region(1).name = "NAc";
-    log(i).region(1).electrode_range = [30 250];
+    log(i).region(1).electrode_range = [1 220];
     log(i).region(2).name = "ADS";
-    log(i).region(2).electrode_range = [251 550];
+    log(i).region(2).electrode_range = [221 530];
     log(i).region(3).name = "M1";
-    log(i).region(3).electrode_range = [551 960];
+    log(i).region(3).electrode_range = [610 960];
     log(i).shank_orientation = [];    
-    log(i).comments = "regions based on A325 histology";
+    log(i).comments = "regions based on A324 extraplotion prior to having histology";
     
     
-    % A327, right ADS (based on histology from A325)
+    % A327, right ADS (based on A324)
     i=i+1;
     log(i).rat = "A327";
     log(i).serial = "19051016061";
@@ -445,13 +445,13 @@ function log = generate_implant_log()
     log(i).sagittal_angle_deg = 0;
     log(i).hemisphere = "right";
     log(i).region(1).name = "NAc";
-    log(i).region(1).electrode_range = [30 220];
+    log(i).region(1).electrode_range = [1 190];
     log(i).region(2).name = "ADS";
-    log(i).region(2).electrode_range = [221 520];
+    log(i).region(2).electrode_range = [191 500];
     log(i).region(3).name = "M1";
-    log(i).region(3).electrode_range = [521 960];
+    log(i).region(3).electrode_range = [580 960];
     log(i).shank_orientation = [];     
-    log(i).comments = "regions based on A325 histology";    
+    log(i).comments = "regions based on A324 extrapolation prior to having histology"   
     
      % A327, left TS  (estimated from A325 histology and A327 ephys)
     i=i+1;
@@ -466,14 +466,22 @@ function log = generate_implant_log()
     log(i).coronal_angle_deg = 5;
     log(i).sagittal_angle_deg = 0;
     log(i).hemisphere = "left";
-    log(i).region(1).name = "Amyg";
-    log(i).region(1).electrode_range = [1 100];   
-    log(i).region(2).name = "TS";
-    log(i).region(2).electrode_range = [101 460];
-    log(i).region(3).name = "S1";
-    log(i).region(3).electrode_range = [461 960];   
-    log(i).shank_orientation = [];       
-    log(i).comments = "regions based on A325 histology and A327 phys";        
+%     log(i).region(1).name = "Amyg";
+%     log(i).region(1).electrode_range = [1 100];   
+%     log(i).region(2).name = "TS";
+%     log(i).region(2).electrode_range = [101 460];
+%     log(i).region(3).name = "S1";
+%     log(i).region(3).electrode_range = [461 960];   
+%     log(i).shank_orientation = [];       
+    
+    
+    log(i).region(1).name = "TS";
+    log(i).region(1).electrode_range = [51 450];
+    log(i).region(2).name = "S1";
+    log(i).region(2).electrode_range = [491 960];
+    log(i).shank_orientation = [];   
+    
+    log(i).comments = "regions based on A324 histology and A327 phys";        
  
     
     % A327, right TS (estimated from A325 histology and A327 ephys)
@@ -489,14 +497,14 @@ function log = generate_implant_log()
     log(i).coronal_angle_deg = 5;
     log(i).sagittal_angle_deg = 0;
     log(i).hemisphere = "right";
-    log(i).region(1).name = "Amyg";
-    log(i).region(1).electrode_range = [1 110];   
-    log(i).region(2).name = "TS";
-    log(i).region(2).electrode_range = [111 470];
-    log(i).region(3).name = "S1";
-    log(i).region(3).electrode_range = [471 960];
+    %log(i).region(1).name = "Amyg";
+    %log(i).region(1).electrode_range = [1 110];   
+    log(i).region(1).name = "TS";
+    log(i).region(1).electrode_range = [50 430];
+    log(i).region(2).name = "S1";
+    log(i).region(2).electrode_range = [471 960];
     log(i).shank_orientation = [];     
-    log(i).comments = "regions based on A325 histology and A327 phys";    
+    log(i).comments = "regions based on A324 histology and A327 phys";    
         
 %%  write implant log as json file
     fid=fopen(P.implant_log_path,'w');

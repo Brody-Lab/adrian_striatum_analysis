@@ -3,10 +3,12 @@ function session_info = make_session_info(Cells,save_path)
     % database.
     
     session_info_fields = {'recording_name','sess_date','rat','sessid','probe_serial',...
-        'days_implanted','n_clusters','craniotomy_AP','craniotomy_ML','depth_inserted',...
+        'days_implanted','n_clusters','AP_mm','ML_mm','insertion_depth_mm','coronal_angle_deg','sagittal_angle_deg','UberPhys',...
         'hemisphere','region_names','n_trials','violation_rate','percent_correct','nic','stim_dur_range',...
         'laser_power_mW','D2Phototagging','days_since_viral_injection','notes','mat_file_name',...
         'last_modified','ap_group'};
+    
+    exclude = validate_trials(Cells.Trials,'mode','agb_glm','quiet',true);    
     
     for f=1:length(session_info_fields)
         
@@ -15,23 +17,20 @@ function session_info = make_session_info(Cells,save_path)
         else
             
             if session_info_fields{f}=="region_names"
-                session_info.region_names  = {Cells.penetration.regions.name};                        
+                session_info.region_names  = cellstr(unique(Cells.region(Cells.region~="")))';                        
             
             elseif session_info_fields{f}=="n_trials"
-                exclude = validate_trials(Cells.Trials,'mode','agb_glm','quiet',true);
                 session_info.n_trials = numel(Cells.Trials.is_hit(~exclude));
             
             elseif session_info_fields{f}=="violation_rate"
-                exclude = validate_trials(Cells.Trials,'mode','agb_glm','quiet',true,'exclude_violations',false,...
+                special_exclude = validate_trials(Cells.Trials,'mode','agb_glm','quiet',true,'exclude_violations',false,...
                     'exclude_no_cpoke_out_trials',false,'exclude_no_spoke_trials',false);                
-                session_info.violation_rate = mean(Cells.Trials.violated(~exclude));                
+                session_info.violation_rate = mean(Cells.Trials.violated(~special_exclude));                
             
             elseif session_info_fields{f}=="percent_correct"
-                exclude = validate_trials(Cells.Trials,'mode','agb_glm','quiet',true);                
                 session_info.percent_correct = 100*mean(Cells.Trials.is_hit(~exclude));
                 
             elseif session_info_fields{f}=="stim_dur_range"
-                exclude = validate_trials(Cells.Trials,'mode','agb_glm','quiet',true);                
                 session_info.stim_dur_range = [min(Cells.Trials.stim_dur_s(~exclude)) max(Cells.Trials.stim_dur_s(~exclude))];
                 
             elseif session_info_fields{f}=="nic"

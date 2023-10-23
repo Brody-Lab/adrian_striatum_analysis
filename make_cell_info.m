@@ -4,22 +4,30 @@ function cell_info = make_cell_info(Cells,save_path)
     % fits
     % this standardizes the fields so that these tables can be directly
     % concatenated across sessions
-    fields = {'recording_name','bank','electrode','unitCount',...
-              'unitISIRatio','unitLRatio','unitIsoDist','unitVppRaw','hemisphere',...
-              'distance_from_tip','DV','AP','ML','regions','ks_good',...
-              'like_axon','mean_uv','peak_trough_width','peak_uv','peak_width_s',...
-              'spike_width_ms','mean_uV','width_ms','reliability','signrank','tp',...
-              'auc','mi','dp','distance_from_fiber_tip','first_sig_time_s',...
-              'autocorr','autocorr_fr_hz','presence_ratio','stability','mean_rate_hz','is_in_dorsal_striatum','ap_group'};  
+    fields = {'recording_name','bank','electrode',...
+              'frac_isi_violation','l_ratio','isolation_distance','uVpp','hemisphere',...
+              'distance_from_tip','DV','AP','ML','region','ks_good',...
+              'like_axon','spatial_spread_um','peak_trough_width_s','peak_width_s','peak_uv'...
+              'reliability','signrank','tp',...
+              'auc','mi','dp','distance_from_fiber_tip','first_sig_time_s','autocorr_baseline','autocorr_baseline_fr_hz',...
+              'autocorr_clicks','autocorr_clicks_fr_hz','presence_ratio','stability','mean_rate_hz','spikes_per_s','num_spikes',...
+              'is_in_dorsal_striatum','ap_group'};  
+          
+% mean_uV and mean_uv are both fields??? these aren't being made properly
+% across all Cells generations in format_cells_fiels
+          
     missing_vals = num2cell(NaN(numel(fields),1));
-    missing_vals{end}=NaT;
-    missing_vals{2}=NaT;    
-    missing_vals{1}=missing; %string
-    missing_vals{12}=missing; %string    
-    missing_vals{13}=missing; %string        
-    missing_vals{18}={};
-    missing_vals{39} = missing;
-    missing_vals{40} = missing;
+    missing_vals{1}=missing; %string recording_name
+    missing_vals{8}=missing; %string    hmeisphere
+    missing_vals{13}=missing; %string  region      
+    missing_vals{28}={[]}; %vector autocorr_baseline
+    missing_vals{30}={[]}; %vector autocorr_clicks
+    if isfield(Cells,'quality_metrics')
+        quality_fields = fieldnames(Cells.quality_metrics);
+        for q=1:numel(quality_fields)
+            Cells.(quality_fields{q}) = Cells.quality_metrics.(quality_fields{q});
+        end
+    end
     % keep adding special missings
     cell_info=table();    
     n_cells = numel(Cells.raw_spike_time_s);    

@@ -706,26 +706,26 @@
       {
         "name": "NAc",
         "electrode_range": [
-          30,
-          250
+          1,
+          220
         ]
       },
       {
         "name": "ADS",
         "electrode_range": [
-          251,
-          550
+          221,
+          530
         ]
       },
       {
         "name": "M1",
         "electrode_range": [
-          551,
+          610,
           960
         ]
       }
     ],
-    "comments": "regions based on A325 histology"
+    "comments": "regions based on A324 extraplotion prior to having histology"
   },
   {
     "rat": "A327",
@@ -744,26 +744,26 @@
       {
         "name": "NAc",
         "electrode_range": [
-          30,
-          220
+          1,
+          190
         ]
       },
       {
         "name": "ADS",
         "electrode_range": [
-          221,
-          520
+          191,
+          500
         ]
       },
       {
         "name": "M1",
         "electrode_range": [
-          521,
+          580,
           960
         ]
       }
     ],
-    "comments": "regions based on A325 histology"
+    "comments": "regions based on A324 extrapolation prior to having histology"
   },
   {
     "rat": "A327",
@@ -780,28 +780,21 @@
     "ap_group": 4,
     "region": [
       {
-        "name": "Amyg",
-        "electrode_range": [
-          1,
-          100
-        ]
-      },
-      {
         "name": "TS",
         "electrode_range": [
-          101,
-          460
+          51,
+          450
         ]
       },
       {
         "name": "S1",
         "electrode_range": [
-          461,
+          491,
           960
         ]
       }
     ],
-    "comments": "regions based on A325 histology and A327 phys"
+    "comments": "regions based on A324 histology and A327 phys"
   },
   {
     "rat": "A327",
@@ -818,17 +811,10 @@
     "ap_group": 4,
     "region": [
       {
-        "name": "Amyg",
-        "electrode_range": [
-          1,
-          110
-        ]
-      },
-      {
         "name": "TS",
         "electrode_range": [
-          111,
-          470
+          50,
+          430
         ]
       },
       {
@@ -839,6 +825,6 @@
         ]
       }
     ],
-    "comments": "regions based on A325 histology and A327 phys"
+    "comments": "regions based on A324 histology and A327 phys"
   }
 ]

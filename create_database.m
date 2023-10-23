@@ -21,7 +21,7 @@ function [sessions_table,cells_table] = create_database(varargin)
     
     %% loop over sessions to generate local formatted cells files if needed and then make cell info and session info structures
     recording_name = recordings_table.recording_name;
-    for i=1:n_sessions
+    parfor i=1:n_sessions
         fprintf('\n\nWorking on session %g of %g: %s\n-----------------\n',i,n_sessions,recording_name(i));
         if paths(i).all_exist && params.update
             fprintf('database does not need to be updated for %s.\n-----------------\n',recording_name(i));                         
@@ -66,32 +66,30 @@ end
 function Cells = format_Cells_file(Cells,recordings_table,save_path)    
     
     P = get_parameters();
+    PB_set_constants;        
 
     %% remove uninitiated trials
     remove_idx = isnan(Cells.Trials.stateTimes.cpoke_in);
     if any(remove_idx)
         fprintf('Removing %g uninitiated trials.\n',sum(remove_idx));
         Cells.Trials = remove_trials(Cells.Trials,remove_idx);
-        fields = fieldnames(Cells.spike_time_s);
-        for f=1:length(fields)
-            for c = 1:length(Cells.spike_time_s.(fields{f}))
-                Cells.spike_time_s.(fields{f}){c} = Cells.spike_time_s.(fields{f}){c}(~remove_idx);
+        if isfield(Cells,'spike_time_s')
+            fields = fieldnames(Cells.spike_time_s);
+            for f=1:length(fields)
+                for c = 1:length(Cells.spike_time_s.(fields{f}))
+                    Cells.spike_time_s.(fields{f}){c} = Cells.spike_time_s.(fields{f}){c}(~remove_idx);
+                end
             end
         end
     end
 
     %% copy some fields from recordings_table
-    fields_to_copy = {'laser_power_mW','notes','D2Phototagging','recording_name','cells_file'};
-    new_name = {'laser_power_mW','notes','D2Phototagging','recording_name','mat_file_name'};            
+    fields_to_copy = {'laser_power_mW','notes','D2Phototagging','recording_name','cells_file','UberPhys'};
+    new_name = {'laser_power_mW','notes','D2Phototagging','recording_name','mat_file_name','UberPhys'};            
     for i=1:length(fields_to_copy)
         Cells.(new_name{i}) = recordings_table.(fields_to_copy{i});
     end
-    
-    try
-        Cells.probe_serial = Cells.ap_meta.imDatPrb_sn;
-    catch
-        Cells.probe_serial = Cells.rec.ap_meta.imDatPrb_sn;        
-    end    
+  
 
     %% ensure all cells files are up to date, bug free and consistent in structure
     if ~isfield(Cells,'ap_meta') && isfield(Cells,'meta')
@@ -102,7 +100,7 @@ function Cells = format_Cells_file(Cells,recordings_table,save_path)
     end
     Cells = uberphys.import_implant_table_to_Cells(Cells);    
     Cells = import_implant_log(Cells,read_implant_log());        
-    Cells.n_clusters = numel(Cells.spike_time_s.cpoke_in);                
+    Cells.n_clusters = numel(Cells.raw_spike_time_s);                
     if ~isfield(Cells,'ks_good')
         % calculate refractory period violations a la Kilosort
         for k=1:Cells.n_clusters
@@ -110,9 +108,8 @@ function Cells = format_Cells_file(Cells,recordings_table,save_path)
         end
     end    
 
-    time_to_clicks = Cells.Trials.stateTimes.clicks_on - Cells.Trials.stateTimes.cpoke_in;
-    exclude_trials = Cells.Trials.violated | time_to_clicks<0.5 | Cells.Trials.laser.isOn;
-    [Cells.autocorr,~,Cells.autocorr_fr_hz] = timescales.get_autocorr_from_Cells(Cells,'cpoke_in',[0 0.5],'exclude_trials',exclude_trials);                  
+    exclude_trials = validate_trials(Cells.Trials,'mode','agb_glm');
+    
     if isfield(Cells,'sess_date')
         try
             Cells.sess_date = datetime(Cells.sess_date);
@@ -135,30 +132,27 @@ function Cells = format_Cells_file(Cells,recordings_table,save_path)
         Cells.last_modified = Cells.meta.last_modified;
     end
     Cells.last_modified = datetime(Cells.last_modified);
-    Cells.probe_serial = string(Cells.probe_serial);
     if isfield(Cells,'PETH')
         Cells = rmfield(Cells,'PETH');
     end
-    
-
-    
-    % add stateTimes for clicks if not there in Thomas' sessions
-    if Cells.rat=="T219" && ~isfield(Cells.Trials.stateTimes,'left_clicks')
-        fprintf('Adding click states to this T219 file ...');tic;
-        Cells.Trials = add_click_states_to_thomas_files(Cells.Trials);
-        fprintf(' took %s.\n-----------------\n',timestr(toc));                   
-    end
+   
     
     % computer laser modulation statistics for phototagging sessions
     if Cells.D2Phototagging==1
         fprintf('-----------------');                                                   
-        Cells = tagging.compute_laser_modulation(Cells);
+        %Cells = tagging.compute_laser_modulation(Cells); % 10/2023, this
+        %breaks now but doesn't need to be rerun since no new phototagging
+        %sessions
         fprintf('-----------------\n');                                   
     end  
     
     % add stability metrics
     stability_ref_event='cpoke_in';
-    [Cells.stability,Cells.presence_ratio,Cells.mean_rate_hz] = calculate_unit_stability(Cells.raw_spike_time_s,Cells.Trials.stateTimes.(stability_ref_event),'event_window_s',kSpikeWindowS.(stability_ref_event));
+    if isfield(Cells,'quality_metrics')
+        [Cells.quality_metrics.stability,Cells.quality_metrics.presence_ratio,Cells.quality_metrics.mean_rate_hz] = calculate_unit_stability(Cells.raw_spike_time_s,Cells.Trials.stateTimes.(stability_ref_event)(~exclude_trials),'event_window_s',kSpikeWindowS.(stability_ref_event));
+    else
+        [Cells.stability,Cells.presence_ratio,Cells.mean_rate_hz] = calculate_unit_stability(Cells.raw_spike_time_s,Cells.Trials.stateTimes.(stability_ref_event)(~exclude_trials),'event_window_s',kSpikeWindowS.(stability_ref_event));        
+    end
     
     % recalculate mean waveforms
     if isfield(Cells,'waveform') && ~isfield(Cells,'quality_metrics')
@@ -215,7 +209,7 @@ function Cells = format_Cells_file(Cells,recordings_table,save_path)
         end
         quality_fields = [ "num_spikes","l_ratio", "isolation_distance","uVpp", "spikes_per_s",...
             "ks_good", "frac_isi_violation", "peak_width_s", "peak_trough_width_s","like_axon",...
-            "spatial_spread_um", "stability","presence_ratio"];  
+            "spatial_spread_um", "stability","presence_ratio","mean_rate_hz","peak_uv"];  
         for q=1:numel(quality_fields)
             if isfield(Cells,quality_fields(q))
                 Cells.quality_metrics.(quality_fields(q)) = Cells.(quality_fields(q));
@@ -230,7 +224,6 @@ function Cells = format_Cells_file(Cells,recordings_table,save_path)
     elseif ~isfield(Cells,'quality_metrics')
         fprintf(' - warning: missing mean waveform data - ');
     end    
-    Cells.quality_metrics.mean_rate_hz = Cells.mean_rate_hz;
     
     
     %% keep a minimal set of spike_time_s fields
@@ -243,17 +236,15 @@ function Cells = format_Cells_file(Cells,recordings_table,save_path)
             end
         end    
     else
-        PB_set_constants;        
         for f=1:numel(keepfields)
-            event_times = Cells.Trials.stateTimes.(keepfields{f});
-            spikes = Cells.raw_spike_time_s;
-            event = keepfields{f};
-            parfor c=1:Cells.num_clusters
-                tmp{c} = group_spike_times(spikes{c},event_times,kSpikeWindowS.(event));
-            end
-            Cells.spike_time_s.(keepfields{f}) = tmp;
+            Cells.spike_time_s.(keepfields{f}) = group_spike_times( ...
+                Cells.raw_spike_time_s , Cells.Trials.stateTimes.(keepfields{f}) , kSpikeWindowS.(keepfields{f})  );
         end
     end
+    
+    [Cells.autocorr_baseline,~,Cells.autocorr_baseline_fr_hz] = timescales.get_autocorr_from_Cells(Cells,'cpoke_in',[0 1],0.05,'exclude_trials',exclude_trials,'mask_eve','clicks_on','mask_window_s',[-2 0]);                  
+    [Cells.autocorr_clicks,~,Cells.autocorr_clicks_fr_hz] = timescales.get_autocorr_from_Cells(Cells,'clicks_on',[0 1],0.05,'exclude_trials',exclude_trials,'mask_eve','cpoke_req_end','mask_window_s',[-2 0]);                  
+        
     
     %% add field specifying whether a cell is in dorsal striatum
     Cells.is_in_dorsal_striatum = get_dorsal_striatal_cells(Cells);
@@ -270,15 +261,15 @@ function Cells = format_Cells_file(Cells,recordings_table,save_path)
     if ~isfolder(fileparts(save_path))
         mkdir(fileparts(save_path));
     end
-    lastwarn('');y
+    lastwarn('');
     try
-        %save(save_path, '-struct','Cells','-v7','-nocompression'); % these settings create a file that is smaller and MUCH faster to save and load than with the default settings
+        save(save_path, '-struct','Cells','-v7','-nocompression'); % these settings create a file that is smaller and MUCH faster to save and load than with the default settings
     catch
-        %save(save_path, '-struct','Cells','-v7'); % these settings create a file that is smaller and MUCH faster to save and load than with the default settings
+        save(save_path, '-struct','Cells','-v7'); % these settings create a file that is smaller and MUCH faster to save and load than with the default settings
     end
     if ~isempty(lastwarn) % warning indicates a variable wasn't saved so try another way
         fprintf('Warning encountered during v7 save. Trying v7.3\n');
-        %save(save_path, '-struct','Cells','-v7.3');
+        save(save_path, '-struct','Cells','-v7.3');
     end
     fprintf(' took %s.\n-----------------\n',timestr(toc));      
 end
