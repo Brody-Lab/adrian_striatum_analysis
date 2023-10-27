@@ -6,8 +6,8 @@ function cells_table = select_cells(varargin)
     p.addParameter('DV',[-Inf Inf],@(x)validateattributes(x,{'numeric'},{'increasing','numel',2}));
     p.addParameter('AP',[-Inf Inf],@(x)validateattributes(x,{'numeric'},{'increasing','numel',2}));
     p.addParameter('ML',[0 Inf],@(x)validateattributes(x,{'numeric'},{'increasing','numel',2,'>=',0}));
-    p.addParameter('regions',{},@(x)validateattributes(x,{'char','cell'},{}));
-    p.addParameter('spike_width_ms',[],@(x)validateattributes(x,{'numeric'},{'increasing','numel',2,'>=',0}));
+    p.addParameter('region',string([]),@(x)validateattributes(x,{'char','cell'},{}));
+    p.addParameter('peak_width_s',[],@(x)validateattributes(x,{'numeric'},{'increasing','numel',2,'>=',0}));
     p.addParameter('reliability',[],@(x)validateattributes(x,{'numeric'},{'increasing','numel',2}));
     p.addParameter('D2Phototagging',[],@(x)validateattributes(x,{'logical'},{'scalar'}));    
     p.addParameter('is_in_dorsal_striatum',[],@(x)validateattributes(x,{'logical'},{'scalar'}));        
