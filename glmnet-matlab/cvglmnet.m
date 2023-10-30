@@ -246,7 +246,7 @@ if (~isempty(options.lambda)) && (length(options.lambda)<2)
     error('Need more than one value of lambda for cv.glmnet');
 end
 
-N = size(x, 1);
+[N,m] = size(x);
 
 if (size(y,1) ~= N)
     y = transpose(y);
@@ -260,13 +260,12 @@ if (isempty(options.weights))
     options.weights = ones(N,1);
 end
 
-if options.relaxed
+if options.relaxed && options.alpha>0
     fprintf('   Determining parameter sets for relaxed fitting.\n');
 end
 
 this_tic=tic;
 glmfit = glmnet(x, y, family, setfield(options,'relaxed',false));
-
 
 if glmfit.jerr~=0
     if require_success
@@ -278,6 +277,11 @@ if glmfit.jerr~=0
     end
 else
     fprintf('   un-cross-validated fit converged in %s after %d passes.\n',timestr(toc(this_tic)),glmfit.npasses);                                            
+end
+
+if options.relaxed && all(glmfit.df==m)
+    fprintf('   value of alpha too low to use relaxed fitting. Ignoring.\n');
+    options.relaxed=false;
 end
 
 
@@ -325,7 +329,7 @@ cpredmat = cell(nfolds,1);
 opts = options;
 
 if (parallel == true)
-    
+    fprintf('   parallel not currently implemented for cvglmnet.\n');
 %     parfor i = 1: nfolds
 %         which = foldid==i;
 %         opts.weights = opts.weights(~which,:);
