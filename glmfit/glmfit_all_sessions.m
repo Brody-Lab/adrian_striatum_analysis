@@ -8,7 +8,7 @@ function glmfit_all_sessions(varargin)
     p=inputParser;
     p.KeepUnmatched=true;
     p.addParameter('job_array',false,@(x)validateattributes(x,{'logical'},{'scalar'})); % use a job array to parallelize over cells (useful if you are fitting adaptation params which takes a long time)
-    p.addParameter('time_per_job',5,@(x)validateattributes(x,{'numeric'},{'scalar','positive'})); % max time per job IN HOURS     
+    p.addParameter('time_per_job',10,@(x)validateattributes(x,{'numeric'},{'scalar','positive'})); % max time per job IN HOURS     
     p.addParameter('partition','',@(x)validateattributes(x,{'char','string'},{}));
     p.addParameter('sbatch_retry_frequency_mins',5,@(x)validateattributes(x,{'numeric'},{'scalar','positive'})); % retry sbatch submission after this many minutes
     p.addParameter('jobid',datestr(now,'YYYY_mm_DD_HH_MM_SS'),@(x)validateattributes(x,{'char','string'},{'nonempty'}));
@@ -29,6 +29,7 @@ function glmfit_all_sessions(varargin)
     if P.on_cluster
         % if on cluster, run computationally expensive jobs first
         S = load_sessions_table();
+        C = load_cells_table();
         if p.Results.job_array
             [~,order] = sort(S.n_trials,'descend');            
         else
@@ -70,9 +71,11 @@ function glmfit_all_sessions(varargin)
             else
                error('Could not load saved params file or it was not saved: %s\n',params_path); 
             end
+            thisC=C(C.recording_name==paths(i).recording_name,:);        
+            cellnos = find(apply_inclusion_criteria(thisC));            
             error_file = fullfile(output_dir,'job%A_cell%a.stderr');
             out_file = fullfile(output_dir,'job%A_cell%a.stdout');            
-            array_string=sprintf('%g,',glmfit_params.params.cellno(glmfit_params.params.responsive_enough));
+            array_string=sprintf('%g,',intersect(cellnos,glmfit_params.params.cellno(glmfit_params.params.responsive_enough)));
             matlab_command = ['"',matlab_command(2:end-3),',''cellno'',id,''save_params'',false);','exit;"'];                
         else
             error_file = fullfile(output_dir,'job%A.stderr');

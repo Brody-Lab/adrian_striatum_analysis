@@ -12,16 +12,24 @@ function cells_table = select_cells(varargin)
     p.addParameter('D2Phototagging',[],@(x)validateattributes(x,{'logical'},{'scalar'}));    
     p.addParameter('is_in_dorsal_striatum',[],@(x)validateattributes(x,{'logical'},{'scalar'}));        
     p.addParameter('recording_name',"",@(x)validateattributes(x,{'string'},{'scalar'}));
+    p.addParameter('skip_inclusion_criteria',false);
     p.parse(varargin{:});
-    select_cells_params=p.Results;  
+    params=p.Results;  
 
     %% make a cells_table with sessions columns
     cells_table = load_cells_table();
     sessions_table = load_sessions_table();
     cells_table = join(cells_table,sessions_table);
     
-    %% 
-    cells_table = validate_ranges(cells_table,select_cells_params);
+    %% apply default exclusion criteria
+    if ~params.skip_inclusion_criteria
+        include = apply_inclusion_criteria(cells_table);
+        cells_table = cells_table(include,:);
+    end
+    
+    %% apply selection criteria 
+    params = rmfield(params,'skip_inclusion_criteria');
+    cells_table = validate_ranges(cells_table,params);    
 
 end
 
