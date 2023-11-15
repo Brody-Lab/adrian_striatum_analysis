@@ -5,8 +5,8 @@
 #SBATCH -t 180                    # 30 min by default
 #SBATCH --nodes=1                # node count
 #SBATCH --ntasks-per-node=1      # number of tasks per node
-#SBATCH --cpus-per-task=1        # cpu-cores per task (>1 if multi-threaded tasks)
-#SBATCH --mem-per-cpu=7G         # important for long sessions or small time binning
+#SBATCH --cpus-per-task=2        # cpu-cores per task (>1 if multi-threaded tasks)
+#SBATCH --mem-per-cpu=10G         # important for long sessions or small time binning
 #SBATCH --mail-type=FAIL,TIME_LIMIT,ARRAY_TASKS,REQUEUE         # email 
 #SBATCH --mail-user=abondy@princeton.edu
 
@@ -17,10 +17,10 @@ matlab_command=$1
 
 if [ $SLURM_ARRAY_TASK_COUNT -eq 1 ]; then
   echo "Matlab command is: ${matlab_command}"
-  matlab -batch "${matlab_command}" || exit 202
+  matlab -nodisplay -nojvm -nodesktop -batch "${matlab_command}" || exit 202
 else
   echo "Matlab command is: id=$SLURM_ARRAY_TASK_ID;${matlab_command}"
-  matlab -batch "id=$SLURM_ARRAY_TASK_ID;${matlab_command}" || exit 202
+  matlab -nodisplay -nojvm -nodesktop -batch "id=$SLURM_ARRAY_TASK_ID;${matlab_command}" || exit 202
 fi
 
 echo "Finished executing matlab command successfully!"
