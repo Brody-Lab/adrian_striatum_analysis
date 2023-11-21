@@ -14,7 +14,8 @@ function glmfit_all_sessions(varargin)
     p.addParameter('jobid',datestr(now,'YYYY_mm_DD_HH_MM_SS'),@(x)validateattributes(x,{'char','string'},{'nonempty'}));
     p.addParameter('paths',1:numel(paths),@(x)validateattributes(x,{'numeric'},{'integer','increasing','nonempty','positive','<=',numel(paths)})); %indices of sessions to run (as they would run after sorting step)
     p.addParameter('ncpus',1,@(x)validateattributes(x,{'numeric'},{'scalar','positive','integer'}));    
-    p.addParameter('ngpus',0,@(x)validateattributes(x,{'numeric'},{'scalar','nonnegative','integer'}));          
+    p.addParameter('ngpus',0,@(x)validateattributes(x,{'numeric'},{'scalar','nonnegative','integer'}));  
+    p.addParameter('memory_gb',7,@(x)validateattributes(x,{'numeric'},{'scalar','positive','integer'}));        
     p.parse(varargin{:});    
     
     %glm fitting params
@@ -83,8 +84,8 @@ function glmfit_all_sessions(varargin)
             array_string='0,';         
         end
         if P.on_cluster
-            sbatch_command = sprintf('sbatch -e %s -o %s -t %g -J "%s" --array=%s -p %s --cpus-per-task=%d --gres=gpu:%d submit_matlab_job.slurm %s',...
-                error_file,out_file,round(p.Results.time_per_job*60),job_name,array_string(1:end-1),p.Results.partition,p.Results.ncpus,p.Results.ngpus,matlab_command);            
+            sbatch_command = sprintf('sbatch -e %s -o %s -t %g -J "%s" --array=%s -p %s --cpus-per-task=%d --gres=gpu:%d --mem-per-cpu=%dG submit_matlab_job.slurm %s',...
+                error_file,out_file,round(p.Results.time_per_job*60),job_name,array_string(1:end-1),p.Results.partition,p.Results.ncpus,p.Results.ngpus,p.Results.memory_gb,matlab_command);            
             sbatch_command = strrep(sbatch_command,'--gres=gpu:0 ','');            
             sbatch_command = strrep(sbatch_command,'-p  ','');                        
             fprintf('Sending following system command to initiate job:\n   %s\n',sbatch_command);
