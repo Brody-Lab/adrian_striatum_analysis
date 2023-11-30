@@ -7,7 +7,7 @@ function cluster_glmfits(fits_table,dspec,varargin)
     %% parse and validate inputs
     P=get_parameters();
     p=inputParser;
-    default_covariates = P.covariate_order(ismember(P.covariate_order,{dspec.covar.label}));
+    default_covariates = P.covariate_order(ismember(P.covariate_order,fieldnames(fits_table.stats(1).ws)));
     p.addParameter('covariates',default_covariates,@(x)validateattributes(x,{'cell'},{'nonempty'}));
     p.addParameter('covariate_names',P.covariate_names(ismember(P.covariate_order,{dspec.covar.label})),@(x)validateattributes(x,{'cell'},{'nonempty'}));   
     p.addParameter('covariates_to_plot',default_covariates,@(x)validateattributes(x,{'cell'},{'nonempty'}));
@@ -22,13 +22,16 @@ function cluster_glmfits(fits_table,dspec,varargin)
     p.addParameter('use_combined_weights',true,@(x)validateattributes(x,{'logical'},{'scalar'})); % if false, things will break. I've found using the combined weights so much better that code assumes it in some places.
     p.addParameter('group_by',ones(size(fits_table,1),1)); % should include ascending natural numbers starting at 1 (or NaNs to be excluded).
     p.addParameter('group_reorder',true,@(x)validateattributes(x,{'logical'},{'scalar'}));    
-    p.addParameter('reorder_cells',false,@(x)validateattributes(x,{'logical'},{'scalar'}));  
+    p.addParameter('reorder_cells',false,@(x)validateattributes(x,{'logical'},{'scalar'})); 
+    p.addParameter('skip_clustering',false,@(x)validateattributes(x,{'logical'},{'scalar'}));      
     p.addParameter('show_cell_no',false,@(x)validateattributes(x,{'logical'},{'scalar'}));      
     p.addParameter('find_optimal_n_clust',false,@(x)validateattributes(x,{'logical'},{'scalar'}));     
     p.addParameter('variable_bar_size',false,@(x)validateattributes(x,{'logical'},{'scalar'}));                  
     p.addParameter('smoothing_window_size',0,@(x)validateattributes(x,{'numeric'},{'nonnegative','nonempty','scalar'})); 
     p.addParameter('var_cutoff',1e-3,@(x)validateattributes(x,{'numeric'},{'positive','nonempty','scalar'}));       
     p.addParameter('clim_multiplier',5);
+    p.addParameter('sig',[]);
+    p.addParameter('equalize_groups',true);    
     p.addParameter('group_colors',P.ap_group_colors);
     p.addParameter('group_labels',P.ap_group_labels);
     p.addParameter('click_ticks',[0 0.1 1]);
@@ -73,20 +76,28 @@ function cluster_glmfits(fits_table,dspec,varargin)
         [params.max_clust,params.ARI,params.ARI_rand,params.vals] = find_optimal_n_clust(bs(:,clust_cols));
     end
     
-    %% determine tree structure
-    tree = linkage(bs(:,clust_cols),params.linkage_method,params.metric);
+    if ~params.skip_clustering
+    %% determine tree structure        
+        tree = linkage(bs(:,clust_cols),params.linkage_method,params.metric);
     
     %% determine distance cutoff to produce desired number of clusters   
-    clusterfun = @(cutoff)cluster(tree,'Cutoff',cutoff,'Criterion','distance'); 
-    [cutoff,T] = find_cutoff(clusterfun,params.max_clust,5,10);
+        clusterfun = @(cutoff)cluster(tree,'Cutoff',cutoff,'Criterion','distance'); 
+        [cutoff,T] = find_cutoff(clusterfun,params.max_clust,5,10);
+    end
 
     %% initialize figure
-    figure('Units','normalized','Position',params.fig_pos,'color',[1 1 1]);    
+    if params.make_fig
+        figure('Units','normalized','Position',params.fig_pos,'color',[1 1 1]);    
+    end
     
     %% compute dendrogram order
-    [~,~,outperm] = dendrogram(tree,0,'orientation','left','ColorThreshold',cutoff,'CheckCrossing',false);
+    if ~params.skip_clustering
+        [~,~,outperm] = dendrogram(tree,0,'orientation','left','ColorThreshold',cutoff,'CheckCrossing',false);
+    end
     if params.reorder_cells || params.group_reorder
-        clf;
+        if params.make_fig
+            clf;
+        end
     else
         params.dendrogram_pos = [0.03 0.1 0.07 0.8];        
         set(gca,'position',params.dendrogram_pos,'ydir','reverse','xtick',[],'ytick',[]);axis off 
@@ -98,11 +109,13 @@ function cluster_glmfits(fits_table,dspec,varargin)
     end    
     
     %% resort by desired order
-    bs=bs(outperm,:);
-    params.group_by = params.group_by(outperm);        
+    if exist('outperm','var')
+        bs=bs(outperm,:);
+        params.group_by = params.group_by(outperm);        
+    end
     
     %% if desired, reorder cells by cluster membership fraction (group reorder)
-    if params.group_reorder
+    if params.group_reorder && ~params.skip_clustering
         clusters_in_order = unique(T(outperm),'stable');
         for i=params.max_clust:-1:1
             these_groups = params.group_by(T(outperm)==clusters_in_order(i));
@@ -131,7 +144,7 @@ function cluster_glmfits(fits_table,dspec,varargin)
     [bs,tr,edim] = select_covariates_to_plot(bs,tr,edim,params) ;  
     
     %% setting up the plotting
-    params.clim  = [-1 1] * params.clim_multiplier * std(bs(:),'omitnan'); % clim is set relative to the s.d. to be insensitive to outliers
+    params.clim  = [-1 1] * params.clim_multiplier * nanstd(bs(:)); % clim is set relative to the s.d. to be insensitive to outliers
     time_range = cellfun(@range,tr);
     if params.reorder_cells
         params.linepos = find(diff(sort(params.group_by)));
@@ -202,7 +215,7 @@ function [bs,edim,tr] = get_data_matrix(stats,dspec,params)
     else
         % get combined weight matrix
         for i=numel(params.covariates):-1:1
-            [ws,tr{i}] = get_combined_weights_downsample(stats,params.covariates{i},10); % downsample by a factor of 10
+            [ws,tr{i}] = get_combined_weights_downsample(stats,params.covariates{i},1); % downsample by a factor of 1
             bs{i} = ws.data;
             good_idx = var(bs{i})>params.var_cutoff;
             bs{i} = bs{i}(:,good_idx);
@@ -226,9 +239,13 @@ function [bs,group_by] = remove_bad_rows(bs,params)
     %% remove elements where group variable is nan
     bs=bs(~isnan(params.group_by),:);
     params.group_by = params.group_by(~isnan(params.group_by));
+    params.sig = params.sig(~isnan(params.group_by));
 
     %% remove unresponsive cells (determined for now by amplitudes of fit coefficients)
-    if params.responsive_cutoff_prctile>0
+    if ~isempty(params.sig)
+        bs = bs(params.sig,:);
+        params.group_by = params.group_by(params.sig);
+    elseif params.responsive_cutoff_prctile>0
         responsiveness = params.responsive_fun(bs');
         cutoff = prctile(responsiveness,params.responsive_cutoff_prctile);        
         bs= bs(responsiveness>cutoff,:);
@@ -236,6 +253,15 @@ function [bs,group_by] = remove_bad_rows(bs,params)
     end
     
     group_by = params.group_by;
+    
+    if params.equalize_groups
+        group_by = equalize_groups(group_by);
+        bs=bs(~isnan(group_by),:);
+        group_by = group_by(~isnan(group_by));
+    end
+        
+        
+        
 end
 
 function [column_idx,edim] = select_beta_columns(dspec,covariates)
@@ -386,7 +412,7 @@ function draw_colorbar(pos,params)
     originalSize = get(gca, 'Position'); % remember current axis position so it can be reset in case colorbar squeezes it        
     h=colorbar('Location','manual');
     ticks = log10([0.01:0.01:0.09 0.1:0.1:1 2 3 4 5 6 7 8 9 10 20 30 40]);
-    idx = ~ismember(ticks,[-2 -1 0 1]);
+    idx = ~ismember(ticks,log10([0.01 0.1 0.2 1 5 10]));%   [-2 -1 0 1]);
     TickLabels = arrayfun(@num2str,[0.01:0.01:0.09 0.1:0.1:1 2 3 4 5 6 7 8 9 10 20 30 40],'uni',0);
     TickLabels(idx) = deal({''});    
     set(h,'FontSize',14,'box','off','LineWidth',0.75,'TickLength',0.05,'Position',[pos(1)+params.covariate_gap+pos(3) 0.8 0.01 0.1],'Ticks',ticks,'TickLabels',TickLabels);

@@ -14,6 +14,7 @@ function [fits_table,kPETH] = add_peth_to_fits_table(fits_table,varargin)
     p.addParameter('separate_by','signal_strength',@(x)validateattributes(x,{'char'},{}));
     p.addParameter('column_name','',@(x)validateattributes(x,{'char'},{}));    
     p.addParameter('kPETH',get_PETH_params('resolution_s',0.05,'type','GAUSS'));
+    p.addParameter('nresamples',500); % number of bootstrap resamples    
     % you can pass mask_states directly to get_psth_from_Cells
     p.parse(varargin{:});
     params=p.Results;
@@ -24,7 +25,7 @@ function [fits_table,kPETH] = add_peth_to_fits_table(fits_table,varargin)
     end
     params.column_name = {[params.column_name_root,'_observed'] [params.column_name_root,'_predicted'] [params.column_name_root,'_observed_se'] [params.column_name_root,'_predicted_se']};
     fprintf('Using "%s" and "%s" as the column names.\n',params.column_name{1},params.column_name{2});      
-    recording_names = unique(fits_table.recording_name);
+    recording_names = unique(fits_table.recording_name(fits_table.sess_date==datetime("20-Jul-2023")));
     run = unique(fits_table.run);
     if ~isscalar(run)
         warning('More than one run in the fits table. If spikes are generated in different ways across these runs, peth generation will be affected, i.e. time window of trial or bin_size_s');
@@ -38,8 +39,7 @@ function [fits_table,kPETH] = add_peth_to_fits_table(fits_table,varargin)
         cellnos{i} = fits_table.cellno(these_rows{i});
         stats{i} = fits_table.stats(these_rows{i});   
     end
-    
-    parfor i=1:numel(recording_names)
+    for i=numel(recording_names):-1:1
         params_file = load(fullfile(fit_path,'fits',recording_names(i),run,'glmfit_params.mat'));        
         Cells = load_Cells_file(recording_names(i));
         [~,p,spikes] = fit_glm_to_Cells(Cells,params_file.params,'fit',false,'keepX',true,'save',false,'cellno',cellnos{i});        
@@ -54,7 +54,7 @@ function [fits_table,kPETH] = add_peth_to_fits_table(fits_table,varargin)
             end
         end    
         peth_mean_rate{i} = p.totalSpikes ./ size(p.X,1) ./ p.bin_size_s;
-        [peth_observed{i},peth_predicted{i},peth_observed_se{i},peth_predicted_se{i},boot_sim_observed{i},~] = get_psth_from_glmfit(p.dm_base.dspec.expt,spikes,params.ref_event,'kPETH',params.kPETH,'separate_by',params.separate_by);    
+        [peth_observed{i},peth_predicted{i},peth_observed_se{i},peth_predicted_se{i},boot_sim_observed{i},~] = get_psth_from_glmfit(p.dm_base.dspec.expt,spikes,params.ref_event,varargin{:},'kPETH',params.kPETH,'separate_by',params.separate_by);    
         for c=1:numel(cellnos{i})
             r2{i}(c) = rsquare(peth_observed{i}{c}(:),peth_predicted{i}{c}(:));
             r{i}(c) = corr(peth_observed{i}{c}(:),peth_predicted{i}{c}(:));

@@ -2,11 +2,11 @@
 #SBATCH --array=0
 #SBATCH -o slurm_outfiles/%A_%a.out
 #SBATCH -e slurm_outfiles/%A_%a.err;
-#SBATCH -t 180                    # 30 min by default
+#SBATCH -t 180                    # 3 hours by default
 #SBATCH --nodes=1                # node count
 #SBATCH --ntasks-per-node=1      # number of tasks per node
-#SBATCH --cpus-per-task=2        # cpu-cores per task (>1 if multi-threaded tasks)
-#SBATCH --mem-per-cpu=10G         # important for long sessions or small time binning
+#SBATCH --cpus-per-task=1        # cpu-cores per task (>1 if multi-threaded tasks)
+#SBATCH --mem-per-cpu=7G         # important for long sessions or small time binning
 #SBATCH --mail-type=FAIL,TIME_LIMIT,ARRAY_TASKS,REQUEUE         # email 
 #SBATCH --mail-user=abondy@princeton.edu
 

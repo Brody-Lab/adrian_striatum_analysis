@@ -107,9 +107,15 @@ function [glmfit_params,saved_cells] = find_glmfit_params_internal(path,params)
                 else
                    error('Params file not found: %s.\n',params_path); % something has gone wrong if you've got to this line.
                 end
-                % check which cells have been saved               
-                saved_cells{k} = cellfun(@(x)str2double(x),regexprep({tmp(size>0).name},'.*cell(.*).mat','$1'),'uni',0);
+                % check which cells have been saved               '
+                names={tmp(size>0).name};
+                saved_cells{k} = cellfun(@(x)str2double(x),regexprep(names,'.*cell(.*).mat','$1'),'uni',0);
                 saved_cells{k}=[saved_cells{k}{:}];
+                nans=isnan(saved_cells{k});
+                if any(nans)
+                    warning('Could not parse cell identity of file %s\n',names{nans});
+                end
+                saved_cells{k} = saved_cells{k}(~nans);
             end
         elseif params.delete_removed && params.remove_missing_mode~="none" % no stats folder made
             remove_run(run_list{k});          
@@ -218,7 +224,7 @@ function glmfit_log = validate_glmfit_log(glmfit_log,params)
         %% check that all sessions are represented
         recordings_table = get_striatum_glm_recordings_table();    
         missing_sessions = ~ismember(recordings_table.recording_name,glmfit_log.recording_name(this_idx));
-        if sum(missing_sessions)>16 % allow fits on old set of 80 sessions to stay in catalog
+        if sum(missing_sessions)>28 % allow fits on old set of 80 sessions to stay in catalog
             warning('%g recordings are missing from the glmfit log for run %s.',sum(missing_sessions),unique_runs(i));
             if params.remove_missing_mode~="none"
                 remove(i)=true;
