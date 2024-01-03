@@ -13,11 +13,12 @@ function [fits_table,kPETH] = add_peth_to_fits_table(fits_table,varargin)
     p.addParameter('ref_event','cpoke_in',@(x)validateattributes(x,{'char'},{'nonempty'}));    
     p.addParameter('separate_by','signal_strength',@(x)validateattributes(x,{'char'},{}));
     p.addParameter('column_name','',@(x)validateattributes(x,{'char'},{}));    
-    p.addParameter('kPETH',get_PETH_params('resolution_s',0.05,'type','GAUSS'));
-    p.addParameter('nresamples',500); % number of bootstrap resamples    
+    p.addParameter('kPETH',get_PETH_params('std_s',0.1,'std_s_clicks',0.1));
+    p.addParameter('nresamples',100); % number of bootstrap resamples    
     % you can pass mask_states directly to get_psth_from_Cells
     p.parse(varargin{:});
     params=p.Results;
+    kPETH=params.kPETH;
     if isempty(params.column_name)
         params.column_name_root = [params.ref_event,'_peth'];
     else
@@ -25,7 +26,8 @@ function [fits_table,kPETH] = add_peth_to_fits_table(fits_table,varargin)
     end
     params.column_name = {[params.column_name_root,'_observed'] [params.column_name_root,'_predicted'] [params.column_name_root,'_observed_se'] [params.column_name_root,'_predicted_se']};
     fprintf('Using "%s" and "%s" as the column names.\n',params.column_name{1},params.column_name{2});      
-    recording_names = unique(fits_table.recording_name(fits_table.sess_date==datetime("20-Jul-2023")));
+    recording_names =   unique(fits_table.recording_name);%(fits_table.sess_date==datetime("20-Jul-2023")));
+
     run = unique(fits_table.run);
     if ~isscalar(run)
         warning('More than one run in the fits table. If spikes are generated in different ways across these runs, peth generation will be affected, i.e. time window of trial or bin_size_s');
@@ -39,18 +41,22 @@ function [fits_table,kPETH] = add_peth_to_fits_table(fits_table,varargin)
         cellnos{i} = fits_table.cellno(these_rows{i});
         stats{i} = fits_table.stats(these_rows{i});   
     end
-    for i=numel(recording_names):-1:1
+    for i=1:numel(recording_names)
         params_file = load(fullfile(fit_path,'fits',recording_names(i),run,'glmfit_params.mat'));        
         Cells = load_Cells_file(recording_names(i));
+        Cells=add_first_click_state(Cells);        
+        exclude_trials = validate_trials(Cells.Trials,'mode','agb_glm','quiet',true,'require_clicks',true);
+        [choice_MI{i},choice_MI_pval{i}] = get_pref_choice(Cells,cellnos{i},'exclude_trials',exclude_trials);        
         [~,p,spikes] = fit_glm_to_Cells(Cells,params_file.params,'fit',false,'keepX',true,'save',false,'cellno',cellnos{i});        
         [~,idx] = ismember(cellnos{i},[spikes.cellno]);
         spikes=spikes(idx);
         % predict Y_hat using X in params and stats for each cell
+        s=stats{i};
         for c=1:numel(spikes)
-            if isfield(stats{i}(c),'B')
-                spikes(c).Yhat = p.link.Inverse([p.X p.dm{c}.X]*stats{i}(c).B(2:end) + stats{i}(c).B(1));
+            if isfield(s(c),'B')
+                spikes(c).Yhat = p.link.Inverse([p.X p.dm{c}.X]*s(c).B(2:end) + s(c).B(1));
             else
-                spikes(c).Yhat = p.link.Inverse([p.X p.dm{c}.X]*stats{i}(c).beta(2:end) + stats{i}(c).beta(1));                
+                spikes(c).Yhat = p.link.Inverse([p.X p.dm{c}.X]*s(c).beta(2:end) + s(c).beta(1));                
             end
         end    
         peth_mean_rate{i} = p.totalSpikes ./ size(p.X,1) ./ p.bin_size_s;
@@ -72,6 +78,8 @@ function [fits_table,kPETH] = add_peth_to_fits_table(fits_table,varargin)
         fits_table.([params.column_name_root,'_r'])(these_rows{i}) = r{i};    
         fits_table.([params.column_name_root,'_boot_sim_observed'])(these_rows{i}) = boot_sim_observed{i};     
         fits_table.([params.column_name_root,'_mean_rate'])(these_rows{i}) = peth_mean_rate{i};
+        fits_table.choice_MI(these_rows{i}) = choice_MI{i};
+        fits_table.choice_MI_pval(these_rows{i}) = choice_MI_pval{i};             
     end
 
 end
