@@ -13,14 +13,22 @@
 pwd; hostname; date
 env | sort
 
+# exit when any command fails
+set -e
+
+# keep track of the last executed command
+trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
+# echo an error message before exiting
+trap 'echo "\"${last_command}\" command failed with exit code $?."' EXIT
+
 matlab_command=$1
 
 if [ $SLURM_ARRAY_TASK_COUNT -eq 1 ]; then
   echo "Matlab command is: ${matlab_command}"
-  matlab -nodisplay -nodisplay -nodesktop -nosplash -r "${matlab_command}" || exit 202
+  matlab -batch -nodisplay "${matlab_command}" || exit 202
 else
-  echo "Matlab command is: id=$SLURM_ARRAY_TASK_ID;${matlab_command}"
-  matlab -nodisplay -nodisplay -nodesktop -nosplash -r "id=$SLURM_ARRAY_TASK_ID;${matlab_command}" || exit 202
+  echo "Matlab command is: id=$SLURM_ARRAY_TASK_ID;${matlab_command};exit"
+  matlab -batch -nodisplay "id=$SLURM_ARRAY_TASK_ID;${matlab_command};exit" || exit 202
 fi
 
 echo "Finished executing matlab command successfully!"
