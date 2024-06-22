@@ -25,10 +25,10 @@ matlab_command=$1
 
 if [ $SLURM_ARRAY_TASK_COUNT -eq 1 ]; then
   echo "Matlab command is: ${matlab_command}"
-  matlab -batch -nodisplay "${matlab_command}" || exit 202
+  matlab -nodisplay -batch "${matlab_command}" || exit 202
 else
   echo "Matlab command is: id=$SLURM_ARRAY_TASK_ID;${matlab_command};exit"
-  matlab -batch -nodisplay "id=$SLURM_ARRAY_TASK_ID;${matlab_command};exit" || exit 202
+  matlab -nodisplay -batch "id=$SLURM_ARRAY_TASK_ID;${matlab_command};exit" || exit 202
 fi
 
 echo "Finished executing matlab command successfully!"
